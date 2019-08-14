@@ -1,0 +1,56 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../js/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../js/webgl-utils.js"></script>
+<script type="text/javascript" src="../js/webgl-debug.js"></script>
+<script type="text/javascript" src="../js/numeric-1.2.6.min.js"></script>
+<script type="text/javascript" src="../js/jquery-1.11.1.min.js"></script>
+
+<!--Our Scripts!-->
+<script src="../Geometry/PolyMesh.js"></script>
+<script src="../Geometry/Primitives3D.js"></script>
+<script src="../Geometry/Cameras3D.js"></script>
+<script src="../DrawingUtils/Shaders.js"></script>
+<script src="../DrawingUtils/SimpleDraw.js"></script>
+<script src="./SimpleMeshCanvas.js"></script>
+</head>
+
+<body>
+
+<table>
+<tr><td><h3>Mesh File</h3></td><td><input type = "file" id = "meshInput"></td></tr>
+</table>
+<canvas id="MainGLCanvas" style="border: none;" width="800" height="600"></canvas>
+
+
+<script>
+    var glcanvas = document.getElementById("MainGLCanvas");
+    glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    SimpleMeshCanvas(glcanvas);
+
+    /////////////////////////////////////////////////////
+    //Setup mesh input
+    /////////////////////////////////////////////////////
+    function onLoadMeshFile(e) {
+        var lines = this.result.split("\n");
+        glcanvas.mesh.loadFileFromLines(lines);
+        glcanvas.centerCamera();
+        requestAnimFrame(glcanvas.repaint);
+    }
+    var meshInput = document.getElementById('meshInput');
+    var result = document.getElementById('text');
+    
+    meshInput.addEventListener('change', function(e) {
+        var file = meshInput.files[0];
+        var reader = new FileReader();
+        reader.onload = onLoadMeshFile;
+        reader.readAsText(file);
+    });
+</script>
+
+</body>
+</html>

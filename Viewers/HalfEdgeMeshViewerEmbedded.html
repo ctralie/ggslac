@@ -1,0 +1,35 @@
+<html>
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <!--External Libraries!-->
+    <!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+    <script type="text/javascript" src = "../js/gl-matrix-min.js"></script>
+    <script type="text/javascript" src="../js/webgl-utils.js"></script>
+    <script type="text/javascript" src="../js/webgl-debug.js"></script>
+    <script type="text/javascript" src="../js/numeric-1.2.6.min.js"></script>
+    <script type="text/javascript" src="../js/jquery-1.11.1.min.js"></script>
+
+    <!--Our Scripts!-->
+    <script src="../Geometry/HalfEdgeMesh.js"></script>
+    <script src="../Geometry/Primitives3D.js"></script>
+    <script src="../Geometry/Cameras3D.js"></script>
+    <script src="./Shaders.js"></script>
+    <script src="./HalfEdgeMeshCanvas.js"></script>
+  </head>
+
+  <body>
+
+    <canvas id="GLCanvas1" style="border: none;" width="800" height="600"></canvas>
+
+    <script>
+     var glcanvas = document.getElementById("GLCanvas1");
+     HalfEdgeMeshCanvas(glcanvas);//Add fields to glcanvas that help with rendering
+     glcanvas.mesh.loadFile("a10_sas.off");
+     console.log(glcanvas.mesh.vertices);
+     glcanvas.centerCamera();
+     requestAnimFrame(glcanvas.repaint);
+    </script>
+
+  </body>
+</html>
