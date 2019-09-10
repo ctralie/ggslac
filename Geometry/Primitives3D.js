@@ -266,22 +266,3 @@ function getFaceNormal(verts) {
     }
     return null;
 }
-
-function getPolygonArea(verts) {
-    if (verts.length < 3) {
-        return 0.0;
-    }
-    var v1 = vec3.clone(verts[1]);
-    vec3.subtract(v1, v1, verts[0]);
-    var v2 = vec3.clone(v1);
-    var vc = vec3.create();
-    var area = 0.0;
-    for (var i = 2; i < verts.length; i++) {
-        v1 = v2;
-        v2 = vec3.clone(verts[i]);
-        vec3.subtract(v2, v2, verts[0]);
-        vec3.cross(vc, v1, v2);
-        area += 0.5*vec3.len(vc);
-    }
-    return area;
-}

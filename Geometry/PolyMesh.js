@@ -102,27 +102,6 @@ function MeshFace(ID) {
         return getFaceNormal(this.getVerticesPos());
     }
     
-    this.getArea = function() {
-        var verts = this.getVertices();
-        for (var i = 0; i < verts.length; i++) {
-            verts[i] = verts[i].pos;
-        }
-        return getPolygonArea(verts);
-    }
-    
-    this.getCentroid = function() {
-        var ret = vec3.fromValues(0, 0, 0);
-        var verts = this.getVertices();
-        if (verts.length == 0) {
-            return ret;
-        }
-        for (var i = 0; i < verts.length; i++) {
-            vec3.add(ret, ret, verts[i].pos);
-        }
-        vec3.scale(ret, ret, 1.0/verts.length);
-        return ret;
-    }
-    
     this.getPlane = function() {
         return new Plane3D(this.startV.pos, this.getNormal());
     }
@@ -399,15 +378,6 @@ function PolyMesh() {
             this.vertices[i].pos[2] *= dz;
         }
     }
-
-    this.getCentroid = function() {
-        center = vec3.fromValues();
-        for (var i = 0; i < this.vertices.length; i++) {
-            vec3.add(center, center, vertices[i].pos);
-        }
-        vec3.scale(center, center, 1.0/this.vertices.length);
-        return center;
-    }
     
     this.getBBox = function() {
         if (this.vertices.length == 0) {
@@ -419,83 +389,6 @@ function PolyMesh() {
             bbox.addPoint(this.vertices[i].pos);
         }
         return bbox;
-    }    
-    
-    /////////////////////////////////////////////////////////////
-    ////                LAPLACIAN MESH METHODS              /////
-    /////////////////////////////////////////////////////////////
-    function LaplaceBeltramiWeightFunc(v1, v2, v3, v4) {
-        var w = 0.0;
-        if (!(v3 === null)) {
-            w = w + getCotangent(v1.pos, v2.pos, v3.pos);
-        }
-        if (!(v4 === null)) {
-            w = w + getCotangent(v1.pos, v2.pos, v4.pos);
-        }
-        //TODO: Fix area scaling
-        //return (3.0/(2.0*v1.getOneRingArea()))*w;
-        return w;
-    }
-    
-    function UmbrellaWeightFunc(v1, v2, v3, v4) {
-    //Very simple function that returns just 1 for the umbrella weights
-        return 1;
-    }
-    
-    //Helper function for Laplacian mesh that figures out the vertex on the 
-    //other side of an edge on a triangle
-    function getVertexAcross(v1, v2, f) {
-        var Vs = f.getVertices();
-        if (Vs.length != 3) {
-            console.log("Warning(getLaplacianSparseMatrix): Expecting 3 vertices per face");
-            return null;
-        }
-        var idx = 0;
-        if ( (v1.ID != Vs[1].ID) && (v2.ID != Vs[1].ID) ) {
-            idx = 1;
-        }
-        else if ( (v1.ID != Vs[2].ID) && (v2.ID != Vs[2].ID) ) {
-            idx = 2;
-        }
-        return Vs[idx];
-    }
-    
-    //Note: This function assumes a triangle mesh    
-    this.getLaplacianSparseMatrix = function(weightFunction) {
-        var N = this.vertices.length;
-        var cols = Array(N); //Store index of row for each element in each column
-        var colsv = Array(N); //Store value of each element in each column
-        for (var i = 0; i < N; i++) {
-            cols[i] = [];
-            colsv[i] = [];
-        }
-        //Loop through all vertices and add a row for each
-        for (var i = 0; i < N; i++) {
-            var v1 = this.vertices[i];
-            //Precompute 1-ring area
-            //var oneRingArea = this.vertices[i].getOneRingArea();
-            for (var ei = 0; ei < v1.edges.length; ei++) {
-                var e = v1.edges[ei];
-                var v2 = e.vertexAcross(v1);
-                var j = v2.ID;
-                var v3 = null;
-                var v4 = null;
-                if (!(e.f1 === null)) {
-                    v3 = getVertexAcross(v1, v2, e.f1);
-                }
-                if (!(e.f2 === null)) {
-                    v4 = getVertexAcross(v1, v2, e.f2);
-                }
-                var wij = weightFunction(v1, v2, v3, v4);
-                totalWeight += wij;
-                cols[j].push(i);
-                colsv[j].push(-wij);
-            }
-            cols[i].push(i);
-            colsv[i].push(totalWeight)
-        }
-        //TODO: Parallel sort cols, colsv by the indices in cols, then setup
-        //NumericJS sparse matrix
     }
     
     /////////////////////////////////////////////////////////////

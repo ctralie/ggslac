@@ -146,7 +146,7 @@ function SimpleMeshCanvas(glcanvas) {
 
     try {
         //this.gl = WebGLDebugUtils.makeDebugContext(this.glcanvas.getContext("experimental-webgl"));
-        glcanvas.gl = glcanvas.getContext("experimental-webgl");
+        glcanvas.gl = glcanvas.getContext("webgl");
         glcanvas.gl.viewportWidth = glcanvas.width;
         glcanvas.gl.viewportHeight = glcanvas.height;
     } catch (e) {
