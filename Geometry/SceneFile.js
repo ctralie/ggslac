@@ -4,10 +4,14 @@
 ///////         SCENE LOADING CODE              //////////
 //////////////////////////////////////////////////////////
 
-var globalFs = 44100;//The global sampling rate of the loaded audio
 
-//Recursive function to load all of the meshes and to 
-//put all of the matrix transformations into mat4 objects
+
+/**
+ * Recursive function to load all of the meshes and to 
+ * put all of the matrix transformations into mat4 objects
+ * At this point, all shapes are converted to meshes
+ * @param {*} node 
+ */
 function parseNode(node) {
     //Step 1: Make a matrix object for the transformation
     if (!('transform' in node)) {
@@ -15,7 +19,7 @@ function parseNode(node) {
         node.transform = mat4.create();
     }
     else if (node.transform.length != 16) {
-        console.log("ERROR: 4x4 Transformation matrix must have 16 entries");
+        console.log("ERROR: 4x4 Transformation matrix " + node.transform + " must have 16 entries");
         return;
     }
     else {
@@ -30,20 +34,24 @@ function parseNode(node) {
     
     //Step 2: Load in mesh if there is one in this node (otherwise it's just
     //a dummy node with a transformation)
-    if ('mesh' in node) {
-        var meshname = node.mesh;
-        node.mesh = new PolyMesh();
-        d3.text(meshname, function(error, data) {
-          console.log("Loading mesh " + meshname);
-          if (error) throw error;
-          arrayOfLines = data.match(/[^\r\n]+/g);
-          node.mesh.loadFileFromLines(arrayOfLines);
-          if ('color' in node) {
-            for (var i = 0; i < node.mesh.vertices.length; i++) {
-                node.mesh.vertices[i].color = node.color;
+    if ('shape' in node) {
+        if (!('type' in node.shape)) {
+            console.log("ERROR: Shape not specified in node " + node);
+            return;
+        }
+        if (node.shape.type == "mesh") {
+            if (!('filename' in node.mesh)) {
+                console.log("ERROR: filename not specified for mesh: " + node.shape);
+                return;
             }
-          }
-        });        
+            node.mesh = new PolyMesh();
+            let reader = new FileReader();
+            reader.onload = function(error) {
+                if (error) throw error;
+                node.mesh.loadFileFromLines(this.result.split("\n"));
+            }
+            reader.readAsText(node.mesh.filename);
+        }      
     }
     
     if ('children' in node) {
@@ -75,8 +83,6 @@ function setupScene(scene, glcanvas) {
     vec3.cross(rc.right, T, rc.up);
     vec3.cross(sc.right, sc.up, T);
     //By default, sound doesn't decay at the source and the receiver
-    rc.rcoeff = 1.0;
-    sc.rcoeff = 1.0;
     scene.receiver = rc;
     scene.source = sc;
     
@@ -90,24 +96,25 @@ function setupScene(scene, glcanvas) {
     scene.paths = [];
     scene.impulseResp = [];//Will hold the discrete impulse response
     
-    //Add algorithm functions to this object
-    addImageSourcesFunctions(scene);
-    
     //Now that the scene has loaded, setup the glcanvas
     SceneCanvas(glcanvas, 'GLEAT/DrawingUtils', 800, 600, scene);
     requestAnimFrame(glcanvas.repaint);
 }
 
 function loadSceneFromFile(filename, glcanvas) {
-    //Use d3 JSON parser to get the scene data in
-    d3.json(filename, function(error, scene) {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', filename, true);
+    xhr.responseType = 'json';
+    xhr.onload = function(error) {
         if (error) {
             alert("Error parsing scene file.  Check your JSON syntax");
             throw error;
         }
+        let scene = this.response;
         setupScene(scene, glcanvas);
         return scene;
-    });
+    };
+    xhr.send();
 }
 
 //For debugging

@@ -54,22 +54,6 @@ function initShaders(gl, linesptsOnly) {
         colorShader.light2PosUniform = gl.getUniformLocation(colorShader, "uLight2Pos");
         colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
     }
-    /*//Flat color shader: Simple shader for drawing polygons with flat colors
-    fragmentShader = getShader(gl, FlatColorShader_Fragment, "fragment");
-    vertexShader = getShader(gl, FlatColorShader_Vertex, "vertex");
-    var flatColorShader = gl.createProgram();
-    gl.attachShader(flatColorShader, vertexShader);
-    gl.attachShader(flatColorShader, fragmentShader);
-    gl.linkProgram(flatColorShader);
-    if (!gl.getProgramParameter(flatColorShader, gl.LINK_STATUS)) {
-        alert("Could not initialise line shader");
-    }
-    flatColorShader.vPosAttrib = gl.getAttribLocation(flatColorShader, "vPos");
-    gl.enableVertexAttribArray(flatColorShader.vPosAttrib);
-    flatColorShader.pMatrixUniform = gl.getUniformLocation(flatColorShader, "uPMatrix");
-    flatColorShader.mvMatrixUniform = gl.getUniformLocation(flatColorShader, "uMVMatrix");
-    flatColorShader.vColorUniform = gl.getUniformLocation(flatColorShader, "vColor");*/
-    
     
     //Line shader: Simple shader for drawing lines with flat colors,
     //usually for debugging

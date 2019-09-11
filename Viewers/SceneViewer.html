@@ -22,8 +22,6 @@
 
 <table><tr><td>
 <canvas id="GLCanvas1" style="border: none;" width="800" height="600"></canvas>
-<center><h3>Impulse Response</h3></center>
-<div id="impulsePlot"></div>
 
 </td>
 <td>
@@ -36,53 +34,16 @@
 <h3>Options</h3>
 <table>
 <tr><td>Display Mesh Edges</td><td><input type="checkbox" id="meshEdgesCheckbox" /></td></tr>
-<tr><td>Display Image Sources</td><td><input type="checkbox" id="displayImageSourcesCheckbox" /></td></tr>
-<tr><td>Display Paths</td><td><input type="checkbox" id="displayPathsCheckbox" /></td></tr>
 </table>
 
 <h3>Viewpoint</h3>
 <table>
 <tr>
-<td><button type="button" id = "sourceButton" onclick="callViewFromSource()">Source</button></td>
-<td><button type="button" id = "receiverButton" onclick="callViewFromReceiver()">Receiver</button></td>
-<td><button type="button" id = "externalButton" onclick="callViewFromExternal()">External</button></td>
+<td><button type="button" id = "camera1Button" onclick="callViewFromCamera1()">Camera 1</button></td>
+<td><button type="button" id = "camera2Button" onclick="callViewFromCamera2()">Camera 2</button></td>
 </tr>
-<tr><td>Source Pos:</td><td colspan = "2"><div id="sourcePos"></div></td></tr>
-<tr><td>Receiver Pos:</td><td colspan = "2"><div id="receiverPos"></div></td></tr>
-<tr><td>External Pos:</td><td colspan = "2"><div id="externalPos"></div></td></tr>
-</table>
-
-<h3>Algorithm</h3>
-<table>
-<tr><td><button type="button" id = "sourcesButton" onclick="callComputeImageSources()">Compute Image Sources</button> of order <input type="text" id="sourceorder" size="1"></input></td></tr>
-<tr><td><button type="button" id = "pathsButton" onclick="callExtractPaths()">Extract Paths Source To Receiver</button></td></tr>
-<tr><td><button type="button" id = "sourceButton" onclick="callComputeImpulseResponse()">Compute Impulse Response</button></td></tr>
-</table>
-
-<h3>Audio Playback</h3>
-<table>
-
-<tr>
-<td>Audio File</td>
-<td><button type = "button" onclick = "playAudioSource()">Play</button></td>
-<td><button type = "button" onclick = "pauseAudio()">Stop</button></td>
-<td><input type = "file" id = "audioInput"></td>
-</tr>
-
-<tr>
-<td>Impulse Response</td>
-<td><button type = "button" onclick = "playAudioImpulse()">Play</button></td>
-<td><button type = "button" onclick = "pauseAudio()">Stop</button></td>
-<td></td>
-</tr>
-
-<tr>
-<td>Convolution</td>
-<td><button type = "button" onclick = "playAudioConv()">Play</button></td>
-<td><button type = "button" onclick = "pauseAudio()">Stop</button></td>
-<td><button type = "button" onclick = "recomputeConv()">Recompute</button></td>
-</tr>
-
+<tr><td>Camera 1:</td><td colspan = "2"><div id="camera1"></div></td></tr>
+<tr><td>Camera 2:</td><td colspan = "2"><div id="camera2"></div></td></tr>
 </table>
 
 
@@ -119,105 +80,13 @@
     });
     meshEdgesCheckbox.checked = true;
 
-    var displayImageSourcesCheckbox = document.getElementById('displayImageSourcesCheckbox');
-    displayImageSourcesCheckbox.addEventListener('change', function(e) {
-        glcanvas.drawImageSources = displayImageSourcesCheckbox.checked;
-        requestAnimFrame(glcanvas.repaint);
-    });
-    displayImageSourcesCheckbox.checked = true;
-    var displayPathsCheckbox = document.getElementById('displayPathsCheckbox');
-    displayPathsCheckbox.addEventListener('change', function(e) {
-        glcanvas.drawPaths = displayPathsCheckbox.checked;
-        requestAnimFrame(glcanvas.repaint);
-    });
-    displayPathsCheckbox.checked = true;
-
-    function callViewFromSource() {
-        glcanvas.viewFromSource();
+    function callViewFromCamera1() {
+        glcanvas.viewFromCamera1();
     }
-    function callViewFromReceiver() {
-        glcanvas.viewFromReceiver();
+    function callViewFromCamera2() {
+        glcanvas.viewFromCamera2();
     }
-    function callViewFromExternal() {
-        glcanvas.viewFromExternal();
-    }
-    function callComputeImageSources() {
-        var orderTxt = document.getElementById("sourceorder");
-        var order = parseInt(orderTxt.value);
-        glcanvas.computeImageSources(order);
-    }
-    function callExtractPaths() {
-        glcanvas.extractPaths();
-    }
-    function callComputeImpulseResponse() {
-        glcanvas.computeImpulseResponse();
-    }
-    ///////////////////////////////////////////
-    //             Audio stuff               //
-    ///////////////////////////////////////////
-    var source = null;
-    var analyser = null;
-    var buffer = null;
-    var impbuffer = null;
-    var convbuffer = null;
-    var context = new (window.AudioContext || window.webkitAudioContext)();
-    function playAudioSource() {
-        playAudio(buffer);
-    }
-
-    function playAudioImpulse() {
-        playAudio(impbuffer);
-    }
-
-    function playAudioConv() {
-        playAudio(convbuffer);
-    }
-
-    function playAudio(b) {
-        if (context === null) {
-            return;
-        }
-        if (!(source === null)) {
-            source.stop();
-        }
-        source = context.createBufferSource();
-        source.buffer = b;
-        analyser = context.createAnalyser();
-        source.connect(analyser);
-        analyser.connect(context.destination);
-        source.start();
-        playing = true;
-    }
-
-    function pauseAudio() {
-        if (source === null) {
-            return;
-        }
-        var playing = false;
-        source.stop();
-    }
-
-    var audioInput = document.getElementById('audioInput');
-    audioInput.addEventListener('change', function(e) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var data = e.target.result;
-            if(context.decodeAudioData) {
-                context.decodeAudioData(data, function(buff) {
-                buffer = buff;
-                globalFs = buffer.sampleRate;
-                console.log("Loaded audio with sample rate " + globalFs);
-                }, function(e) {
-                    console.log(e);
-                });
-            }
-        }
-        reader.readAsArrayBuffer(audioInput.files[0]);
-    });
-
-    function recomputeConv() {
-        doConvolution(buffer, impbuffer);
-    }
+    
 </script>
 
 </body>
