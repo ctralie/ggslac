@@ -33,10 +33,37 @@ function getShader(gl, shadersrc, type) {
 /**
  * 
  * @param {*} gl WebGL Handle
- * @param {*} prefix File prefix for shader
+ * @param {*} prefix File prefix for shader.  It is expected that there
+ * will be both a vertex shader named prefix.vert and a fragment
+ * shader named prefix.frag
  */
 function getShaders(gl, prefix) {
-
+    let vertReader = new FileReader();
+    vertReader.onload = function(e) {
+        if (e) {
+            console.log("Error loading vertex shader " + prefix + ".vert");
+        }
+        else {
+            let vertexShader = getShader(gl, this.result, "vertex");
+            let fragReader = new FileReader();
+            fragReader.onload = function(e2) {
+                if (e2) {
+                    console.log("Error loading fragment shader " + prefix + ".frag");
+                }
+                else {
+                    let fragmentShader = getShader(gl, this.result, "fragment");
+                    let shader = gl.createProgram();
+                    gl.attachShader(shader, vertexShader);
+                    gl.attachShader(shader, fragmentShader);
+                    gl.linkProgram(shader);
+                    if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
+                        alert("Could not initialise shader" + prefix);
+                    }
+                }
+            }
+        }
+    }
+    vertReader.readAsText(prefix + ".vert");
 }
 
 
