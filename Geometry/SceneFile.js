@@ -63,14 +63,14 @@ function parseNode(node) {
 
 function setupScene(scene, glcanvas) {
     //Setup camera objects for the source and receiver
-    var rc = new FPSCamera(0, 0, 0.75);
-    rc.pos = vec3.fromValues(scene.receiver[0], scene.receiver[1], scene.receiver[2]);
-    var sc = new FPSCamera(0, 0, 0.75);
-    sc.pos = vec3.fromValues(scene.source[0], scene.source[1], scene.source[2]);
+    let cam1 = new FPSCamera(0, 0, 0.75);
+    cam1.pos = vec3.fromValues(scene.camera1[0], scene.camera1[1], scene.camera1[2]);
+    let cam2 = new FPSCamera(0, 0, 0.75);
+    cam2.pos = vec3.fromValues(scene.camera2[0], scene.camera2[1], scene.camera2[2]);
     
     //Make them look roughly at each other but in the XZ plane, if that's a nonzero projection
     var T = vec3.create();
-    vec3.subtract(T, sc.pos, rc.pos);
+    vec3.subtract(T, cam2.pos, cam1.pos);
     T[1] = 0;
     if (T[0] == 0 && T[2] == 0) {
         //If it's a nonzero projection (one is right above the other on y)
@@ -80,21 +80,16 @@ function setupScene(scene, glcanvas) {
     else {
         vec3.normalize(T, T);
     }
-    vec3.cross(rc.right, T, rc.up);
-    vec3.cross(sc.right, sc.up, T);
+    vec3.cross(cam1.right, T, cam1.up);
+    vec3.cross(cam2.right, cam2.up, T);
     //By default, sound doesn't decay at the source and the receiver
-    scene.receiver = rc;
-    scene.source = sc;
+    scene.cam1 = cam1;
+    scene.cam2 = cam2;
     
     //Now recurse and setup all of the children nodes in the tree
     for (var i = 0; i < scene.children.length; i++) {
         parseNode(scene.children[i]);
     }
-    
-    //By default no paths and no image sources; user chooses when to compute
-    scene.imsources = [scene.source];
-    scene.paths = [];
-    scene.impulseResp = [];//Will hold the discrete impulse response
     
     //Now that the scene has loaded, setup the glcanvas
     SceneCanvas(glcanvas, 'GLEAT/DrawingUtils', 800, 600, scene);
