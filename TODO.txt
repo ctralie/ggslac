@@ -1,0 +1,7 @@
+*Make more javascript-like with prototypes
+https://github.com/bmershon/scissors/blob/master/src/polygon/polygon.js
+https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/Object_building_practice
+
+*Implement winged edge or half edge mesh data structures, which are initialized from the clunker version, but which throw away the memory used there
+
+*Make viewer from CS290 sound renderer standard in this library
