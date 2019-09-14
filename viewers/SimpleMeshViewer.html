@@ -11,6 +11,7 @@
 <script type="text/javascript" src="../js/jquery-1.11.1.min.js"></script>
 
 <!--Our Scripts!-->
+<script src="../Utils/blockloader.js"></script>
 <script src="../Geometry/polymesh.js"></script>
 <script src="../Geometry/primitives3D.js"></script>
 <script src="../Geometry/cameras3D.js"></script>
@@ -32,23 +33,18 @@
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
     SimpleMeshCanvas(glcanvas);
 
-    /////////////////////////////////////////////////////
-    //Setup mesh input
-    /////////////////////////////////////////////////////
-    function onLoadMeshFile(e) {
-        var lines = this.result.split("\n");
-        glcanvas.mesh.loadFileFromLines(lines);
-        glcanvas.centerCamera();
-        requestAnimFrame(glcanvas.repaint);
-    }
     var meshInput = document.getElementById('meshInput');
     var result = document.getElementById('text');
     
     meshInput.addEventListener('change', function(e) {
-        var file = meshInput.files[0];
-        var reader = new FileReader();
-        reader.onload = onLoadMeshFile;
-        reader.readAsText(file);
+        if (e) {
+            alert(e);
+            return;
+        }
+        let lines = BlockLoader.loadTxt(meshInput.files[0]).split("\n");
+        glcanvas.mesh.loadFileFromLines(lines);
+        glcanvas.centerCamera();
+        requestAnimationFrame(glcanvas.repaint);
     });
 </script>
 
