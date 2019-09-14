@@ -986,13 +986,13 @@ function PolyMesh() {
             }
             this.drawer.reset();
         }
-        if (doDrawNormals) {
+        if (opt.drawNormals) {
             this.drawNormals(gl, shaders, pMatrix, mvMatrix);
         }
-        if (doDrawEdges) {
+        if (opt.drawEdges) {
             this.drawEdges(gl, shaders, pMatrix, mvMatrix);
         }
-        if (doDrawPoints) {
+        if (opt.drawPoints) {
             this.drawPoints(gl, shaders, pMatrix, mvMatrix);
         }
         

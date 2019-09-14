@@ -74,7 +74,7 @@ function getShaderProgram(gl, prefix) {
  */
 function initStandardShaders(gl) {
     /** ColorShader: Ordinary color shader for drawing meshes  */
-    let colorShader = getShaderProgram("colorshader");
+    let colorShader = getShaderProgram(gl, "colorshader");
     colorShader.vPosAttrib = gl.getAttribLocation(colorShader, "vPos");
     gl.enableVertexAttribArray(colorShader.vPosAttrib);
     colorShader.vNormalAttrib = gl.getAttribLocation(colorShader, "vNormal");
@@ -90,7 +90,7 @@ function initStandardShaders(gl) {
     colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
 
     /** FlatShader: A shader that draws a constant color for all faces*/
-    let flatShader = getShaderProgram("flatcolorshader");
+    let flatShader = getShaderProgram(gl, "flatcolorshader");
     flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
     gl.enableVertexAttribArray(flatShader.vPosAttrib);
     flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
@@ -101,7 +101,7 @@ function initStandardShaders(gl) {
     
     /** Line shader: Simple shader for drawing lines with flat colors,
      * usually for debugging */
-    let lineShader = getShaderProgram("lineshader");
+    let lineShader = getShaderProgram(gl, "lineshader");
     lineShader.vPosAttrib = gl.getAttribLocation(lineShader, "vPos");
     gl.enableVertexAttribArray(lineShader.vPosAttrib);
     lineShader.vColorAttrib = gl.getAttribLocation(lineShader, "vColor");
@@ -111,7 +111,7 @@ function initStandardShaders(gl) {
     
     /** Point shader: Simple shader for drawing points with flat colors,
     usually for debugging (for now exactly the same as line shader)  */
-    let pointShader = getShaderProgram("pointshader");
+    let pointShader = getShaderProgram(gl, "pointshader");
     pointShader.vPosAttrib = gl.getAttribLocation(pointShader, "vPos");
     gl.enableVertexAttribArray(pointShader.vPosAttrib);
     pointShader.vColorAttrib = gl.getAttribLocation(pointShader, "vColor");
@@ -124,5 +124,5 @@ function initStandardShaders(gl) {
 }
 
 
-let Shaders = Shaders || {};
+let Shaders = function() {};
 Shaders.initStandardShaders = initStandardShaders;
