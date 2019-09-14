@@ -61,6 +61,8 @@ function getShaderProgram(gl, prefix) {
     if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
         alert("Could not initialize shader" + prefix);
     }
+    shader.name = prefix;
+    return shader;
 }
 
 
@@ -86,6 +88,16 @@ function initStandardShaders(gl) {
     colorShader.light1PosUniform = gl.getUniformLocation(colorShader, "uLight1Pos");
     colorShader.light2PosUniform = gl.getUniformLocation(colorShader, "uLight2Pos");
     colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
+
+    /** FlatShader: A shader that draws a constant color for all faces*/
+    let flatShader = getShaderProgram("flatcolorshader");
+    flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
+    gl.enableVertexAttribArray(flatShader.vPosAttrib);
+    flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
+    flatShader.mvMatrixUniform = gl.getUniformLocation(flatShader, "uMVMatrix");
+    flatShader.vColorUniform = gl.getUniformLocation(flatShader, "vColor");
+    
+
     
     /** Line shader: Simple shader for drawing lines with flat colors,
      * usually for debugging */
@@ -108,5 +120,9 @@ function initStandardShaders(gl) {
     pointShader.mvMatrixUniform = gl.getUniformLocation(pointShader, "uMVMatrix");
     pointShader.pSizeUniform = gl.getUniformLocation(pointShader, "pSize");
     
-    return { colorShader:colorShader, lineShader:lineShader, pointShader:pointShader};
+    return { colorShader:colorShader, flatShader:flatShader, lineShader:lineShader, pointShader:pointShader};
 }
+
+
+let Shaders = Shaders || {};
+Shaders.initStandardShaders = initStandardShaders;

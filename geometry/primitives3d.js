@@ -31,7 +31,6 @@ glMatrix.mat4Str = function(m) {
 /////////////////////////////////////////////
 
 let GeomUtils = GeomUtils || {};
-GeomUtils.arePerpendicular = arePerpendicular;
 
 /**
  * Return whether two vectors are perpendicular, 

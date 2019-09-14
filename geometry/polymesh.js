@@ -793,12 +793,20 @@ function PolyMesh() {
     /**
      * Draw the surface normals as a bunch of blue line segments
      * @param{WebGL Handle} gl WebGL Handle
-     * @param{glMatrix.mat4} PMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix.
+     * @param{glMatrix.mat4} pMatrix The projection matrix
+     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
      *      This assumes the upper left 3x3 matrix of the modelview matrix 
      *      is orthogonal, which it will be if mvMatrix is describing the camera
+     * @param{array} color An array of RGB, or blue by default
      */
-    this.drawNormals = function(gl, pMatrix, mvMatrix) {
+    this.drawNormals = function(gl, pMatrix, mvMatrix, color) {
+        if (this.drawer === null) {
+            console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
+            return;
+        }
+        if (color === undefined) {
+            color = [0.0, 0.0, 1.0];
+        }
         if (this.needsDisplayUpdate) {
             //Figure out scale of normals; make 1/20th of the bounding box diagonal
             let dR = 0.05*this.getBBox().getDiagLength();
@@ -806,50 +814,146 @@ function PolyMesh() {
                 let P1 = this.vertices[i].pos;
                 let P2 = this.vertices[i].getNormal();
                 glMatrix.vec3.scaleAndAdd(P2, P1, P2, dR);
-                this.drawer.drawLine(P1, P2, [0.0, 0.0, 1.0]);    
+                this.drawer.drawLine(P1, P2, color);    
             }
         }
         this.drawer.repaint(pMatrix, mvMatrix);
     }
 
-    //Draw the surface edges as a bunch of blue line segments
-    //PMatrix: The projection matrix
-    //mvMatrix: The modelview matrix
-    this.drawEdges = function(gl, pMatrix, mvMatrix) {
+    /**
+     * Draw the surface edges as a bunch of blue line segments
+     * 
+     * @param{WebGL Handle} gl WebGL Handle
+     * @param{glMatrix.mat4} pMatrix The projection matrix
+     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param{array} color An array of RGB, or blue by default
+     */
+    this.drawEdges = function(gl, pMatrix, mvMatrix, color) {
+        if (this.drawer === null) {
+            console.log("Warning: Trying to draw mesh edges, but simple drawer is null");
+            return;
+        }
+        if (color === undefined) {
+            color = [0.0, 0.0, 1.0];
+        }
         if (this.needsDisplayUpdate) {
             for (let i = 0; i < this.edges.length; i++) {
                 let P1 = this.edges[i].v1.pos;
                 let P2 = this.edges[i].v2.pos;
-                this.drawer.drawLine(P1, P2, [0.0, 0.0, 1.0]);    
+                this.drawer.drawLine(P1, P2, color);    
             }
         }
         this.drawer.repaint(pMatrix, mvMatrix);
     }
 
-
-    //Draw the surface points as a red scatterplot
-    //PMatrix: The projection matrix
-    //mvMatrix: The modelview matrix
-    this.drawPoints = function(gl, pMatrix, mvMatrix) {
+    /**
+     * Draw the surface points as a scatter plot
+     * 
+     * @param{WebGL Handle} gl WebGL Handle
+     * @param{glMatrix.mat4} pMatrix The projection matrix
+     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param{array} color An array of RGB, or red by default
+     */
+    this.drawPoints = function(gl, pMatrix, mvMatrix, color) {
+        if (this.drawer === null) {
+            console.log("Warning: Trying to draw mesh points, but simple drawer is null");
+            return;
+        }
+        if (color === undefined) {
+            color = [1.0, 0.0, 0.0];
+        }
         if (this.needsDisplayUpdate) {
             for (let i = 0; i < this.vertices.length; i++) {
-                this.drawer.drawPoint(this.vertices[i].pos, [1.0, 0.0, 0.0]);    
+                this.drawer.drawPoint(this.vertices[i].pos, color);    
             }
         }
         this.drawer.repaint(pMatrix, mvMatrix);
     }
     
-    //shaders: Shader programs, pMatrix: Perspective projection matrix, mvMatrix: Modelview matrix
-    //ambientColor, light1Pos, light2Pos, lightColor are all glMatrix.vec3s
-    //drawNormals: Whether or not to draw blue line segments for the vertex normals
-    //shaderType: The type of shading to use
-    FLAT_SHADING = 0;
-    COLOR_SHADING = 1;
-    this.render = function(gl, shaders, pMatrix, mvMatrix, ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderType) {
-        /*console.log("this.vertexBuffer = " + this.vertexBuffer);
-          console.log("this.normalBuffer = " + this.normalBuffer);
-          console.log("this.indexBuffer = " + this.indexBuffer);
-          console.log("this.colorBuffer = " + this.colorBuffer);*/
+    /* Bind all buffers according to what the shader accepts.
+     * This includes vertex positions, normals, colors, lighting,
+     * and triangle index buffers
+     * 
+     * @param{WebGL Handle} gl WebGL Handle
+     * @param{object} sProg A shader program to use
+     * @param{glMatrix.mat4} pMatrix The projection matrix
+     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param{object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
+     * 
+     * */
+    this.sendBuffersToGPU = function(gl, sProg, pMatrix, mvMatrix, opts) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        //Normal buffer (only relevant if lighting)
+        if ('vNormalAttrib' in sProg) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+            gl.vertexAttribPointer(sProg.vNormalAttrib, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        }
+
+        // Color buffers
+        if ('vColorAttrib' in sProg) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+            gl.vertexAttribPointer(sProg.vColorAttrib, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        }
+        else if ('vColorUniform' in sProg) {
+            gl.uniform4fv(sProg.vColorUniform, vec4.fromValues(1, 0.5, 0.5, 1));
+        }
+
+        // Projection and transformation matrices
+        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
+
+        // Normal matrix
+        if ('nMatrixUniform' in sProg) {
+            //Compute normal transformation matrix from world modelview matrix
+            //(transpose of inverse of upper 3x3 part)
+            nMatrix = mat3.create();
+            mat3.normalFromMat4(nMatrix, mvMatrix);
+            gl.uniformMatrix3fv(sProg.nMatrixUniform, false, nMatrix);
+        }
+
+        // Lighting
+        if ('ambientColorUniform' in sProg) {
+            let ambientColor = vec3.fromValues(0.1, 0.1, 0.1);
+            if ('ambientColor' in opts) {
+                ambientColor = opts.ambientColor;
+            }
+            gl.uniform3fv(sProg.ambientColorUniform, ambientColor);
+        }
+        if ('light1PosUniform' in sProg) {
+            let light1Pos = vec3.fromValues(0, 0, 0);
+            if ('light1Pos' in opts) {
+                light1Pos = opts.light1Pos;
+            }
+            gl.uniform3fv(sProg.light1PosUniform, light1Pos);
+        }
+        if ('light2PosUniform' in sProg) {
+            let light2Pos = vec3.fromValues(0, 0, 0);
+            if ('light2Pos' in opts) {
+                light2Pos = opts.light2Pos;
+            }
+            gl.uniform3fv(sProg.light2PosUniform, light2Pos);
+        }
+        if ('lightColorUniform' in sProg) {
+            let lightColorUniform = vec3.fromValues(1, 1, 1);
+            if ('lightColorUniform' in opts) {
+                lightColorUniform = opts.lightColorUniform;
+            }
+            gl.uniform3fv(sProg.lightColorUniform, lightColor);
+        }
+    }
+
+    /**
+     Render the mesh using some pre-specified shaders
+     * @param{WebGL Handle} gl WebGL Handle
+     * @param{object} shaders An object with different compiled shader programs, including
+     *                        a flat and color shader
+     * @param{glMatrix.mat4} pMatrix The projection matrix
+     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param{object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
+     */
+    this.render = function(gl, shaders, pMatrix, mvMatrix, opts) {
         if (this.vertices.length == 0) {
             return;
         }
@@ -861,58 +965,18 @@ function PolyMesh() {
             return;
         }
         
-        //Figure out which shader to use
-        let sProg; 
-        if (shaderType == FLAT_SHADING) {
-            sProg = shaders.flatColorShader;
-        }
-        else if (shaderType == COLOR_SHADING) {
-            sProg = shaders.colorShader;
-        }
-        else {
-            console.log("ERROR: Incorrect shader specified for mesh rendering");
-            return;
+        //Step 1: Figure out which shader to use
+        let sProg = shaders.flatColorShader;
+        if ('shaderToUse' in opts) {
+            sProg = opts.shaderToUse;
         }
         gl.useProgram(sProg);
         
-        //Step 1: Bind all buffers
-        //Vertex position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        if (shaderType == COLOR_SHADING) {
-            //Normal buffer (only relevant if lighting)
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-            gl.vertexAttribPointer(sProg.vNormalAttrib, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-            //Color buffer
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-            gl.vertexAttribPointer(sProg.vColorAttrib, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        }
-        //Index buffer
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        
-        //Step 2: Scale, translate, and rotate the mesh appropriately on top of whatever 
-        //world transformation has already been passed along in mvMatrix, by sending over
-        //the matrices to the GPU as uniforms.  Also send over lighting letiables as uniforms
-        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
-        
-        if (shaderType == COLOR_SHADING) {
-            //Compute normal transformation matrix from world modelview matrix
-            //(transpose of inverse of upper 3x3 part)
-            nMatrix = mat3.create();
-            mat3.normalFromMat4(nMatrix, mvMatrix);
-            gl.uniformMatrix3fv(sProg.nMatrixUniform, false, nMatrix);
-            
-            gl.uniform3fv(sProg.ambientColorUniform, ambientColor);
-            gl.uniform3fv(sProg.light1PosUniform, light1Pos);
-            gl.uniform3fv(sProg.light2PosUniform, light2Pos);
-            gl.uniform3fv(sProg.lightColorUniform, lightColor);
-        }
-        else if (shaderType == FLAT_SHADING) {
-            gl.uniform4fv(sProg.vColorUniform, vec4.fromValues(1, 0.5, 0.5, 1));
-        }
+        // Step 2: Bind all buffers
+        this.sendBuffersToGPU(gl, sProg, pMatrix, mvMatrix, opts)
         
         //Step 3: Render the mesh
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         
         //Step 4: Draw lines and points for vertices, edges, and normals if requested
