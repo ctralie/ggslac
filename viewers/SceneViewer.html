@@ -15,8 +15,8 @@
 <script src="../shaders/shaders.js"></script>
 <script src="../utils/simpledraw.js"></script>
 <script src="../utils/blockloader.js"></script>
-<script src="./simplemeshcanvas.js"></script>
-<script src="../geometry/scenefile.js"></script>
+<script src="./basecanvas.js"></script>
+<script src="./scenecanvas.js"></script>
 </head>
 
 <body>
@@ -55,22 +55,21 @@
 <script>
     let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    let scene = BlockLoader.loadJSON("SampleScene.scn", "Check your scene file syntax.");
-    loadSceneFromFile('SampleScene.scn', glcanvas);
+    SceneCanvas(glcanvas, "../shaders/")
 
     let sceneInput = document.getElementById('sceneInput');
     sceneInput.addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
-            let data = e.target.result;
+            let scene = e.target.result;
             try {
-                data = JSON.parse(data);
+                scene = JSON.parse(scene);
             }
             catch(error) {
                 alert("Error parsing scene file.  Check your JSON syntax");
                 throw(error);
             }
-            setupScene(data, glcanvas);
+            glcanvas.setupScene(scene);
         }
         reader.readAsText(sceneInput.files[0]);
     });

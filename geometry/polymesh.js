@@ -22,7 +22,7 @@ function MeshVertex(P, ID) {
      * through an edge.
      * WARNING: This function does a *slow* linear search through all edges
      * 
-     * @returns{list of MeshVertex} A list of attached vertices
+     * @returns {list of MeshVertex} A list of attached vertices
      */
     this.getVertexNeighbors = function() {
         let ret = Array(this.edges.length);
@@ -36,7 +36,7 @@ function MeshVertex(P, ID) {
      * Return a set of all faces attached to this vertex
      * WARNING: This function does a *slow* linear search through all edges
      * 
-     * @returns{list of MeshFace} A list of attached faces
+     * @returns {list of MeshFace} A list of attached faces
      *
      */
     this.getAttachedFaces = function() {
@@ -92,7 +92,7 @@ function MeshFace(ID) {
     /**
      * Walk around the face edges and compile a list of all vertices
      * 
-     * @returns{list of MeshVertex} Vertices on this face
+     * @returns {list of MeshVertex} Vertices on this face
      */
     this.getVertices = function() {
         let ret = Array(this.edges.length);
@@ -107,7 +107,7 @@ function MeshFace(ID) {
     /**
      * Return a cloned array of mesh vertices
      * 
-     * @returns{list of MeshVertex} Cloned list
+     * @returns {list of MeshVertex} Cloned list
      */
     this.getVerticesPos = function() {
         let ret = Array(this.edges.length);
@@ -122,7 +122,7 @@ function MeshFace(ID) {
     /**
      * Return the area of this face
      * 
-     * @returns{number} Area
+     * @returns {number} Area
      */
     this.getArea = function() {
         let verts = this.getVertices();
@@ -135,7 +135,7 @@ function MeshFace(ID) {
     /**
      * Return the normal of this face
      * 
-     * @returns{glMatrix.vec3} Normal, or null if the points are all collinear
+     * @returns {glMatrix.vec3} Normal, or null if the points are all collinear
      */
     this.getNormal = function() {
         return GeomUtils.getFaceNormal(this.getVerticesPos());
@@ -144,7 +144,7 @@ function MeshFace(ID) {
     /**
      * Compute a plane spanned by this face
      * 
-     * @returns{Plane3D} Plane spanned by this face
+     * @returns {Plane3D} Plane spanned by this face
      */
     this.getPlane = function() {
         return new Plane3D(this.startV.pos, this.getNormal());
@@ -163,9 +163,9 @@ function MeshEdge(v1, v2, ID) {
      * vertex, or null if the given vertex is not part
      * of the edge
      * 
-     * @param{MeshVertex} Starting vertex
+     * @param {MeshVertex} Starting vertex
      * 
-     * @returns{MeshVertex} Vertex across edge
+     * @returns {MeshVertex} Vertex across edge
      */
     this.vertexAcross = function(startV) {
         if (startV === this.v1) {
@@ -181,7 +181,7 @@ function MeshEdge(v1, v2, ID) {
     /**
      * Attach a face to this edge
      * 
-     * @param{MeshFace} face face to add
+     * @param {MeshFace} face face to add
      */
     this.addFace = function(face) {
         if (this.f1 === null) {
@@ -198,7 +198,7 @@ function MeshEdge(v1, v2, ID) {
     /**
      * Un-attach a face from this edge
      * 
-     * @param{MeshFace} face face to remove
+     * @param {MeshFace} face face to remove
      */
     this.removeFace = function(face) {
         if (this.f1 === face) {
@@ -216,9 +216,9 @@ function MeshEdge(v1, v2, ID) {
      * Return the face across an edge from a given face, or null
      * if the given face is not attached to this edge
      * 
-     * @param{MeshFace} startF the given face
+     * @param {MeshFace} startF the given face
      * 
-     * @returns{MeshFace} Face across
+     * @returns {MeshFace} Face across
      */
     this.faceAcross = function(startF) {
         if (startF === this.f1) {
@@ -234,7 +234,7 @@ function MeshEdge(v1, v2, ID) {
     /**
      * Return the centroid of the edge
      * 
-     * @returns{glMatrix.vec3} Centroid
+     * @returns {glMatrix.vec3} Centroid
      */
     this.getCenter = function() {
         let ret = glMatrix.vec3.create();
@@ -245,7 +245,7 @@ function MeshEdge(v1, v2, ID) {
     /**
      * Return the number of faces that are attached to this edge
      * 
-     * @returns{int} 0, 1, or 2 faces attached
+     * @returns {int} 0, 1, or 2 faces attached
      */
     this.numAttachedFaces = function() {
         let ret = 0;
@@ -278,10 +278,10 @@ function PolyMesh() {
     /**
      * A static function to return the face that two edges
      * have in common, if they happen to meet at a face
-     * @param{MeshEdge} e1 First edge
-     * @param{MeshEdge} e2 Second edge
+     * @param {MeshEdge} e1 First edge
+     * @param {MeshEdge} e2 Second edge
      * 
-     * @returns{MeshFace} The face they have in common, or null
+     * @returns {MeshFace} The face they have in common, or null
      * if they don't have anything in common
      */
     this.getFaceInCommon = function(e1, e2) {
@@ -304,10 +304,10 @@ function PolyMesh() {
     /**
      * A static function to return the vertex at which two edges intersect
      * 
-     * @param{MeshEdge} e1 First edge
-     * @param{MeshEdge} e2 Second edge
+     * @param {MeshEdge} e1 First edge
+     * @param {MeshEdge} e2 Second edge
      * 
-     * @returns{MeshVertex} Vertex shared by the two
+     * @returns {MeshVertex} Vertex shared by the two
      * edges, or null if they don't intersect
      */
     this.getVertexInCommon = function(e1, e2) {
@@ -325,10 +325,10 @@ function PolyMesh() {
     /**
      * A static function to find what edge two vertices have in common
      * 
-     * @param{MeshVertex} v1 The first vertex
-     * @param{MeshVertex} v2 The second vertex
+     * @param {MeshVertex} v1 The first vertex
+     * @param {MeshVertex} v2 The second vertex
      * 
-     * @returns{MeshEdge} The edge that they both have in common, or
+     * @returns {MeshEdge} The edge that they both have in common, or
      * null if they don't share an edge
      */
     this.getEdgeInCommon = function(v1, v2) {
@@ -346,10 +346,10 @@ function PolyMesh() {
     
     /**
      * Add a vertex to this mesh
-     * @param{glMatrix.vec3} P Position of vertex
-     * @param{list} color Color of vertex, or null if unspecified
+     * @param {glMatrix.vec3} P Position of vertex
+     * @param {list} color Color of vertex, or null if unspecified
      * 
-     * @returns{MeshVertex} The new vertex object
+     * @returns {MeshVertex} The new vertex object
      */
     this.addVertex = function(P, color) {
         vertex = new MeshVertex(P, this.vertices.length);
@@ -363,10 +363,10 @@ function PolyMesh() {
      * Create an edge between v1 and v2 in the mesh
      * This function assumes v1 and v2 are valid vertices in the mesh
      * 
-     * @param{MeshVertex} v1
-     * @param{MeshVertex} v2
+     * @param {MeshVertex} v1
+     * @param {MeshVertex} v2
      * 
-     * @returns{MeshEdge} The edge that was added
+     * @returns {MeshEdge} The edge that was added
     */
     this.addEdge = function(v1, v2) {
         edge = new MeshEdge(v1, v2, this.edges.length);
@@ -382,9 +382,9 @@ function PolyMesh() {
      * create a face object from them and add it to the mesh.
      * Also add any edges that have not been added to the mesh yet
      * 
-     * @param{list of MeshVert} meshVerts List of vertices in CCW order
+     * @param {list of MeshVert} meshVerts List of vertices in CCW order
      * 
-     * @returns{MeshFace} New face object that's created
+     * @returns {MeshFace} New face object that's created
      */
     this.addFace = function(meshVerts) {
         let vertsPos = Array(meshVerts.length);
@@ -425,7 +425,7 @@ function PolyMesh() {
      * Remove a face from the list of faces and remove the pointers
      * from all edges to this face
      * 
-     * @param{MeshFace} face
+     * @param {MeshFace} face
      */
     this.removeFace = function(face) {
         //Swap the face to remove with the last face (O(1) removal)
@@ -447,7 +447,7 @@ function PolyMesh() {
      * (NOTE: This function is not responsible for cleaning up
      * faces that may have used this edge; that is up to the client)
      * 
-     * @param{MeshEdge} edge Edge to remove
+     * @param {MeshEdge} edge Edge to remove
      */
     this.removeEdge = function(edge) {
         //Swap the edge to remove with the last edge
@@ -469,7 +469,7 @@ function PolyMesh() {
      * NOTE: This function is not responsible for cleaning up any of
      * the edges or faces that may have used this vertex
      * 
-     * @param{MeshVertex} Vertex to remove
+     * @param {MeshVertex} Vertex to remove
      */
     this.removeVertex = function(vertex) {
         this.vertices[vertex.ID] = this.vertices[this.vertices.length-1];
@@ -482,7 +482,7 @@ function PolyMesh() {
     /**
      * Make a clone of this mesh in memory and return it
      * 
-     * @returns{PolyMesh} A clone of this mesh
+     * @returns {PolyMesh} A clone of this mesh
      */
     this.Clone = function() {
         newMesh = new PolyMesh();
@@ -510,7 +510,7 @@ function PolyMesh() {
     /**
      * Apply a transformation matrix to the mesh
      * 
-     * @param{glMatrix.mat4} Homogenous 4x4 matrix to apply
+     * @param {glMatrix.mat4} Homogenous 4x4 matrix to apply
      */
     this.Transform = function(matrix) {
         this.vertices.forEach(function(v) {
@@ -523,7 +523,7 @@ function PolyMesh() {
     /**
      * Translate a matrix over by a vector
      * 
-     * @param{glMatrix.vec3} Vector by which to translate
+     * @param {glMatrix.vec3} Vector by which to translate
      */
     this.Translate = function(dV) {
         this.vertices.forEach(function(v) {
@@ -535,9 +535,9 @@ function PolyMesh() {
     
     /**
      * Scale the matrix by different amounts across each axi
-     * @param{number} dx Scale factor by dx
-     * @param{number} dy Scale factor by dy
-     * @param{number} dz Scale by factor dz
+     * @param {number} dx Scale factor by dx
+     * @param {number} dy Scale factor by dy
+     * @param {number} dz Scale by factor dz
      */
     this.Scale = function(dx, dy, dz) {
         this.vertices.forEach(function(v) {
@@ -552,7 +552,7 @@ function PolyMesh() {
     /**
      * Get the axis-aligned bounding box of this mesh
      * 
-     * @returns{AABox3D} The axis-aligned bounding box containing the mesh
+     * @returns {AABox3D} The axis-aligned bounding box containing the mesh
      */
     this.getBBox = function() {
         if (this.vertices.length == 0) {
@@ -696,7 +696,7 @@ function PolyMesh() {
     /**
      * Copy over vertex and triangle information to the GPU via
      * a WebGL handle
-     * @param{WebGL handle} gl A handle to WebGL
+     * @param {WebGL handle} gl A handle to WebGL
      */
     this.updateBuffers = function(gl) {
         //Check to see if buffers need to be initialized
@@ -792,12 +792,12 @@ function PolyMesh() {
     //which it will be if mvMatrix is describing the camera
     /**
      * Draw the surface normals as a bunch of blue line segments
-     * @param{WebGL Handle} gl WebGL Handle
-     * @param{glMatrix.mat4} pMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {WebGL Handle} gl WebGL Handle
+     * @param {glMatrix.mat4} pMatrix The projection matrix
+     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
      *      This assumes the upper left 3x3 matrix of the modelview matrix 
      *      is orthogonal, which it will be if mvMatrix is describing the camera
-     * @param{array} color An array of RGB, or blue by default
+     * @param {array} color An array of RGB, or blue by default
      */
     this.drawNormals = function(gl, pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
@@ -823,10 +823,10 @@ function PolyMesh() {
     /**
      * Draw the surface edges as a bunch of blue line segments
      * 
-     * @param{WebGL Handle} gl WebGL Handle
-     * @param{glMatrix.mat4} pMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
-     * @param{array} color An array of RGB, or blue by default
+     * @param {WebGL Handle} gl WebGL Handle
+     * @param {glMatrix.mat4} pMatrix The projection matrix
+     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {array} color An array of RGB, or blue by default
      */
     this.drawEdges = function(gl, pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
@@ -849,10 +849,10 @@ function PolyMesh() {
     /**
      * Draw the surface points as a scatter plot
      * 
-     * @param{WebGL Handle} gl WebGL Handle
-     * @param{glMatrix.mat4} pMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
-     * @param{array} color An array of RGB, or red by default
+     * @param {WebGL Handle} gl WebGL Handle
+     * @param {glMatrix.mat4} pMatrix The projection matrix
+     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {array} color An array of RGB, or red by default
      */
     this.drawPoints = function(gl, pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
@@ -874,11 +874,11 @@ function PolyMesh() {
      * This includes vertex positions, normals, colors, lighting,
      * and triangle index buffers
      * 
-     * @param{WebGL Handle} gl WebGL Handle
-     * @param{object} sProg A shader program to use
-     * @param{glMatrix.mat4} pMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
-     * @param{object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
+     * @param {WebGL Handle} gl WebGL Handle
+     * @param {object} sProg A shader program to use
+     * @param {glMatrix.mat4} pMatrix The projection matrix
+     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
      * 
      * */
     this.sendBuffersToGPU = function(gl, sProg, pMatrix, mvMatrix, opts) {
@@ -953,12 +953,12 @@ function PolyMesh() {
 
     /**
      Render the mesh using some pre-specified shaders
-     * @param{WebGL Handle} gl WebGL Handle
-     * @param{object} shaders An object with different compiled shader programs, including
+     * @param {WebGL Handle} gl WebGL Handle
+     * @param {object} shaders An object with different compiled shader programs, including
      *                        a flat and color shader
-     * @param{glMatrix.mat4} pMatrix The projection matrix
-     * @param{glMatrix.mat4} mvMatrix The modelview matrix 
-     * @param{object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
+     * @param {glMatrix.mat4} pMatrix The projection matrix
+     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
      */
     this.render = function(gl, shaders, pMatrix, mvMatrix, opts) {
         if (this.vertices.length == 0) {

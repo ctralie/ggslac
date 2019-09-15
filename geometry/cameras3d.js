@@ -9,6 +9,7 @@ function MousePolarCamera(pixWidth, pixHeight, yfov) {
     //handed system with +z out of the screen, +x to the right,
     //and +y up
     //phi is CCW down from +y, theta is CCW away from +z
+    this.type = "polar";
     this.pixWidth = pixWidth;
     this.pixHeight = pixHeight;
     this.yfov = yfov;
@@ -127,6 +128,7 @@ function MousePolarCamera(pixWidth, pixHeight, yfov) {
 
 //For use with WASD + mouse bindings
 function FPSCamera(pixWidth, pixHeight, yfov) {
+    this.type = "fps";
     this.pixWidth = pixWidth;
     this.pixHeight = pixHeight;
     this.yfov = yfov;
