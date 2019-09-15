@@ -90,6 +90,7 @@ function initStandardShaders(gl, relpath) {
     colorShader.light1PosUniform = gl.getUniformLocation(colorShader, "uLight1Pos");
     colorShader.light2PosUniform = gl.getUniformLocation(colorShader, "uLight2Pos");
     colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
+    colorShader.uColorUniform = gl.getUniformLocation(colorShader, "uColor");
 
     /** FlatShader: A shader that draws a constant color for all faces*/
     let flatShader = getShaderProgram(gl, relpath + "flatcolorshader");
@@ -97,7 +98,7 @@ function initStandardShaders(gl, relpath) {
     gl.enableVertexAttribArray(flatShader.vPosAttrib);
     flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
     flatShader.mvMatrixUniform = gl.getUniformLocation(flatShader, "uMVMatrix");
-    flatShader.vColorUniform = gl.getUniformLocation(flatShader, "vColor");
+    flatShader.uColorUniform = gl.getUniformLocation(flatShader, "uColor");
     
 
     

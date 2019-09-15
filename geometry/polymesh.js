@@ -896,8 +896,15 @@ function PolyMesh() {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
             gl.vertexAttribPointer(sProg.vColorAttrib, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
-        else if ('vColorUniform' in sProg) {
-            gl.uniform4fv(sProg.vColorUniform, vec4.fromValues(1, 0.5, 0.5, 1));
+        if ('uColorUniform' in sProg) {
+            // The default value of the uniform color is (2, 2, 2).
+            // The shader knows to ignore it if it receives 2, 2, 2
+            // If the user specified a constant color, then use that instead
+            let color = glMatrix.vec3.fromValues(2.0, 2.0, 2.0);
+            if ('constColor' in opts) {
+                color = opts.constColor;
+            }
+            gl.uniform3fv(sProg.uColorUniform, color);
         }
 
         // Projection and transformation matrices

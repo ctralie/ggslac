@@ -14,6 +14,8 @@ uniform vec3 uLightColor;
 varying vec3 vLightCoeff;
 varying vec3 vColorInterp;
 
+uniform vec3 uColor;
+
 void main(void) {
     vec4 mvPosition = uMVMatrix*vec4(vPos, 1.0);
     gl_Position = uPMatrix * mvPosition;
@@ -27,5 +29,14 @@ void main(void) {
         dirLightWeight *= -1.0;
     }
     vLightCoeff = uAmbientColor + dirLightWeight*uLightColor;
-    vColorInterp = vColor;
+    // The default value of the uniform color is (2, 2, 2)
+    // So ignore and use the vColor from the buffer in this case.
+    // Otherwise, override the buffer with the specified uniform color
+    if (uColor[0] == 2.0 && uColor[1] == 2.0 && uColor[2] == 2.0) {
+        vColorInterp = vColor; 
+        
+    }
+    else {
+        vColorInterp = uColor;
+    }
 }
