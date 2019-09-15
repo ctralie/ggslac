@@ -986,15 +986,15 @@ function PolyMesh() {
             }
             this.drawer.reset();
         }
-        /*if (opts.drawNormals) {
-            this.drawNormals(gl, shaders, pMatrix, mvMatrix);
+        if (opts.drawNormals) {
+            this.drawNormals(gl, pMatrix, mvMatrix);
         }
         if (opts.drawEdges) {
-            this.drawEdges(gl, shaders, pMatrix, mvMatrix);
+            this.drawEdges(gl, pMatrix, mvMatrix);
         }
         if (opts.drawPoints) {
-            this.drawPoints(gl, shaders, pMatrix, mvMatrix);
-        }*/
+            this.drawPoints(gl, pMatrix, mvMatrix);
+        }
         
         if (this.needsDisplayUpdate) {
             //By the time rendering is done, there should not be a need to update
