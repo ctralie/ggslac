@@ -135,7 +135,6 @@ function SimpleDrawer(gl, shaders) {
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.linesCVBO);
             gl.vertexAttribPointer(this.lineShader.vColorAttrib, this.linesCVBO.itemSize, gl.FLOAT, false, 0, 0);
-
             gl.uniformMatrix4fv(this.lineShader.pMatrixUniform, false, pMatrix);
             gl.uniformMatrix4fv(this.lineShader.mvMatrixUniform, false, mvMatrix);
             gl.drawArrays(gl.LINES, 0, this.linesVBO.numItems);

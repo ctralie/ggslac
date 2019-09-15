@@ -30,7 +30,7 @@ glMatrix.mat4Str = function(m) {
 ///////////   UTILITY FUNCTIONS   ///////////
 /////////////////////////////////////////////
 
-let GeomUtils = GeomUtils || {};
+let GeomUtils = function(){};
 
 /**
  * Return whether two vectors are perpendicular, 
@@ -42,8 +42,8 @@ let GeomUtils = GeomUtils || {};
  */
 function arePerpendicular(a, b) {
     return Math.abs(glMatrix.vec3.dot(a, b)) < 
-            glMatrix.EPSILON*Math.min(glMatrix.vec3.sqrLen(N),
-                                      glMatrix.vec3.sqrLen(V));
+            glMatrix.EPSILON*Math.min(glMatrix.vec3.sqrLen(a),
+                                      glMatrix.vec3.sqrLen(b));
 }
 GeomUtils.arePerpendicular = arePerpendicular;
 
@@ -164,17 +164,17 @@ function getPolygonArea(verts) {
     if (verts.length < 3) {
         return 0.0;
     }
-    let v1 = vec3.clone(verts[1]);
-    vec3.subtract(v1, v1, verts[0]);
-    let v2 = vec3.clone(v1);
-    let vc = vec3.create();
+    let v1 = glMatrix.vec3.clone(verts[1]);
+    glMatrix.vec3.subtract(v1, v1, verts[0]);
+    let v2 = glMatrix.vec3.clone(v1);
+    let vc = glMatrix.vec3.create();
     let area = 0.0;
     for (let i = 2; i < verts.length; i++) {
         v1 = v2;
-        v2 = vec3.clone(verts[i]);
-        vec3.subtract(v2, v2, verts[0]);
-        vec3.cross(vc, v1, v2);
-        area += 0.5*vec3.len(vc);
+        v2 = glMatrix.vec3.clone(verts[i]);
+        glMatrix.vec3.subtract(v2, v2, verts[0]);
+        glMatrix.vec3.cross(vc, v1, v2);
+        area += 0.5*glMatrix.vec3.len(vc);
     }
     return area;
 }

@@ -410,7 +410,7 @@ function PolyMesh() {
         for (let i = 0; i < meshVerts.length; i++) {
             let v1 = meshVerts[i];
             let v2 = meshVerts[(i+1)%meshVerts.length];
-            let edge = PolyMesh.getEdgeInCommon(v1, v2);
+            let edge = this.getEdgeInCommon(v1, v2);
             if (edge === null) {
                 edge = this.addEdge(v1, v2);
             }
@@ -908,39 +908,39 @@ function PolyMesh() {
         if ('nMatrixUniform' in sProg) {
             //Compute normal transformation matrix from world modelview matrix
             //(transpose of inverse of upper 3x3 part)
-            nMatrix = mat3.create();
-            mat3.normalFromMat4(nMatrix, mvMatrix);
+            nMatrix = glMatrix.mat3.create();
+            glMatrix.mat3.normalFromMat4(nMatrix, mvMatrix);
             gl.uniformMatrix3fv(sProg.nMatrixUniform, false, nMatrix);
         }
 
         // Lighting
         if ('ambientColorUniform' in sProg) {
-            let ambientColor = vec3.fromValues(0.1, 0.1, 0.1);
+            let ambientColor = glMatrix.vec3.fromValues(0.1, 0.1, 0.1);
             if ('ambientColor' in opts) {
                 ambientColor = opts.ambientColor;
             }
             gl.uniform3fv(sProg.ambientColorUniform, ambientColor);
         }
         if ('light1PosUniform' in sProg) {
-            let light1Pos = vec3.fromValues(0, 0, 0);
+            let light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
             if ('light1Pos' in opts) {
                 light1Pos = opts.light1Pos;
             }
             gl.uniform3fv(sProg.light1PosUniform, light1Pos);
         }
         if ('light2PosUniform' in sProg) {
-            let light2Pos = vec3.fromValues(0, 0, 0);
+            let light2Pos = glMatrix.vec3.fromValues(0, 0, 0);
             if ('light2Pos' in opts) {
                 light2Pos = opts.light2Pos;
             }
             gl.uniform3fv(sProg.light2PosUniform, light2Pos);
         }
         if ('lightColorUniform' in sProg) {
-            let lightColorUniform = vec3.fromValues(1, 1, 1);
+            let lightColorUniform = glMatrix.vec3.fromValues(1, 1, 1);
             if ('lightColorUniform' in opts) {
                 lightColorUniform = opts.lightColorUniform;
             }
-            gl.uniform3fv(sProg.lightColorUniform, lightColor);
+            gl.uniform3fv(sProg.lightColorUniform, lightColorUniform);
         }
     }
 
@@ -986,15 +986,15 @@ function PolyMesh() {
             }
             this.drawer.reset();
         }
-        if (opt.drawNormals) {
+        /*if (opts.drawNormals) {
             this.drawNormals(gl, shaders, pMatrix, mvMatrix);
         }
-        if (opt.drawEdges) {
+        if (opts.drawEdges) {
             this.drawEdges(gl, shaders, pMatrix, mvMatrix);
         }
-        if (opt.drawPoints) {
+        if (opts.drawPoints) {
             this.drawPoints(gl, shaders, pMatrix, mvMatrix);
-        }
+        }*/
         
         if (this.needsDisplayUpdate) {
             //By the time rendering is done, there should not be a need to update

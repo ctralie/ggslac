@@ -11,7 +11,7 @@
 <!--Our Scripts!-->
 <script src="../utils/blockloader.js"></script>
 <script src="../geometry/polymesh.js"></script>
-<script src="../geometry/primitives3D.js"></script>
+<script src="../geometry/primitives3d.js"></script>
 <script src="../geometry/cameras3d.js"></script>
 <script src="../shaders/shaders.js"></script>
 <script src="../utils/simpledraw.js"></script>
@@ -29,20 +29,20 @@
 <script>
     var glcanvas = document.getElementById("MainGLCanvas");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    SimpleMeshCanvas(glcanvas);
+    SimpleMeshCanvas(glcanvas, "../shaders/");
 
     var meshInput = document.getElementById('meshInput');
     var result = document.getElementById('text');
     
     meshInput.addEventListener('change', function(e) {
-        if (e) {
-            alert(e);
-            return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let lines = e.target.result.split("\n");
+            glcanvas.mesh.loadFileFromLines(lines);
+            glcanvas.centerCamera();
+            requestAnimationFrame(glcanvas.repaint);
         }
-        let lines = BlockLoader.loadTxt(meshInput.files[0]).split("\n");
-        glcanvas.mesh.loadFileFromLines(lines);
-        glcanvas.centerCamera();
-        requestAnimationFrame(glcanvas.repaint);
+        reader.readAsText(meshInput.files[0]);
     });
 </script>
 

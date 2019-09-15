@@ -69,12 +69,14 @@ function getShaderProgram(gl, prefix) {
 /**
  * 
  * @param {*} gl WebGL Handle
+ * @param{string} relpath Relative path to shaders from the directory
+ * in which this function is called
  * 
  * @returns{obj} An object with fields containing standard shaders
  */
-function initStandardShaders(gl) {
+function initStandardShaders(gl, relpath) {
     /** ColorShader: Ordinary color shader for drawing meshes  */
-    let colorShader = getShaderProgram(gl, "colorshader");
+    let colorShader = getShaderProgram(gl, relpath + "colorshader");
     colorShader.vPosAttrib = gl.getAttribLocation(colorShader, "vPos");
     gl.enableVertexAttribArray(colorShader.vPosAttrib);
     colorShader.vNormalAttrib = gl.getAttribLocation(colorShader, "vNormal");
@@ -90,7 +92,7 @@ function initStandardShaders(gl) {
     colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
 
     /** FlatShader: A shader that draws a constant color for all faces*/
-    let flatShader = getShaderProgram(gl, "flatcolorshader");
+    let flatShader = getShaderProgram(gl, relpath + "flatcolorshader");
     flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
     gl.enableVertexAttribArray(flatShader.vPosAttrib);
     flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
@@ -101,7 +103,7 @@ function initStandardShaders(gl) {
     
     /** Line shader: Simple shader for drawing lines with flat colors,
      * usually for debugging */
-    let lineShader = getShaderProgram(gl, "lineshader");
+    let lineShader = getShaderProgram(gl, relpath + "lineshader");
     lineShader.vPosAttrib = gl.getAttribLocation(lineShader, "vPos");
     gl.enableVertexAttribArray(lineShader.vPosAttrib);
     lineShader.vColorAttrib = gl.getAttribLocation(lineShader, "vColor");
@@ -111,7 +113,7 @@ function initStandardShaders(gl) {
     
     /** Point shader: Simple shader for drawing points with flat colors,
     usually for debugging (for now exactly the same as line shader)  */
-    let pointShader = getShaderProgram(gl, "pointshader");
+    let pointShader = getShaderProgram(gl, relpath + "pointshader");
     pointShader.vPosAttrib = gl.getAttribLocation(pointShader, "vPos");
     gl.enableVertexAttribArray(pointShader.vPosAttrib);
     pointShader.vColorAttrib = gl.getAttribLocation(pointShader, "vColor");

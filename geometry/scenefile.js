@@ -474,7 +474,7 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     if (!glcanvas.gl) {
         alert("Could not initialise WebGL, sorry :-(.  Try a new version of chrome or firefox and make sure your newest graphics drivers are installed");
     }
-    glcanvas.shaders = initShaders(glcanvas.gl, shadersRelPath);
+    glcanvas.shaders = initStandardShaders(glcanvas.gl, shadersRelPath);
     
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
