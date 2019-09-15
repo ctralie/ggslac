@@ -10,9 +10,10 @@
  * Recursive function to load all of the meshes and to 
  * put all of the matrix transformations into mat4 objects
  * At this point, all shapes are converted to meshes
- * @param {*} node 
+ * @param {object} scene The root of the scene graph
+ * @param {object} node The current node in the recursive parsing
  */
-function parseNode(node) {
+function parseNode(scene, node) {
     //Step 1: Make a matrix object for the transformation
     if (!('transform' in node)) {
         //Assume identity matrix if no matrix is provided
@@ -23,17 +24,16 @@ function parseNode(node) {
         return;
     }
     else {
-        //Matrix has been specified in array form an needs to be converted into object
-        var m = mat4.create();
-        for (var i = 0; i < 16; i++) {
+        //Matrix has been specified in array form and needs to be converted into object
+        let m = mat4.create();
+        for (let i = 0; i < 16; i++) {
             m[i] = node.transform[i];
         }
         mat4.transpose(m, m);
         node.transform = m;
     }
     
-    //Step 2: Load in mesh if there is one in this node (otherwise it's just
-    //a dummy node with a transformation)
+    //Step 2: Load in the shape with its properties
     if ('shape' in node) {
         if (!('type' in node.shape)) {
             console.log("ERROR: Shape not specified in node " + node);
@@ -53,24 +53,39 @@ function parseNode(node) {
             reader.readAsText(node.mesh.filename);
         }      
     }
+    if ('material' in node) {
+        node.material = scene.materials[node.material];
+    }
+    else {
+        // Default material is greenish gray flat color
+        node.material = {"color":[0.5, 0.55, 0.5]};
+    }
     
     if ('children' in node) {
-        for (var i = 0; i < node.children.length; i++) {
-            parseNode(node.children[i]);
+        for (let i = 0; i < node.children.length; i++) {
+            parseNode(scene, node.children[i]);
         }
     }
 }
 
 function setupScene(scene, glcanvas) {
     //Setup camera objects for the source and receiver
-    let cam1 = new FPSCamera(0, 0, 0.75);
-    cam1.pos = vec3.fromValues(scene.camera1[0], scene.camera1[1], scene.camera1[2]);
-    let cam2 = new FPSCamera(0, 0, 0.75);
-    cam2.pos = vec3.fromValues(scene.camera2[0], scene.camera2[1], scene.camera2[2]);
+    let cam1pos = [0, 0, 0];
+    let cam2pos = [5, 0, 0];
+    if ("camera1" in scene) {
+        cam1pos = camera1;
+    }
+    if ("camera2" in scene) {
+        cam2pos = camera2;
+    }
+    scene.cam1 = new FPSCamera(0, 0, 0.75);
+    scene.cam2 = new FPSCamera(0, 0, 0.75);
+    scene.cam1.pos = glMatrix.vec3.fromValues(cam1pos[0], cam1pos[1], cam1pos[2]);
+    scene.cam2.pos = glMatrix.vec3.fromValues(cam2pos[0], cam2pos[1], cam2pos[2]);
     
     //Make them look roughly at each other but in the XZ plane, if that's a nonzero projection
-    var T = vec3.create();
-    vec3.subtract(T, cam2.pos, cam1.pos);
+    let T = glMatrix.vec3.create();
+    glMatrix.vec3.subtract(T, scene.cam2.pos, scene.cam1.pos);
     T[1] = 0;
     if (T[0] == 0 && T[2] == 0) {
         //If it's a nonzero projection (one is right above the other on y)
@@ -78,17 +93,14 @@ function setupScene(scene, glcanvas) {
         T[2] = -1;
     }
     else {
-        vec3.normalize(T, T);
+        glMatrix.vec3.normalize(T, T);
     }
-    vec3.cross(cam1.right, T, cam1.up);
-    vec3.cross(cam2.right, cam2.up, T);
-    //By default, sound doesn't decay at the source and the receiver
-    scene.cam1 = cam1;
-    scene.cam2 = cam2;
+    glMatrix.vec3.cross(scene.cam1.right, T, scene.cam1.up);
+    glMatrix.vec3.cross(scene.cam2.right, scene.cam2.up, T);
     
     //Now recurse and setup all of the children nodes in the tree
-    for (var i = 0; i < scene.children.length; i++) {
-        parseNode(scene.children[i]);
+    for (let i = 0; i < scene.children.length; i++) {
+        parseNode(scene, scene.children[i]);
     }
     
     //Now that the scene has loaded, setup the glcanvas
@@ -96,27 +108,11 @@ function setupScene(scene, glcanvas) {
     requestAnimFrame(glcanvas.repaint);
 }
 
-function loadSceneFromFile(filename, glcanvas) {
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', filename, true);
-    xhr.responseType = 'json';
-    xhr.onload = function(error) {
-        if (error) {
-            alert("Error parsing scene file.  Check your JSON syntax");
-            throw error;
-        }
-        let scene = this.response;
-        setupScene(scene, glcanvas);
-        return scene;
-    };
-    xhr.send();
-}
-
 //For debugging
 function outputSceneMeshes(node, levelStr) {
     console.log("*" + levelStr + node.mesh);
     if ('children' in node) {
-        for (var i = 0; i < node.children.length; i++) {
+        for (let i = 0; i < node.children.length; i++) {
             outputSceneMeshes(node.children[i], levelStr+"\t");
         }
     }    
@@ -131,7 +127,7 @@ BEACON_SIZE = 0.1;
 function drawBeacon(glcanvas, pMatrix, mvMatrix, camera, mesh, color) {
     m = mat4.create();
     mat4.translate(m, m, camera.pos);
-    mat4.scale(m, m, vec3.fromValues(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE));
+    mat4.scale(m, m, glMatrix.vec3.fromValues(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE));
     mat4.mul(m, mvMatrix, m);
     mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, color, camera.pos, [0, 0, 0], color, false, false, false, COLOR_SHADING);
 }
@@ -141,9 +137,9 @@ function vec3StrFixed(v, k) {
     return "(" + v[0].toFixed(k) + ", " + v[1].toFixed(2) + ", " + v[2].toFixed(2) + ")";
 }
 function updateBeaconsPos() {
-    var sourcePosE = document.getElementById("sourcePos");
-    var receiverPosE = document.getElementById("receiverPos");
-    var externalPosE = document.getElementById("externalPos");
+    let sourcePosE = document.getElementById("sourcePos");
+    let receiverPosE = document.getElementById("receiverPos");
+    let externalPosE = document.getElementById("externalPos");
     sourcePosE.innerHTML = "<font color = \"blue\">" + vec3StrFixed(glcanvas.scene.source.pos, 2) + "</font>";
     receiverPosE.innerHTML = "<font color = \"red\">" + vec3StrFixed(glcanvas.scene.receiver.pos, 2) + "</font>";
     externalPosE.innerHTML = "<font color = \"green\">" + vec3StrFixed(glcanvas.externalCam.pos, 2) + "</font>";
@@ -152,7 +148,7 @@ function updateBeaconsPos() {
 //A function that adds lots of fields to glcanvas for rendering the scene graph
 function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     console.log("Loaded in mesh hierarchy:");
-    for (var i = 0; i < scene.children.length; i++) {
+    for (let i = 0; i < scene.children.length; i++) {
         outputSceneMeshes(scene.children[i], "");
     }
 
@@ -169,10 +165,10 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     glcanvas.clickType = "LEFT";
     
     //Lighting info
-    glcanvas.ambientColor = vec3.fromValues(0.3, 0.3, 0.3);
-    glcanvas.light1Pos = vec3.fromValues(0, 0, 0);
-    glcanvas.light2Pos = vec3.fromValues(0, 0, -1);
-    glcanvas.lightColor = vec3.fromValues(0.9, 0.9, 0.9);
+    glcanvas.ambientColor = glMatrix.vec3.fromValues(0.3, 0.3, 0.3);
+    glcanvas.light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
+    glcanvas.light2Pos = glMatrix.vec3.fromValues(0, 0, -1);
+    glcanvas.lightColor = glMatrix.vec3.fromValues(0.9, 0.9, 0.9);
     
     //Scene and camera stuff
     glcanvas.scene = scene;
@@ -181,7 +177,7 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     glcanvas.scene.receiver.pixWidth = pixWidth;
     glcanvas.scene.receiver.pixHeight = pixHeight;
     glcanvas.externalCam = new FPSCamera(pixWidth, pixHeight, 0.75);
-    glcanvas.externalCam.pos = vec3.fromValues(0, 1.5, 0);
+    glcanvas.externalCam.pos = glMatrix.vec3.fromValues(0, 1.5, 0);
     glcanvas.walkspeed = 2.5;//How many meters per second
     glcanvas.lastTime = (new Date()).getTime();
     glcanvas.movelr = 0;//Moving left/right
@@ -196,13 +192,13 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     //Step 1: Setup repaint function
     /////////////////////////////////////////////////////
     glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
-        var mvMatrix = mat4.create();
+        let mvMatrix = mat4.create();
         mat4.mul(mvMatrix, matrixIn, node.transform);
         if ('mesh' in node) {
             node.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas.ambientColor, glcanvas.light1Pos, glcanvas.light2Pos, glcanvas.lightColor, false, glcanvas.drawEdges, false, COLOR_SHADING);
         }
         if ('children' in node) {
-            for (var i = 0; i < node.children.length; i++) {
+            for (let i = 0; i < node.children.length; i++) {
                 glcanvas.repaintRecurse(node.children[i], pMatrix, mvMatrix);
             }
         }
@@ -213,36 +209,36 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
         
-        var pMatrix = mat4.create();
+        let pMatrix = mat4.create();
         mat4.perspective(pMatrix, 45, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, 0.01, 1000.0);
         //First get the global modelview matrix based on the camera
-        var mvMatrix = glcanvas.camera.getMVMatrix();
+        let mvMatrix = glcanvas.camera.getMVMatrix();
         //Then drawn the scene
-        var scene = glcanvas.scene;
+        let scene = glcanvas.scene;
         if ('children' in scene) {
-            for (var i = 0; i < scene.children.length; i++) {
+            for (let i = 0; i < scene.children.length; i++) {
                 glcanvas.repaintRecurse(scene.children[i], pMatrix, mvMatrix);
             }
         }
         
         //Draw the source, receiver, and third camera
         if (!(glcanvas.camera == glcanvas.scene.receiver)) {
-            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.receiver, glcanvas.beaconMesh, vec3.fromValues(1, 0, 0));
+            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.receiver, glcanvas.beaconMesh, glMatrix.vec3.fromValues(1, 0, 0));
         }
         if (!(glcanvas.camera == glcanvas.scene.source)) {
-            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.source, glcanvas.beaconMesh, vec3.fromValues(0, 0, 1));
+            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.source, glcanvas.beaconMesh, glMatrix.vec3.fromValues(0, 0, 1));
         }
         if (!(glcanvas.camera == glcanvas.externalCam)) {
-            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.externalCam, glcanvas.beaconMesh, vec3.fromValues(0, 1, 0));
+            drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.externalCam, glcanvas.beaconMesh, glMatrix.vec3.fromValues(0, 1, 0));
         }
         
         //Draw the image sources as magenta beacons
         if (glcanvas.drawImageSources) {
-            for (var i = 0; i < glcanvas.scene.imsources.length; i++) {
+            for (let i = 0; i < glcanvas.scene.imsources.length; i++) {
                 if (glcanvas.scene.imsources[i] == glcanvas.scene.source) {
                     continue;
                 }
-                drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.imsources[i], glcanvas.beaconMesh, vec3.fromValues(1, 0, 1)); 
+                drawBeacon(glcanvas, pMatrix, mvMatrix, glcanvas.scene.imsources[i], glcanvas.beaconMesh, glMatrix.vec3.fromValues(1, 0, 1)); 
             }
         }
         
@@ -258,8 +254,8 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
         
         //Redraw if walking
         if (glcanvas.movelr != 0 || glcanvas.moveud != 0 || glcanvas.movefb != 0) {
-            var thisTime = (new Date()).getTime();
-            var dt = (thisTime - glcanvas.lastTime)/1000.0;
+            let thisTime = (new Date()).getTime();
+            let dt = (thisTime - glcanvas.lastTime)/1000.0;
             glcanvas.lastTime = thisTime;
             glcanvas.camera.translate(0, 0, glcanvas.movefb, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(0, glcanvas.moveud, 0, glcanvas.walkspeed*dt);
@@ -273,7 +269,7 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     //Step 2: Setup mouse and keyboard callbacks for the camera
     /////////////////////////////////////////////////////////////////
     glcanvas.getMousePos = function(evt) {
-        var rect = this.getBoundingClientRect();
+        let rect = this.getBoundingClientRect();
         return {
             X: evt.clientX - rect.left,
             Y: evt.clientY - rect.top
@@ -293,7 +289,7 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     }
     
     glcanvas.makeClick = function(e) {
-        var evt = (e == null ? event:e);
+        let evt = (e == null ? event:e);
         glcanvas.clickType = "LEFT";
         if (evt.which) {
             if (evt.which == 3) glcanvas.clickType = "RIGHT";
@@ -305,7 +301,7 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
         }
         this.dragging = true;
         this.justClicked = true;
-        var mousePos = this.getMousePos(evt);
+        let mousePos = this.getMousePos(evt);
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
         requestAnimFrame(this.repaint);
@@ -314,9 +310,9 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
 
     //Mouse handlers for camera
     glcanvas.clickerDragged = function(evt) {
-        var mousePos = this.getMousePos(evt);
-        var dX = mousePos.X - this.lastX;
-        var dY = mousePos.Y - this.lastY;
+        let mousePos = this.getMousePos(evt);
+        let dX = mousePos.X - this.lastX;
+        let dY = mousePos.Y - this.lastY;
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
         if (this.dragging) {
@@ -377,111 +373,17 @@ function SceneCanvas(glcanvas, shadersRelPath, pixWidth, pixHeight, scene) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
-    glcanvas.viewFromSource = function() {
-        glcanvas.camera = glcanvas.scene.source;
+    glcanvas.viewFromCam1 = function() {
+        glcanvas.camera = glcanvas.scene.cam1;
         requestAnimFrame(glcanvas.repaint);
     }
     
-    glcanvas.viewFromReceiver = function() {
-        glcanvas.camera = glcanvas.scene.receiver;
+    glcanvas.viewFromCam2 = function() {
+        glcanvas.camera = glcanvas.scene.cam2;
         requestAnimFrame(glcanvas.repaint);
     }
-
-    glcanvas.viewFromExternal = function() {
-        glcanvas.camera = glcanvas.externalCam;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.computeImageSources = function(order) {
-        console.log("Computing image sources of order " + order);
-        glcanvas.scene.computeImageSources(order);
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.extractPaths = function() {
-        console.log("Extracting paths source to receiver");
-        glcanvas.scene.extractPaths();
-        //Fill in buffers for path drawer
-        glcanvas.pathDrawer.reset();
-        for (var i = 0; i < glcanvas.scene.paths.length; i++) {
-            var path = glcanvas.scene.paths[i];
-            for (var j = 0; j < path.length-1; j++) {
-                //Draw all of the paths as a sequence of red line segments
-                glcanvas.pathDrawer.drawLine(path[j].pos, path[j+1].pos, vec3.fromValues(1, 0, 0));
-            }
-        }
-        requestAnimFrame(glcanvas.repaint);
-    }
-
-    glcanvas.computeImpulseResponse = function() {
-        console.log("Computing impulse response");
-        //Step 1: Call student code
-        glcanvas.scene.computeImpulseResponse(globalFs);
-        if (scene.impulseResp.length == 0) {
-            return; //Student hasn't filled in yet.  Exit gracefully
-        }
-        
-        //Step 2: Plot the impulse response as a stem plot with milliseconds on the x-axis
-        //and magnitude on the y-axis
-        console.log("impulseResp.length = " + scene.impulseResp.length);
-        data = [];
-        for (var i = 0; i < scene.impulseResp.length; i++) {
-            var gamma = scene.impulseResp[i];
-            if (gamma > 0) {
-                data.push({x:[1000*i/globalFs, 1000*i/globalFs], y:[0, gamma], mode:'lines+markers'});
-            }
-        }
-        Plotly.newPlot('impulsePlot', data, {xaxis:{title:'Time (Milliseconds)'}, yaxis:{title:'Magnitude'}});
-        
-        //Step 3: Create a new audio buffer and copy over the data
-        //https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createBuffer
-        impbuffer = context.createBuffer(1, scene.impulseResp.length, globalFs);
-        var impsamples = impbuffer.getChannelData(0);
-        for (var i = 0; i < scene.impulseResp.length; i++) {
-            impsamples[i] = scene.impulseResp[i];
-        }
-        requestAnimFrame(glcanvas.repaint);
-    }
-
-
-
-    /////////////////////////////////////////////////////
-    //Step 4: Initialize Web GL
-    /////////////////////////////////////////////////////
-    glcanvas.addEventListener('mousedown', glcanvas.makeClick);
-    glcanvas.addEventListener('mouseup', glcanvas.releaseClick);
-    glcanvas.addEventListener('mousemove', glcanvas.clickerDragged);
-    glcanvas.addEventListener('mouseout', glcanvas.mouseOut);
-
-    //Support for mobile devices
-    glcanvas.addEventListener('touchstart', glcanvas.makeClick);
-    glcanvas.addEventListener('touchend', glcanvas.releaseClick);
-    glcanvas.addEventListener('touchmove', glcanvas.clickerDragged);
-
-    //Keyboard listener
-    var medadiv = document.getElementById('metadiv');
-    document.addEventListener('keydown', glcanvas.keyDown, true);
-    document.addEventListener('keyup', glcanvas.keyUp, true);
-
-    try {
-        //this.gl = WebGLDebugUtils.makeDebugContext(this.glcanvas.getContext("experimental-webgl"));
-        glcanvas.gl = glcanvas.getContext("experimental-webgl");
-        glcanvas.gl.viewportWidth = glcanvas.width;
-        glcanvas.gl.viewportHeight = glcanvas.height;
-    } catch (e) {
-        console.log(e);
-    }
-    if (!glcanvas.gl) {
-        alert("Could not initialise WebGL, sorry :-(.  Try a new version of chrome or firefox and make sure your newest graphics drivers are installed");
-    }
-    glcanvas.shaders = initStandardShaders(glcanvas.gl, shadersRelPath);
     
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
     
-    glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    glcanvas.gl.enable(glcanvas.gl.DEPTH_TEST);
-    
-    glcanvas.gl.useProgram(glcanvas.shaders.colorShader);
-    requestAnimFrame(glcanvas.repaint);
 }

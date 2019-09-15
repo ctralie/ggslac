@@ -1,13 +1,24 @@
 //A function that adds lots of fields to glcanvas for meshes and rendering
 function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     glcanvas.gl = null;
+
+    // Mouse variables
     glcanvas.lastX = 0;
     glcanvas.lastY = 0;
     glcanvas.dragging = false;
     glcanvas.justClicked = false;
+    glcanvas.clickType = "LEFT";
+
+    // Keyboard variables
+    glcanvas.walkspeed = 2.5;//How many meters per second
+    glcanvas.lastTime = (new Date()).getTime();
+    glcanvas.movelr = 0;//Moving left/right
+    glcanvas.movefb = 0;//Moving forward/backward
+    glcanvas.moveud = 0;//Moving up/down
+
+    // Camera and mesh variables
     glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height, 0.75);
     glcanvas.mesh = new PolyMesh();
-    glcanvas.clickType = "LEFT";
     
     //Lighting info
     glcanvas.ambientColor = glMatrix.vec3.fromValues(0.1, 0.1, 0.1);
@@ -147,6 +158,10 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     glcanvas.addEventListener('touchstart', glcanvas.makeClick);
     glcanvas.addEventListener('touchend', glcanvas.releaseClick);
     glcanvas.addEventListener('touchmove', glcanvas.clickerDragged);
+
+    //Keyboard listener
+    document.addEventListener('keydown', glcanvas.keyDown, true);
+    document.addEventListener('keyup', glcanvas.keyUp, true);
 
     try {
         //this.gl = WebGLDebugUtils.makeDebugContext(this.glcanvas.getContext("experimental-webgl"));

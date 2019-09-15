@@ -4,18 +4,19 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!--External Libraries!-->
 <!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
-<script type="text/javascript" src = "../js/gl-matrix-min.js"></script>
-<script type="text/javascript" src="../js/webgl-utils.js"></script>
-<script type="text/javascript" src="../js/webgl-debug.js"></script>
+<script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
 
 <!--Our Scripts!-->
-<script src="../Geometry/PolyMesh.js"></script>
-<script src="../Geometry/Primitives3D.js"></script>
-<script src="../Geometry/Cameras3D.js"></script>
-<script src="../DrawingUtils/Shaders.js"></script>
-<script src="../DrawingUtils/SimpleDraw.js"></script>
-<script src="../Viewers/SimpleMeshCanvas.js"></script>
-<script src="../Geometry/SceneFile.js"></script>
+<script src="../geometry/polymesh.js"></script>
+<script src="../geometry/primitives3d.js"></script>
+<script src="../geometry/cameras3d.js"></script>
+<script src="../shaders/shaders.js"></script>
+<script src="../utils/simpledraw.js"></script>
+<script src="../utils/blockloader.js"></script>
+<script src="./simplemeshcanvas.js"></script>
+<script src="../geometry/scenefile.js"></script>
 </head>
 
 <body>
@@ -52,15 +53,16 @@
 
 
 <script>
-    var glcanvas = document.getElementById("GLCanvas1");
+    let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    let scene = BlockLoader.loadJSON("SampleScene.scn", "Check your scene file syntax.");
     loadSceneFromFile('SampleScene.scn', glcanvas);
 
-    var sceneInput = document.getElementById('sceneInput');
+    let sceneInput = document.getElementById('sceneInput');
     sceneInput.addEventListener('change', function(e) {
-        var reader = new FileReader();
+        let reader = new FileReader();
         reader.onload = function(e) {
-            var data = e.target.result;
+            let data = e.target.result;
             try {
                 data = JSON.parse(data);
             }
@@ -73,7 +75,7 @@
         reader.readAsText(sceneInput.files[0]);
     });
 
-    var meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
+    let meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
     meshEdgesCheckbox.addEventListener('change', function(e) {
         glcanvas.drawEdges = meshEdgesCheckbox.checked;
         requestAnimFrame(glcanvas.repaint);
