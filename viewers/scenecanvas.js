@@ -4,22 +4,16 @@
 BEACON_SIZE = 0.1;
 
 function drawBeacon(glcanvas, pMatrix, mvMatrix, camera, mesh, color) {
-    m = mat4.create();
-    mat4.translate(m, m, camera.pos);
-    mat4.scale(m, m, glMatrix.vec3.fromValues(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE));
-    mat4.mul(m, mvMatrix, m);
+    m = glMatrix.mat4.create();
+    glMatrix.mat4.translate(m, m, camera.pos);
+    glMatrix.mat4.scale(m, m, glMatrix.vec3.fromValues(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE));
+    glMatrix.mat4.mul(m, mvMatrix, m);
     mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, color, camera.pos, [0, 0, 0], color, false, false, false, COLOR_SHADING);
 }
 
 //Update the beacon positions on the web site
 function vec3StrFixed(v, k) {
     return "(" + v[0].toFixed(k) + ", " + v[1].toFixed(2) + ", " + v[2].toFixed(2) + ")";
-}
-function updateCamerasPos() {
-    let cam1PosE = document.getElementById("camera1");
-    let cam2PosE = document.getElementById("camera2");
-    cam1PosE.innerHTML = "<font color = \"red\">" + vec3StrFixed(glcanvas.scene.cam1.pos, 2) + "</font>";
-    cam2PosE.innerHTML = "<font color = \"green\">" + vec3StrFixed(glcanvas.cam2.pos, 2) + "</font>";
 }
 
 //A function that adds lots of fields to glcanvas for rendering the scene graph
@@ -29,7 +23,7 @@ function SceneCanvas(glcanvas, shadersrelpath) {
 
     /**
      * Recursive function to load all of the meshes and to 
-     * put all of the matrix transformations into mat4 objects
+     * put all of the matrix transformations into glMatrix.mat4 objects
      * At this point, all shapes are converted to meshes
      * @param {object} node The current node in the recursive parsing
      */
@@ -37,7 +31,7 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         //Step 1: Make a matrix object for the transformation
         if (!('transform' in node)) {
             //Assume identity matrix if no matrix is provided
-            node.transform = mat4.create();
+            node.transform = glMatrix.mat4.create();
         }
         else if (node.transform.length != 16) {
             console.log("ERROR: 4x4 Transformation matrix " + node.transform + " must have 16 entries");
@@ -45,11 +39,11 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         }
         else {
             //Matrix has been specified in array form and needs to be converted into object
-            let m = mat4.create();
+            let m = glMatrix.mat4.create();
             for (let i = 0; i < 16; i++) {
                 m[i] = node.transform[i];
             }
-            mat4.transpose(m, m);
+            glMatrix.mat4.transpose(m, m);
             node.transform = m;
         }
         
@@ -60,17 +54,13 @@ function SceneCanvas(glcanvas, shadersrelpath) {
                 return;
             }
             if (node.shape.type == "mesh") {
-                if (!('filename' in node.mesh)) {
+                if (!('filename' in node.shape)) {
                     console.log("ERROR: filename not specified for mesh: " + node.shape);
                     return;
                 }
                 node.mesh = new PolyMesh();
-                let reader = new FileReader();
-                reader.onload = function(error) {
-                    if (error) throw error;
-                    node.mesh.loadFileFromLines(this.result.split("\n"));
-                }
-                reader.readAsText(node.mesh.filename);
+                let lines = BlockLoader.loadTxt(node.shape.filename);
+                node.mesh.loadFileFromLines(lines.split("\n"));
             }      
         }
         if ('material' in node) {
@@ -93,7 +83,9 @@ function SceneCanvas(glcanvas, shadersrelpath) {
      * @param {}
      */
     glcanvas.outputSceneMeshes = function(node, levelStr) {
-        console.log("*" + levelStr + node.mesh);
+        if ('mesh' in node) {
+            console.log("*" + levelStr + node.mesh);
+        }
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
                 glcanvas.outputSceneMeshes(node.children[i], levelStr+"\t");
@@ -113,10 +105,10 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         let cam1pos = [0, 0, 0];
         let cam2pos = [5, 0, 0];
         if ("camera1" in glcanvas.scene) {
-            cam1pos = camera1;
+            cam1pos = glcanvas.scene.camera1;
         }
         if ("camera2" in glcanvas.scene) {
-            cam2pos = camera2;
+            cam2pos = glcanvas.scene.camera2;
         }
         glcanvas.scene.cam1 = new FPSCamera(0, 0, 0.75);
         glcanvas.scene.cam2 = new FPSCamera(0, 0, 0.75);
@@ -141,7 +133,7 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         //Now recurse and setup all of the children nodes in the tree
         glcanvas.scene.children.forEach(function(child) {
             glcanvas.parseNode(child);
-            glcanvas.outputSceneMeshes(child);
+            glcanvas.outputSceneMeshes(child, "");
         });
         glcanvas.viewFromCam1();
     }
@@ -151,10 +143,10 @@ function SceneCanvas(glcanvas, shadersrelpath) {
     //  Repaint Function
     /////////////////////////////////////////////////////
     glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
-        let mvMatrix = mat4.create();
-        mat4.mul(mvMatrix, matrixIn, node.transform);
+        let mvMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
         if ('mesh' in node) {
-            glcanvas.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
+            node.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
         }
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
@@ -171,8 +163,8 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
         
-        let pMatrix = mat4.create();
-        mat4.perspective(pMatrix, 45, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, 0.01, 1000.0);
+        let pMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.perspective(pMatrix, 45, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, 0.01, 1000.0);
         //First get the global modelview matrix based on the camera
         let mvMatrix = glcanvas.camera.getMVMatrix();
         //Then drawn the scene
@@ -201,7 +193,7 @@ function SceneCanvas(glcanvas, shadersrelpath) {
             glcanvas.camera.translate(0, 0, glcanvas.movefb, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(0, glcanvas.moveud, 0, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(glcanvas.movelr, 0, 0, glcanvas.walkspeed*dt);
-            updateCamerasPos(); //Update HTML display of vector positions
+            glcanvas.updateCamerasPos(); //Update HTML display of vector positions
             requestAnimFrame(glcanvas.repaint);
         }
     }
@@ -209,6 +201,13 @@ function SceneCanvas(glcanvas, shadersrelpath) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
+    glcanvas.updateCamerasPos = function() {
+        let cam1PosE = document.getElementById("camera1");
+        let cam2PosE = document.getElementById("camera2");
+        cam1PosE.innerHTML = "<font color = \"red\">" + vec3StrFixed(glcanvas.scene.cam1.pos, 2) + "</font>";
+        cam2PosE.innerHTML = "<font color = \"green\">" + vec3StrFixed(glcanvas.scene.cam2.pos, 2) + "</font>";
+    }
+
     glcanvas.viewFromCam1 = function() {
         glcanvas.camera = glcanvas.scene.cam1;
         requestAnimFrame(glcanvas.repaint);

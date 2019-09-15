@@ -8,14 +8,14 @@
             "color":[0.0, 1.0, 0.0]        
         },
         "shader":"colorShader"
-    }
+    },
     
     "children":[
         { 
             "shape":
                 {
                 "type":"mesh",
-                "filename":"meshes/box.off"
+                "filename":"../meshes/box.off"
                 },
             "material":"green",
             "transform":[1, 0, 0, 0,
@@ -25,10 +25,9 @@
             "children":[
                 { 
                 "shape":{
-                        "type":mesh",
-                        "filename":"meshes/box.off"
+                        "type":"mesh",
+                        "filename":"../meshes/box.off"
                         },
-                "color":[0.0, 0.5, 1.0],
                 "transform":[2, 0, 0, 2,
                              0, 1, 0, 0,
                              0, 0, 1, 0,
@@ -38,10 +37,9 @@
         },
         {
             "shape":{
-                    "type":mesh,
-                    "filename":"meshes/square.off"
+                    "type":"mesh",
+                    "filename":"../meshes/square.off"
                     },
-            "color":[0.8, 0.8, 0.8],
             "transform":[20, 0, 0, 0,
                          0, 20, 0, 0,
                          0, 0, 20, 0,

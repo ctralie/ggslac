@@ -168,8 +168,8 @@ function FPSCamera(pixWidth, pixHeight, yfov) {
     //Rotate the up direction around the right direction
     this.rotateUpDown = function(ud) {
         var thetaud = (Math.PI/2)*this.yfov*ud/this.pixHeight;
-        var q = quat.create();
-        quat.setAxisAngle(q, this.right, thetaud);
+        var q = glMatrix.quat.create();
+        glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
     }
     
@@ -177,8 +177,8 @@ function FPSCamera(pixWidth, pixHeight, yfov) {
     //but project onto the XY plane
     this.rotateLeftRight = function(lr) {
         var thetalr = (Math.PI/2)*lr/this.pixWidth;
-        var q = quat.create();
-        quat.setAxisAngle(q, this.up, thetalr);
+        var q = glMatrix.quat.create();
+        glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);
         //Snap to the XY plane to keep things from getting wonky
         this.right[1] = 0;
