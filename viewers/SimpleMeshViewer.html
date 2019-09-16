@@ -1,0 +1,51 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
+
+<!--Our Scripts!-->
+<script src="../utils/blockloader.js"></script>
+<script src="../geometry/polymesh.js"></script>
+<script src="../geometry/primitives3d.js"></script>
+<script src="../geometry/cameras3d.js"></script>
+<script src="../shaders/shaders.js"></script>
+<script src="../utils/simpledraw.js"></script>
+<script src="./basecanvas.js"></script>
+<script src="./simplemeshcanvas.js"></script>
+</head>
+
+<body>
+
+<table>
+<tr><td><h3>Mesh File</h3></td><td><input type = "file" id = "meshInput"></td></tr>
+</table>
+<canvas id="MainGLCanvas" style="border: none;" width="800" height="600"></canvas>
+
+
+<script>
+    var glcanvas = document.getElementById("MainGLCanvas");
+    glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    SimpleMeshCanvas(glcanvas, "../shaders/");
+
+    var meshInput = document.getElementById('meshInput');
+    var result = document.getElementById('text');
+    
+    meshInput.addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let lines = e.target.result.split("\n");
+            glcanvas.mesh.loadFileFromLines(lines);
+            glcanvas.centerCamera();
+            requestAnimationFrame(glcanvas.repaint);
+        }
+        reader.readAsText(meshInput.files[0]);
+    });
+</script>
+
+</body>
+</html>

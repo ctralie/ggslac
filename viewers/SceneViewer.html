@@ -1,0 +1,95 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
+
+<!--Our Scripts!-->
+<script src="../geometry/polymesh.js"></script>
+<script src="../geometry/primitives3d.js"></script>
+<script src="../geometry/cameras3d.js"></script>
+<script src="../shaders/shaders.js"></script>
+<script src="../utils/simpledraw.js"></script>
+<script src="../utils/blockloader.js"></script>
+<script src="./basecanvas.js"></script>
+<script src="./scenecanvas.js"></script>
+</head>
+
+<body>
+
+<table><tr><td>
+<canvas id="GLCanvas1" style="border: none;" width="800" height="600"></canvas>
+
+</td>
+<td>
+
+<h3>Scene</h3>
+<table>
+<tr><td>Scene File</td><td><input type = "file" id = "sceneInput"></td></tr>
+</table>
+
+<h3>Options</h3>
+<table>
+<tr><td>Display Mesh Edges</td><td><input type="checkbox" id="meshEdgesCheckbox" /></td></tr>
+</table>
+
+<h3>Viewpoint</h3>
+<table>
+<tr>
+<td><button type="button" id = "camera1Button" onclick="callViewFromCamera1()">Camera 1</button></td>
+<td><button type="button" id = "camera2Button" onclick="callViewFromCamera2()">Camera 2</button></td>
+</tr>
+<tr><td>Camera 1:</td><td colspan = "2"><div id="camera1"></div></td></tr>
+<tr><td>Camera 2:</td><td colspan = "2"><div id="camera2"></div></td></tr>
+</table>
+
+
+</td></tr>
+</table>
+
+
+<script>
+    let glcanvas = document.getElementById("GLCanvas1");
+    glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    SceneCanvas(glcanvas, "../shaders/")
+
+    let sceneInput = document.getElementById('sceneInput');
+    sceneInput.addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let scene = e.target.result;
+            try {
+                scene = JSON.parse(scene);
+            }
+            catch(error) {
+                alert("Error parsing scene file.  Check your JSON syntax");
+                throw(error);
+            }
+            console.log(glcanvas.clientWidth + " x " + glcanvas.clientHeight);
+            glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+        }
+        reader.readAsText(sceneInput.files[0]);
+    });
+
+    let meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
+    meshEdgesCheckbox.addEventListener('change', function(e) {
+        glcanvas.drawEdges = meshEdgesCheckbox.checked;
+        requestAnimFrame(glcanvas.repaint);
+    });
+    meshEdgesCheckbox.checked = true;
+
+    function callViewFromCamera1() {
+        glcanvas.viewFromCamera1();
+    }
+    function callViewFromCamera2() {
+        glcanvas.viewFromCamera2();
+    }
+    
+</script>
+
+</body>
+</html>

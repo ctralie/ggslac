@@ -1,43 +1,50 @@
-//A function that adds lots of fields to glcanvas for meshes and rendering
-function SimpleMeshCanvas(glcanvas) {
+/**
+ * A function that adds lots of fields to glcanvas for rendering
+ * and interaction.  This serves as the superclass for other more
+ * specific kinds of viewers
+ * @param {DOM Element} glcanvas Handle to HTML where the glcanvas resides
+ * @param {string} shadersrelpath Path to the folder that contains the shaders,
+ *                                relative to where the constructor is being called
+ */
+function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.gl = null;
+
+    // Mouse variables
     glcanvas.lastX = 0;
     glcanvas.lastY = 0;
     glcanvas.dragging = false;
     glcanvas.justClicked = false;
-    glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height, 0.75);
-    glcanvas.mesh = new PolyMesh();
     glcanvas.clickType = "LEFT";
+
+    // Keyboard variables
+    glcanvas.walkspeed = 2.5;//How many meters per second
+    glcanvas.lastTime = (new Date()).getTime();
+    glcanvas.movelr = 0;//Moving left/right
+    glcanvas.movefb = 0;//Moving forward/backward
+    glcanvas.moveud = 0;//Moving up/down
     
     //Lighting info
-    glcanvas.ambientColor = vec3.fromValues(0.1, 0.1, 0.1);
-    glcanvas.light1Pos = vec3.fromValues(0, 0, 0);
-    glcanvas.light2Pos = vec3.fromValues(0, 0, -1);
-    glcanvas.lightColor = vec3.fromValues(0.9, 0.9, 0.9);
+    glcanvas.ambientColor = glMatrix.vec3.fromValues(0.1, 0.1, 0.1);
+    glcanvas.light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
+    glcanvas.light2Pos = glMatrix.vec3.fromValues(0, 0, -1);
+    glcanvas.lightColor = glMatrix.vec3.fromValues(0.9, 0.9, 0.9);
     
     //User choices
     glcanvas.drawNormals = false;
     glcanvas.drawEdges = true;
     glcanvas.drawPoints = false;
     
-    /////////////////////////////////////////////////////
-    //Step 1: Setup repaint function
-    /////////////////////////////////////////////////////    
-    glcanvas.repaint = function() {
-        glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
-        glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
-        
-        var pMatrix = mat4.create();
-        mat4.perspective(pMatrix, 45, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, glcanvas.camera.R/100.0, glcanvas.camera.R*2);
-        var mvMatrix = glcanvas.camera.getMVMatrix();
-        glcanvas.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas.ambientColor, glcanvas.light1Pos, glcanvas.light2Pos, glcanvas.lightColor, glcanvas.drawNormals, glcanvas.drawEdges, glcanvas.drawPoints, COLOR_SHADING);
-    }
     
+    glcanvas.repaint = function() {
+        // Dummy function for base canvas, which should be
+        // overwritten for subclasses
+    }
+
     /////////////////////////////////////////////////////
-    //Step 2: Setup mouse callbacks
+    //Step 1: Setup mouse callbacks
     /////////////////////////////////////////////////////
     glcanvas.getMousePos = function(evt) {
-        var rect = this.getBoundingClientRect();
+        let rect = this.getBoundingClientRect();
         return {
             X: evt.clientX - rect.left,
             Y: evt.clientY - rect.top
@@ -58,7 +65,7 @@ function SimpleMeshCanvas(glcanvas) {
     }
     
     glcanvas.makeClick = function(e) {
-        var evt = (e == null ? event:e);
+        let evt = (e == null ? event:e);
         glcanvas.clickType = "LEFT";
         evt.preventDefault();
         if (evt.which) {
@@ -71,7 +78,7 @@ function SimpleMeshCanvas(glcanvas) {
         }
         this.dragging = true;
         this.justClicked = true;
-        var mousePos = this.getMousePos(evt);
+        let mousePos = this.getMousePos(evt);
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
         requestAnimFrame(this.repaint);
@@ -81,12 +88,15 @@ function SimpleMeshCanvas(glcanvas) {
     //http://www.w3schools.com/jsref/dom_obj_event.asp
     glcanvas.clickerDragged = function(evt) {
         evt.preventDefault();
-        var mousePos = this.getMousePos(evt);
-        var dX = mousePos.X - this.lastX;
-        var dY = mousePos.Y - this.lastY;
+        let mousePos = this.getMousePos(evt);
+        let dX = mousePos.X - this.lastX;
+        let dY = mousePos.Y - this.lastY;
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
-        if (this.dragging) {
+        if (this.camera === null) {
+            return;
+        }
+        if (this.dragging && this.camera.type == "polar") {
             //Translate/rotate shape
             if (glcanvas.clickType == "MIDDLE") {
                 this.camera.translate(dX, -dY);
@@ -100,12 +110,60 @@ function SimpleMeshCanvas(glcanvas) {
             }
             requestAnimFrame(this.repaint);
         }
+        else if (this.dragging && this.camera.type == "fps") {
+            //Rotate camera by mouse dragging
+            this.camera.rotateLeftRight(-dX);
+            this.camera.rotateUpDown(-dY);
+            requestAnimFrame(glcanvas.repaint);
+        }
         return false;
-    }    
-    
-    glcanvas.centerCamera = function() {
-        this.camera.centerOnMesh(this.mesh);
     }
+
+    //Keyboard handlers for camera
+    glcanvas.keyDown = function(evt) {
+        if (evt.keyCode == 87) { //W
+            glcanvas.movefb = 1;
+        }
+        else if (evt.keyCode == 83) { //S
+            glcanvas.movefb = -1;
+        }
+        else if (evt.keyCode == 65) { //A
+            glcanvas.movelr = -1;
+        }
+        else if (evt.keyCode == 68) { //D
+            glcanvas.movelr = 1;
+        }
+        else if (evt.keyCode == 67) { //C
+            glcanvas.moveud = -1;
+        }
+        else if (evt.keyCode == 69) { //E
+            glcanvas.moveud = 1;
+        }
+        glcanvas.lastTime = (new Date()).getTime();
+        requestAnimFrame(glcanvas.repaint);
+    }
+    
+    glcanvas.keyUp = function(evt) {
+        if (evt.keyCode == 87) { //W
+            glcanvas.movefb = 0;
+        }
+        else if (evt.keyCode == 83) { //S
+            glcanvas.movefb = 0;
+        }
+        else if (evt.keyCode == 65) { //A
+            glcanvas.movelr = 0;
+        }
+        else if (evt.keyCode == 68) { //D
+            glcanvas.movelr = 0;
+        }
+        else if (evt.keyCode == 67) { //C
+            glcanvas.moveud = 0;
+        }
+        else if (evt.keyCode == 69) { //E
+            glcanvas.moveud = 0;
+        }
+        requestAnimFrame(glcanvas.repaint);
+    }    
     
     /////////////////////////////////////////////////////
     //Step 3: Initialize offscreen rendering for picking
@@ -121,7 +179,7 @@ function SimpleMeshCanvas(glcanvas) {
         this.pickingTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.pickingTexture);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.pickingFramebuffer.width, this.pickingFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        var renderbuffer = this.gl.createRenderbuffer();
+        let renderbuffer = this.gl.createRenderbuffer();
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
         this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.pickingFramebuffer.width, this.pickingFramebuffer.height);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.pickingTexture, 0);
@@ -144,6 +202,10 @@ function SimpleMeshCanvas(glcanvas) {
     glcanvas.addEventListener('touchend', glcanvas.releaseClick);
     glcanvas.addEventListener('touchmove', glcanvas.clickerDragged);
 
+    //Keyboard listener
+    document.addEventListener('keydown', glcanvas.keyDown, true);
+    document.addEventListener('keyup', glcanvas.keyUp, true);
+
     try {
         //this.gl = WebGLDebugUtils.makeDebugContext(this.glcanvas.getContext("experimental-webgl"));
         glcanvas.gl = glcanvas.getContext("webgl");
@@ -155,11 +217,10 @@ function SimpleMeshCanvas(glcanvas) {
     if (!glcanvas.gl) {
         alert("Could not initialise WebGL, sorry :-(.  Try a new version of chrome or firefox and make sure your newest graphics drivers are installed");
     }
-    glcanvas.shaders = initShaders(glcanvas.gl);
+    glcanvas.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
     //glcanvas.initPickingFramebuffer();
 
+    glcanvas.camera = null;
     glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     glcanvas.gl.enable(glcanvas.gl.DEPTH_TEST);
-    
-    requestAnimFrame(glcanvas.repaint);
 }
