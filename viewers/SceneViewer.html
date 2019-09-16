@@ -69,7 +69,8 @@
                 alert("Error parsing scene file.  Check your JSON syntax");
                 throw(error);
             }
-            glcanvas.setupScene(scene);
+            console.log(glcanvas.clientWidth + " x " + glcanvas.clientHeight);
+            glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
         }
         reader.readAsText(sceneInput.files[0]);
     });

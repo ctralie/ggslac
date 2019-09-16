@@ -99,7 +99,7 @@ function SceneCanvas(glcanvas, shadersrelpath) {
      * 
      * @param {WebGL Handle} glcanvas 
      */
-    glcanvas.setupScene = function(scene) {
+    glcanvas.setupScene = function(scene, pixWidth, pixHeight) {
         //Setup camera objects for the source and receiver
         glcanvas.scene = scene;
         let cam1pos = [0, 0, 0];
@@ -110,8 +110,8 @@ function SceneCanvas(glcanvas, shadersrelpath) {
         if ("camera2" in glcanvas.scene) {
             cam2pos = glcanvas.scene.camera2;
         }
-        glcanvas.scene.cam1 = new FPSCamera(0, 0, 0.75);
-        glcanvas.scene.cam2 = new FPSCamera(0, 0, 0.75);
+        glcanvas.scene.cam1 = new FPSCamera(pixWidth, pixHeight, 0.75);
+        glcanvas.scene.cam2 = new FPSCamera(pixWidth, pixHeight, 0.75);
         glcanvas.scene.cam1.pos = glMatrix.vec3.fromValues(cam1pos[0], cam1pos[1], cam1pos[2]);
         glcanvas.scene.cam2.pos = glMatrix.vec3.fromValues(cam2pos[0], cam2pos[1], cam2pos[2]);
         

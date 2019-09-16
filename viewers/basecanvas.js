@@ -93,6 +93,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
         let dY = mousePos.Y - this.lastY;
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
+        if (this.camera === null) {
+            return;
+        }
         if (this.dragging && this.camera.type == "polar") {
             //Translate/rotate shape
             if (glcanvas.clickType == "MIDDLE") {
@@ -217,6 +220,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
     //glcanvas.initPickingFramebuffer();
 
+    glcanvas.camera = null;
     glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     glcanvas.gl.enable(glcanvas.gl.DEPTH_TEST);
 }
