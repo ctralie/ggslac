@@ -534,7 +534,7 @@ function PolyMesh() {
     }
     
     /**
-     * Scale the matrix by different amounts across each axi
+     * Scale the matrix by different amounts across each axis
      * @param {number} dx Scale factor by dx
      * @param {number} dy Scale factor by dy
      * @param {number} dz Scale by factor dz
@@ -1122,4 +1122,46 @@ function getCylinderMesh(center, R, H, res, color) {
         cylinder.addFace([botc, vertexArr[i2][0], vertexArr[i1][0]]);
     }
     return cylinder;
+}
+
+
+/**
+ * Return a mesh representing a vertically aligned cone
+ * @param {glMatrix.vec3} center Vector at the center of the cylinder
+ * @param {number} R Radius of the cone
+ * @param {number} H Height of the cone
+ * @param {int} res Resolution around the circle of the cone
+ * @param {array} color Color of the cylinder
+ */
+function getConeMesh(center, R, H, res, color) {
+    cone = new PolyMesh();
+    let vertexArr = [];
+    let vals = [0, 0, 0];
+    if (color === undefined) {
+        color = [0.5, 0.55, 0.5];
+    }
+    // Make the base of the cone
+    for (let i = 0; i < res; i++) {
+        vals[0] = R*Math.cos(i*2*3.141/res);
+        vals[2] = R*Math.sin(i*2*3.141/res);
+        vals[1] = 0
+        let v = glMatrix.vec3.fromValues(vals[0] + center[0], vals[1] + center[1], vals[2] + center[2]);
+        vertexArr.push(cone.addVertex(v, color));
+    }
+    let topc = glMatrix.vec3.fromValues(center[0], center[1]+H, center[1]);
+    topc = cone.addVertex(topc, color);
+    let botc = glMatrix.vec3.fromValues(center[0], center[1], center[1]);
+    botc = cone.addVertex(botc, color);
+    // Make the faces for the open cone
+    let i2;
+    for (let i1 = 0; i1 < res; i1++) {
+        i2 = (i1+1) % res;
+        cone.addFace([vertexArr[i1], vertexArr[i2], topc]);
+    }
+    // Make the faces for the bottom
+    for (let i1 = 0; i1 < res; i1++) {
+        i2 = (i1+1) % res;
+        cone.addFace([botc, vertexArr[i2], vertexArr[i1]]);
+    }
+    return cone;
 }
