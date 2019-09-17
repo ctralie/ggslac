@@ -1,25 +1,16 @@
 //Purpose: Code to parse and render scene files
 
 
-BEACON_SIZE = 0.1;
-
-function drawBeacon(glcanvas, pMatrix, mvMatrix, camera, mesh, color) {
-    m = glMatrix.mat4.create();
-    glMatrix.mat4.translate(m, m, camera.pos);
-    glMatrix.mat4.scale(m, m, glMatrix.vec3.fromValues(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE));
-    glMatrix.mat4.mul(m, mvMatrix, m);
-    mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, color, camera.pos, [0, 0, 0], color, false, false, false, COLOR_SHADING);
-}
-
 //Update the beacon positions on the web site
 function vec3StrFixed(v, k) {
     return "(" + v[0].toFixed(k) + ", " + v[1].toFixed(2) + ", " + v[2].toFixed(2) + ")";
 }
 
 //A function that adds lots of fields to glcanvas for rendering the scene graph
-function SceneCanvas(glcanvas, shadersrelpath) {
+function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     BaseCanvas(glcanvas, shadersrelpath);
     glcanvas.scene = null;
+    glcanvas.specialMeshes = {};
 
     /**
      * Recursive function to load all of the meshes and to 
@@ -46,6 +37,11 @@ function SceneCanvas(glcanvas, shadersrelpath) {
             glMatrix.mat4.transpose(m, m);
             node.transform = m;
         }
+        // Keep a separate transform for display (e.g. to deal with sphere centers/radii
+        // as a transform for WebGL)
+        node.disptransform = glMatrix.mat4.create();
+        glMatrix.mat4.copy(node.disptransform, node.transform);
+
         
         //Step 2: Load in the shape with its properties
         if ('shape' in node) {
@@ -61,7 +57,29 @@ function SceneCanvas(glcanvas, shadersrelpath) {
                 node.mesh = new PolyMesh();
                 let lines = BlockLoader.loadTxt(node.shape.filename);
                 node.mesh.loadFileFromLines(lines.split("\n"));
-            }      
+            }
+            else if (node.shape.type == "sphere") {
+                if (!('sphere' in glcanvas.specialMeshes)) {
+                    let spheremesh = new PolyMesh();
+                    let lines = BlockLoader.loadTxt(meshesrelpath + "sphere1026.off")
+                    spheremesh.loadFileFromLines(lines.split("\n"));
+                    glcanvas.specialMeshes.sphere = spheremesh;
+                }
+                node.mesh = glcanvas.specialMeshes.sphere;
+                // Apply a transform that realizes the proper center and radius
+                // before the transform at this node
+                let ms = glMatrix.mat4.create();
+                let c = node.shape.center;
+                let r = node.shape.radius;
+                ms[0] = r;
+                ms[5] = r;
+                ms[10] = r;
+                ms[12] = c[0];
+                ms[13] = c[1];
+                ms[14] = c[2];
+                console.log(ms);
+                glMatrix.mat4.mul(node.disptransform, node.disptransform, ms);
+            }
         }
         if ('material' in node) {
             node.material = glcanvas.scene.materials[node.material];
@@ -144,8 +162,14 @@ function SceneCanvas(glcanvas, shadersrelpath) {
     /////////////////////////////////////////////////////
     glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
         let mvMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
+        glMatrix.mat4.mul(mvMatrix, matrixIn, node.disptransform);
         if ('mesh' in node) {
+            if ('color' in node.material) {
+                glcanvas.constColor = node.material.color;
+            }
+            else {
+                glcanvas.constColor = [0.5, 0.55, 0.5]
+            }
             node.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
         }
         if ('children' in node) {

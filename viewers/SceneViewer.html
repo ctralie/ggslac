@@ -55,7 +55,7 @@
 <script>
     let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    SceneCanvas(glcanvas, "../shaders/")
+    SceneCanvas(glcanvas, "../shaders/", "../meshes/");
 
     let sceneInput = document.getElementById('sceneInput');
     sceneInput.addEventListener('change', function(e) {
@@ -78,6 +78,7 @@
     let meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
     meshEdgesCheckbox.addEventListener('change', function(e) {
         glcanvas.drawEdges = meshEdgesCheckbox.checked;
+        console.log("glcanvas.drawEdges = " + glcanvas.drawEdges);
         requestAnimFrame(glcanvas.repaint);
     });
     meshEdgesCheckbox.checked = true;

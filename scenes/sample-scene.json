@@ -1,7 +1,7 @@
 {
     "name":"testscene",
-    "camera1":[5, 1.5, 0],
-    "camera2":[-5, 1.5, 0], 
+    "camera1":[0, 1.5, 5],
+    "camera2":[0, 1.5, -5], 
     
     "materials":{
         "green":{
@@ -15,7 +15,7 @@
             "shape":
                 {
                 "type":"mesh",
-                "filename":"../meshes/box.off"
+                "filename":"../meshes/box2402.off"
                 },
             "material":"green",
             "transform":[1, 0, 0, 0,
@@ -26,7 +26,7 @@
                 { 
                 "shape":{
                         "type":"mesh",
-                        "filename":"../meshes/box.off"
+                        "filename":"../meshes/box2402.off"
                         },
                 "transform":[2, 0, 0, 2,
                              0, 1, 0, 0,
@@ -40,9 +40,34 @@
                     "type":"mesh",
                     "filename":"../meshes/square.off"
                     },
+            "material":"green",
             "transform":[20, 0, 0, 0,
                          0, 20, 0, 0,
                          0, 0, 20, 0,
+                         0, 0, 0, 1]     
+        },
+        {
+            "shape":{
+                    "type":"sphere",
+                    "radius":0.5,
+                    "center":[0, 0, -10]
+                    },
+            "material":"green",
+            "transform":[1, 0, 0, 0,
+                         0, 1, 0, 0,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1]     
+        },
+        {
+            "shape":{
+                    "type":"sphere",
+                    "radius":2,
+                    "center":[4, 0, -10]
+                    },
+            "material":"green",
+            "transform":[1, 0, 0, 0,
+                         0, 1, 0, 0,
+                         0, 0, 1, 0,
                          0, 0, 0, 1]     
         }
     ]
