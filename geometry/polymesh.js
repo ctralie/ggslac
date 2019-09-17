@@ -1077,35 +1077,49 @@ function getIcosahedronMesh() {
 }
 
 /**
- * Return a mesh representing a cylinder
- * @param {glMatrix.vec3} axis Vector along the axis of the cylinder 
+ * Return a mesh representing a vertically aligned cylinder
  * @param {glMatrix.vec3} center Vector at the center of the cylinder
  * @param {number} R Radius of the cylinder 
  * @param {number} H Height of the cylinder
- * @param {array} color Color of the cylinder
  * @param {int} res Resolution around the circle of the cylinder
+ * @param {array} color Color of the cylinder
  */
-function getCylinderMesh(axis, center, R, H, color, res) {
+function getCylinderMesh(center, R, H, res, color) {
     cylinder = new PolyMesh();
     let vertexArr = [];
     let vals = [0, 0, 0];
-    //Make the main cylinder part
+    if (color === undefined) {
+        color = [0.5, 0.55, 0.5];
+    }
+    // Make the main cylinder part
     for (let i = 0; i < res; i++) {
         vertexArr.push([]);
         for (let j = 0; j < 2; j++) {
-            vals[axis[0]] = R*Math.cos(i*2*3.141/res);
-            vals[axis[1]] = R*Math.sin(i*2*3.141/res);
-            vals[axis[2]] = H/2*(2*j-1)
+            vals[0] = R*Math.cos(i*2*3.141/res);
+            vals[2] = R*Math.sin(i*2*3.141/res);
+            vals[1] = H/2*(2*j-1)
             let v = glMatrix.vec3.fromValues(vals[0] + center[0], vals[1] + center[1], vals[2] + center[2]);
             vertexArr[i].push(cylinder.addVertex(v, color));
         }
     }
-    //Make the faces
+    let topc = glMatrix.vec3.fromValues(center[0], center[1]+H/2, center[1]);
+    topc = cylinder.addVertex(topc, color);
+    let botc = glMatrix.vec3.fromValues(center[0], center[1]-H/2, center[1]);
+    botc = cylinder.addVertex(botc, color);
+    // Make the faces for the open cylinder
     let i2;
     for (let i1 = 0; i1 < res; i1++) {
         i2 = (i1+1) % res;
         cylinder.addFace([vertexArr[i1][0], vertexArr[i2][0], vertexArr[i2][1]]);
         cylinder.addFace([vertexArr[i1][0], vertexArr[i2][1], vertexArr[i1][1]]);
+    }
+    // Make the faces for the top and bottom
+    for (let i1 = 0; i1 < res; i1++) {
+        i2 = (i1+1) % res;
+        // Top
+        cylinder.addFace([vertexArr[i1][1], vertexArr[i2][1], topc]);
+        // Bottom
+        cylinder.addFace([botc, vertexArr[i2][0], vertexArr[i1][0]]);
     }
     return cylinder;
 }

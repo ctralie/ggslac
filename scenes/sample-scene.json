@@ -5,7 +5,10 @@
     
     "materials":{
         "green":{
-            "color":[0.0, 1.0, 0.0]        
+            "color":[0.0, 1.0, 0.0]
+        },
+        "red":{
+            "color":[1.0, 0.0, 0.0]
         },
         "shader":"colorShader"
     },
@@ -14,8 +17,11 @@
         { 
             "shape":
                 {
-                "type":"mesh",
-                "filename":"../meshes/box2402.off"
+                "type":"box",
+                "L":1,
+                "W":1,
+                "H":1,
+                "center":[0, 0, 0]
                 },
             "material":"green",
             "transform":[1, 0, 0, 0,
@@ -24,10 +30,14 @@
                          0, 0, 0, 1],  
             "children":[
                 { 
-                "shape":{
-                        "type":"mesh",
-                        "filename":"../meshes/box2402.off"
-                        },
+                "shape":
+                    {
+                    "type":"box",
+                    "L":1,
+                    "W":1,
+                    "H":1,
+                    "center":[0, 0, 0]
+                    },
                 "transform":[2, 0, 0, 2,
                              0, 1, 0, 0,
                              0, 0, 1, 0,
@@ -53,7 +63,7 @@
                     "center":[0, 0, -10]
                     },
             "material":"green",
-            "transform":[1, 0, 0, 0,
+            "transform":[2, 0, 0, 0,
                          0, 1, 0, 0,
                          0, 0, 1, 0,
                          0, 0, 0, 1]     
@@ -65,6 +75,19 @@
                     "center":[4, 0, -10]
                     },
             "material":"green",
+            "transform":[1, 0, 0, 0,
+                         0, 1, 0, 0,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1]     
+        },
+        {
+            "shape":{
+                    "type":"cylinder",
+                    "radius":1,
+                    "height":3,
+                    "center":[-4, 0, 0]
+                    },
+            "material":"red",
             "transform":[1, 0, 0, 0,
                          0, 1, 0, 0,
                          0, 0, 1, 0,

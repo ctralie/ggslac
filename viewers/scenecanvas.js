@@ -77,8 +77,47 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 ms[12] = c[0];
                 ms[13] = c[1];
                 ms[14] = c[2];
-                console.log(ms);
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, ms);
+            }
+            else if (node.shape.type == "box") {
+                if (!('box' in glcanvas.specialMeshes)) {
+                    let boxmesh = new PolyMesh();
+                    let lines = BlockLoader.loadTxt(meshesrelpath + "box2402.off");
+                    boxmesh.loadFileFromLines(lines.split("\n"));
+                    glcanvas.specialMeshes.box = boxmesh;
+                }
+                node.mesh = glcanvas.specialMeshes.box;
+                let mb = glMatrix.mat4.create();
+                let c = node.shape.center;
+                mb[0] = node.shape.L; // Length
+                mb[5] = node.shape.W; // Width
+                mb[10] = node.shape.H;
+                mb[12] = c[0];
+                mb[13] = c[1];
+                mb[14] = c[2];
+                glMatrix.mat4.mul(node.disptransform, node.disptransform, mb);
+            }
+            else if (node.shape.type == "cylinder") {
+                if (!('cylinder' in glcanvas.specialMeshes)) {
+                    let center = glMatrix.vec3.fromValues(0, 0, 0);
+                    let cylindermesh = getCylinderMesh(center, 1.0, 1.0, 100);
+                    glcanvas.specialMeshes.cylinder = cylindermesh;
+                }
+                node.mesh = glcanvas.specialMeshes.cylinder;
+                let mc = glMatrix.mat4.create();
+                let c = node.shape.center;
+                let r = node.shape.radius;
+                let h = node.shape.height;
+                mc[0] = r;
+                mc[5] = h;
+                mc[10] = r;
+                mc[12] = c[0];
+                mc[13] = c[1];
+                mc[14] = c[2];
+                glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
+            }
+            else {
+                console.log("Warning: Unknown shape type " + node.shape.type);
             }
         }
         if ('material' in node) {
@@ -97,12 +136,18 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     }
 
     /**
-     * 
-     * @param {}
+     * Recursive function to output information about the scene tree
+     * @param {object} node The scene node
+     * @param {string} levelStr A string that keeps track of how much
+     *                          to tab over based on depth in tree
      */
     glcanvas.outputSceneMeshes = function(node, levelStr) {
         if ('mesh' in node) {
-            console.log("*" + levelStr + node.mesh);
+            let nodestring = "empty";
+            if ('type' in node.shape) {
+                nodestring = node.shape.type;
+            }
+            console.log("*" + levelStr + nodestring);
         }
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
@@ -149,9 +194,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glMatrix.vec3.cross(glcanvas.scene.cam2.right, glcanvas.scene.cam2.up, T);
         
         //Now recurse and setup all of the children nodes in the tree
-        glcanvas.scene.children.forEach(function(child) {
+        glcanvas.scene.children.forEach(function(child, i) {
             glcanvas.parseNode(child);
-            glcanvas.outputSceneMeshes(child, "");
+        });
+
+        //Output information about the scene tree
+        glcanvas.scene.children.forEach(function(child, i) {
+            glcanvas.outputSceneMeshes(child, " ");
         });
         glcanvas.viewFromCam1();
     }
@@ -183,7 +232,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         if (glcanvas.scene === null) {
             return;
         }
-        glcanvas.light1Pos = glcanvas.camera.pos;
+        //glcanvas.light1Pos = glcanvas.camera.pos;
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
         
