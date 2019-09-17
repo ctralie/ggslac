@@ -322,11 +322,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
 
 
         // Now draw the beacons for the cameras (assuming FPSCamera)
-        if (glcanvas.camera == glcanvas.scene.cam2) {
-            glcanvas.drawCameraBeacon(glcanvas.scene.cam1, pMatrix, mvMatrix, BEACON_COLOR_1);
-        }
-        else {
-            glcanvas.drawCameraBeacon(glcanvas.scene.cam2, pMatrix, mvMatrix, BEACON_COLOR_2);
+        if (glcanvas.showCameras) {
+            if (glcanvas.camera == glcanvas.scene.cam2) {
+                glcanvas.drawCameraBeacon(glcanvas.scene.cam1, pMatrix, mvMatrix, BEACON_COLOR_1);
+            }
+            else {
+                glcanvas.drawCameraBeacon(glcanvas.scene.cam2, pMatrix, mvMatrix, BEACON_COLOR_2);
+            }
         }
         
         //Redraw if walking
@@ -385,4 +387,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.shaderToUse = glcanvas.shaders.colorShader;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
+    glcanvas.walkspeed = 2.6;
+    glcanvas.showCameras = true;
 }

@@ -832,10 +832,9 @@ function PolyMesh() {
             return;
         }
         if (color === undefined) {
-            color = [0.0, 0.0, 1.0];
+            color = [1.0, 1.0, 1.0];
         }
         if (this.needsDisplayUpdate) {
-            console.log("Redrawing edges");
             for (let i = 0; i < this.edges.length; i++) {
                 let P1 = this.edges[i].v1.pos;
                 let P2 = this.edges[i].v2.pos;
