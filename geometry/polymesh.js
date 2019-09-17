@@ -792,14 +792,13 @@ function PolyMesh() {
     //which it will be if mvMatrix is describing the camera
     /**
      * Draw the surface normals as a bunch of blue line segments
-     * @param {WebGL Handle} gl WebGL Handle
      * @param {glMatrix.mat4} pMatrix The projection matrix
      * @param {glMatrix.mat4} mvMatrix The modelview matrix 
      *      This assumes the upper left 3x3 matrix of the modelview matrix 
      *      is orthogonal, which it will be if mvMatrix is describing the camera
      * @param {array} color An array of RGB, or blue by default
      */
-    this.drawNormals = function(gl, pMatrix, mvMatrix, color) {
+    this.drawNormals = function(pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
             return;
@@ -823,12 +822,11 @@ function PolyMesh() {
     /**
      * Draw the surface edges as a bunch of blue line segments
      * 
-     * @param {WebGL Handle} gl WebGL Handle
      * @param {glMatrix.mat4} pMatrix The projection matrix
      * @param {glMatrix.mat4} mvMatrix The modelview matrix 
      * @param {array} color An array of RGB, or blue by default
      */
-    this.drawEdges = function(gl, pMatrix, mvMatrix, color) {
+    this.drawEdges = function(pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh edges, but simple drawer is null");
             return;
@@ -837,6 +835,7 @@ function PolyMesh() {
             color = [0.0, 0.0, 1.0];
         }
         if (this.needsDisplayUpdate) {
+            console.log("Redrawing edges");
             for (let i = 0; i < this.edges.length; i++) {
                 let P1 = this.edges[i].v1.pos;
                 let P2 = this.edges[i].v2.pos;
@@ -849,12 +848,11 @@ function PolyMesh() {
     /**
      * Draw the surface points as a scatter plot
      * 
-     * @param {WebGL Handle} gl WebGL Handle
      * @param {glMatrix.mat4} pMatrix The projection matrix
      * @param {glMatrix.mat4} mvMatrix The modelview matrix 
      * @param {array} color An array of RGB, or red by default
      */
-    this.drawPoints = function(gl, pMatrix, mvMatrix, color) {
+    this.drawPoints = function(pMatrix, mvMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh points, but simple drawer is null");
             return;
@@ -958,7 +956,7 @@ function PolyMesh() {
      *                        a flat and color shader
      * @param {glMatrix.mat4} pMatrix The projection matrix
      * @param {glMatrix.mat4} mvMatrix The modelview matrix 
-     * @param {object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, doDrawNormals, doDrawEdges, doDrawPoints, shaderToUse
+     * @param {object} opts An object of additional options, including ambientColor, light1Pos, light2Pos, lightColor, drawNormals, drawEdges, drawPoints, shaderToUse
      */
     this.render = function(gl, shaders, pMatrix, mvMatrix, opts) {
         if (this.vertices.length == 0) {
@@ -994,13 +992,13 @@ function PolyMesh() {
             this.drawer.reset();
         }
         if (opts.drawNormals) {
-            this.drawNormals(gl, pMatrix, mvMatrix);
+            this.drawNormals(pMatrix, mvMatrix);
         }
         if (opts.drawEdges) {
-            this.drawEdges(gl, pMatrix, mvMatrix);
+            this.drawEdges(pMatrix, mvMatrix);
         }
         if (opts.drawPoints) {
-            this.drawPoints(gl, pMatrix, mvMatrix);
+            this.drawPoints(pMatrix, mvMatrix);
         }
         
         if (this.needsDisplayUpdate) {

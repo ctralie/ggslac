@@ -191,7 +191,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /**
      * Fill in the camera based on a JSON specification
      * @param {object} camera The camera object to fill in
-     * @param {object} obj The JSON fields
+     * @param {object} obj The JSON object
      */
     glcanvas.fillInCamera = function(camera, obj) {
         if ('pos' in obj) {
@@ -204,6 +204,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         }
         if ('fovy' in obj) {
             camera.fovy = obj.fovy;
+        }
+        if ('near' in obj) {
+            camera.near = obj.near;
+        }
+        if ('far' in obj) {
+            camera.far = obj.far;
         }
     }
 
@@ -334,6 +340,26 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             requestAnimFrame(glcanvas.repaint);
         }
         glcanvas.updateCamerasHTML();
+    }
+
+    glcanvas.updateMeshDrawingsRecurse = function(node) {
+        if ('mesh' in node) {
+            node.mesh.needsDisplayUpdate = true;
+        }
+        if ('children' in node) {
+            node.children.forEach(function(child) {
+                glcanvas.updateMeshDrawingsRecurse(child);
+            })
+        }
+    }
+
+    glcanvas.updateMeshDrawings = function() {
+        let scene = glcanvas.scene;
+        if ('children' in glcanvas.scene) {
+            scene.children.forEach(function(child) {
+                glcanvas.updateMeshDrawingsRecurse(child);
+            });
+        }
     }
 
     /////////////////////////////////////////////////////

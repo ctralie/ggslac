@@ -71,6 +71,7 @@
             }
             console.log(glcanvas.clientWidth + " x " + glcanvas.clientHeight);
             glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+            glcanvas.drawEdges = meshEdgesCheckbox.checked;
         }
         reader.readAsText(sceneInput.files[0]);
     });
@@ -78,10 +79,10 @@
     let meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
     meshEdgesCheckbox.addEventListener('change', function(e) {
         glcanvas.drawEdges = meshEdgesCheckbox.checked;
-        console.log("glcanvas.drawEdges = " + glcanvas.drawEdges);
+        glcanvas.updateMeshDrawings();
         requestAnimFrame(glcanvas.repaint);
     });
-    meshEdgesCheckbox.checked = true;
+    meshEdgesCheckbox.checked = false;
 
     function callViewFromCamera1() {
         glcanvas.viewFromCamera1();
