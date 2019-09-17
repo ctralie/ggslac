@@ -44,10 +44,15 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     //Step 1: Setup mouse callbacks
     /////////////////////////////////////////////////////
     glcanvas.getMousePos = function(evt) {
-        let rect = this.getBoundingClientRect();
+        if ('touches' in evt) {
+            return {
+                X: evt.touches[0].clientX,
+                Y: evt.touches[1].clientY
+            }
+        }
         return {
-            X: evt.clientX - rect.left,
-            Y: evt.clientY - rect.top
+            X: evt.clientX,
+            Y: evt.clientY
         };
     }
     
