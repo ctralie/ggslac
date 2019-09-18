@@ -145,6 +145,20 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 mc[13] = c[1];
                 mc[14] = c[2];
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
+            }
+            else if (node.shape.type == "scene") {
+                if (!('filename' in node.shape)) {
+                    console.log("ERROR: filename not specified for scene: " + node);
+                    return;
+                }
+                let subscene = BlockLoader.loadJSON('../scenes/scene2.json');
+                // Ignore the cameras, but copy over the materials
+                if ('materials' in subscene) {
+                    glcanvas.scene.materials = {...glcanvas.scene.materials, ...subscene.materials }
+                }
+                if ('children' in subscene) {
+                    node.children = subscene.children;
+                }
             }            
             else {
                 console.log("Warning: Unknown shape type " + node.shape.type);
