@@ -235,6 +235,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
      */
     glcanvas.setupScene = function(scene, pixWidth, pixHeight) {
         //Setup camera objects for the source and receiver
+        if (!('materials' in scene)) {
+            scene.materials = {};
+        }
         glcanvas.scene = scene;
         glcanvas.scene.cam1 = new FPSCamera(pixWidth, pixHeight);
         glcanvas.scene.cam2 = new FPSCamera(pixWidth, pixHeight);
