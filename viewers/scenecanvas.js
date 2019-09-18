@@ -103,14 +103,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
                 node.mesh = glcanvas.specialMeshes.box;
                 let mb = glMatrix.mat4.create();
-                if ('L' in node.shape) {
-                    mb[0] = node.shape.L; // Length
+                if ('width' in node.shape) {
+                    mb[0] = node.shape.width;
                 }
-                if ('W' in node.shape) {
-                    mb[5] = node.shape.W; // Width
+                if ('height' in node.shape) {
+                    mb[5] = node.shape.height;
                 }
-                if ('H' in node.shape) {
-                    mb[10] = node.shape.H;
+                if ('length' in node.shape) {
+                    mb[10] = node.shape.length;
                 }
                 if ('center' in node.shape) {
                     let c = node.shape.center;

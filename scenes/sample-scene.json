@@ -16,8 +16,7 @@
         },
         "red":{
             "color":[1.0, 0.0, 0.0]
-        },
-        "shader":"colorShader"
+        }
     },
     
     "children":[
@@ -25,9 +24,9 @@
             "shape":
                 {
                 "type":"box",
-                "L":1,
-                "W":1,
-                "H":1,
+                "length":1,
+                "width":1,
+                "height":1,
                 "center":[0, 0, 0]
                 },
             "material":"green",
@@ -40,9 +39,9 @@
                 "shape":
                     {
                     "type":"box",
-                    "L":1,
-                    "W":1,
-                    "H":1,
+                    "length":1,
+                    "width":1,
+                    "height":1,
                     "center":[0, 0, 0]
                     },
                 "transform":[2, 0, 0, 2,
