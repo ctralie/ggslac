@@ -151,7 +151,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     console.log("ERROR: filename not specified for scene: " + node);
                     return;
                 }
-                let subscene = BlockLoader.loadJSON('../scenes/scene2.json');
+                let subscene = BlockLoader.loadJSON(node.shape.filename);
                 // Ignore the cameras, but copy over the materials
                 if ('materials' in subscene) {
                     glcanvas.scene.materials = {...glcanvas.scene.materials, ...subscene.materials }
