@@ -80,14 +80,18 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 // Apply a transform that realizes the proper center and radius
                 // before the transform at this node
                 let ms = glMatrix.mat4.create();
-                let c = node.shape.center;
-                let r = node.shape.radius;
-                ms[0] = r;
-                ms[5] = r;
-                ms[10] = r;
-                ms[12] = c[0];
-                ms[13] = c[1];
-                ms[14] = c[2];
+                if ('r' in node.shape) {
+                    let r = node.shape.radius;
+                    ms[0] = r;
+                    ms[5] = r;
+                    ms[10] = r;
+                }
+                if ('center' in node.shape) {
+                    let c = node.shape.center;
+                    ms[12] = c[0];
+                    ms[13] = c[1];
+                    ms[14] = c[2];
+                }
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, ms);
             }
             else if (node.shape.type == "box") {
@@ -99,13 +103,21 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
                 node.mesh = glcanvas.specialMeshes.box;
                 let mb = glMatrix.mat4.create();
-                let c = node.shape.center;
-                mb[0] = node.shape.L; // Length
-                mb[5] = node.shape.W; // Width
-                mb[10] = node.shape.H;
-                mb[12] = c[0];
-                mb[13] = c[1];
-                mb[14] = c[2];
+                if ('L' in node.shape) {
+                    mb[0] = node.shape.L; // Length
+                }
+                if ('W' in node.shape) {
+                    mb[5] = node.shape.W; // Width
+                }
+                if ('H' in node.shape) {
+                    mb[10] = node.shape.H;
+                }
+                if ('center' in node.shape) {
+                    let c = node.shape.center;
+                    mb[12] = c[0];
+                    mb[13] = c[1];
+                    mb[14] = c[2];
+                }
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, mb);
             }
             else if (node.shape.type == "cylinder") {
@@ -116,15 +128,19 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
                 node.mesh = glcanvas.specialMeshes.cylinder;
                 let mc = glMatrix.mat4.create();
-                let c = node.shape.center;
-                let r = node.shape.radius;
-                let h = node.shape.height;
-                mc[0] = r;
-                mc[5] = h;
-                mc[10] = r;
-                mc[12] = c[0];
-                mc[13] = c[1];
-                mc[14] = c[2];
+                if ('radius' in node.shape) {
+                    mc[0] = node.shape.radius;
+                    mc[10] = node.shape.radius;
+                }
+                if ('height' in node.shape) {
+                    mc[5] = node.shape.height;
+                }
+                if ('center' in node.shape) {
+                    let c = node.shape.center;
+                    mc[12] = c[0];
+                    mc[13] = c[1];
+                    mc[14] = c[2];
+                }
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
             }
             else if (node.shape.type == "cone") {
@@ -135,15 +151,19 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
                 node.mesh = glcanvas.specialMeshes.cone;
                 let mc = glMatrix.mat4.create();
-                let c = node.shape.center;
-                let r = node.shape.radius;
-                let h = node.shape.height;
-                mc[0] = r;
-                mc[5] = h;
-                mc[10] = r;
-                mc[12] = c[0];
-                mc[13] = c[1];
-                mc[14] = c[2];
+                if ('radius' in node.shape) {
+                    mc[0] = node.shape.radius;
+                    mc[10] = node.shape.radius;
+                }
+                if ('height' in node.shape) {
+                    mc[5] = node.shape.height;
+                }
+                if ('center' in node.shape) {
+                    let c = node.shape.center;
+                    mc[12] = c[0];
+                    mc[13] = c[1];
+                    mc[14] = c[2];
+                }
                 glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
             }
             else if (node.shape.type == "scene") {
