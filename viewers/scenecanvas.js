@@ -181,7 +181,10 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     glcanvas.scene.materials = {...glcanvas.scene.materials, ...subscene.materials };
                 }
                 if ('children' in subscene) {
-                    node.children = {...node.children, ...subscene.children};
+                    if (!('children' in node)) {
+                        node.children = [];
+                    }
+                    node.children = node.children.concat(subscene.children);
                 }
             }            
             else {
@@ -298,15 +301,17 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
-                glcanvas.constColor = [0.5, 0.55, 0.5];
-                if ('material' in shape) {
-                    if ('color' in shape.material) {
-                        glcanvas.constColor = shape.material.color;
+                if (!(shape.mesh === null)) {
+                    glcanvas.constColor = [0.5, 0.55, 0.5];
+                    if ('material' in shape) {
+                        if ('color' in shape.material) {
+                            glcanvas.constColor = shape.material.color;
+                        }
                     }
+                    m = glMatrix.mat4.create();
+                    glMatrix.mat4.mul(m, mvMatrix, shape.ms);
+                    shape.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
                 }
-                m = glMatrix.mat4.create();
-                glMatrix.mat4.mul(m, mvMatrix, shape.ms);
-                shape.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
             }
         });
         if ('children' in node) {
