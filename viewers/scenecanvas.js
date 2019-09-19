@@ -49,154 +49,163 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glMatrix.mat4.transpose(m, m);
             node.transform = m;
         }
-        // Keep a separate transform for display (e.g. to deal with sphere centers/radii
-        // as a transform for WebGL)
-        node.disptransform = glMatrix.mat4.create();
-        glMatrix.mat4.copy(node.disptransform, node.transform);
 
-        //Step 2: Load in the shape with its properties
-        if ('shape' in node) {
-            if (!('type' in node.shape)) {
+        //Step 2: Load in each shape with its properties
+        if (!('shapes' in node)) {
+            node.shapes = [];
+        }
+        for (var i = 0; i < node.shapes.length; i++) {
+            let shape = node.shapes[i];
+            if (!('type' in shape)) {
                 console.log("ERROR: Shape not specified in node " + node);
-                return;
+                continue;
             }
-            if (node.shape.type == "mesh") {
-                if (!('filename' in node.shape)) {
-                    console.log("ERROR: filename not specified for mesh: " + node.shape);
-                    return;
+            // Create an extra transformation going down to the shape to accommodate
+            // shape properties such as length/width/height/center/radius
+            shape.ms = glMatrix.mat4.create();
+            shape.mesh = null;
+            if (shape.type == "mesh") {
+                if (!('filename' in shape)) {
+                    console.log("ERROR: filename not specified for mesh: " + shape);
+                    continue;
                 }
-                node.mesh = new PolyMesh();
-                let lines = BlockLoader.loadTxt(node.shape.filename);
-                node.mesh.loadFileFromLines(lines.split("\n"));
+                shape.mesh = new PolyMesh();
+                let lines = BlockLoader.loadTxt(shape.filename);
+                shape.mesh.loadFileFromLines(lines.split("\n"));
             }
-            else if (node.shape.type == "sphere") {
+            else if (shape.type == "sphere") {
                 if (!('sphere' in glcanvas.specialMeshes)) {
                     let spheremesh = new PolyMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "sphere1026.off")
                     spheremesh.loadFileFromLines(lines.split("\n"));
                     glcanvas.specialMeshes.sphere = spheremesh;
                 }
-                node.mesh = glcanvas.specialMeshes.sphere;
+                shape.mesh = glcanvas.specialMeshes.sphere;
                 // Apply a transform that realizes the proper center and radius
                 // before the transform at this node
                 let ms = glMatrix.mat4.create();
-                if ('r' in node.shape) {
-                    let r = node.shape.radius;
+                if ('r' in shape) {
+                    let r = shape.radius;
                     ms[0] = r;
                     ms[5] = r;
                     ms[10] = r;
                 }
-                if ('center' in node.shape) {
-                    let c = node.shape.center;
+                if ('center' in shape) {
+                    let c = shape.center;
                     ms[12] = c[0];
                     ms[13] = c[1];
                     ms[14] = c[2];
                 }
-                glMatrix.mat4.mul(node.disptransform, node.disptransform, ms);
+                shape.ms = ms;
             }
-            else if (node.shape.type == "box") {
+            else if (shape.type == "box") {
                 if (!('box' in glcanvas.specialMeshes)) {
                     let boxmesh = new PolyMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "box2402.off");
                     boxmesh.loadFileFromLines(lines.split("\n"));
                     glcanvas.specialMeshes.box = boxmesh;
                 }
-                node.mesh = glcanvas.specialMeshes.box;
-                let mb = glMatrix.mat4.create();
-                if ('width' in node.shape) {
-                    mb[0] = node.shape.width;
+                shape.mesh = glcanvas.specialMeshes.box;
+                let ms = glMatrix.mat4.create();
+                if ('width' in shape) {
+                    ms[0] = shape.width;
                 }
-                if ('height' in node.shape) {
-                    mb[5] = node.shape.height;
+                if ('height' in shape) {
+                    ms[5] = shape.height;
                 }
-                if ('length' in node.shape) {
-                    mb[10] = node.shape.length;
+                if ('length' in shape) {
+                    ms[10] = shape.length;
                 }
-                if ('center' in node.shape) {
-                    let c = node.shape.center;
-                    mb[12] = c[0];
-                    mb[13] = c[1];
-                    mb[14] = c[2];
+                if ('center' in shape) {
+                    let c = shape.center;
+                    ms[12] = c[0];
+                    ms[13] = c[1];
+                    ms[14] = c[2];
                 }
-                glMatrix.mat4.mul(node.disptransform, node.disptransform, mb);
+                shape.ms = ms;
             }
-            else if (node.shape.type == "cylinder") {
+            else if (shape.type == "cylinder") {
                 if (!('cylinder' in glcanvas.specialMeshes)) {
                     let center = glMatrix.vec3.fromValues(0, 0, 0);
                     let cylindermesh = getCylinderMesh(center, 1.0, 1.0, 100);
                     glcanvas.specialMeshes.cylinder = cylindermesh;
                 }
-                node.mesh = glcanvas.specialMeshes.cylinder;
-                let mc = glMatrix.mat4.create();
-                if ('radius' in node.shape) {
-                    mc[0] = node.shape.radius;
-                    mc[10] = node.shape.radius;
+                shape.mesh = glcanvas.specialMeshes.cylinder;
+                let ms = glMatrix.mat4.create();
+                if ('radius' in shape) {
+                    ms[0] = shape.radius;
+                    ms[10] = shape.radius;
                 }
-                if ('height' in node.shape) {
-                    mc[5] = node.shape.height;
+                if ('height' in shape) {
+                    ms[5] = shape.height;
                 }
-                if ('center' in node.shape) {
-                    let c = node.shape.center;
-                    mc[12] = c[0];
-                    mc[13] = c[1];
-                    mc[14] = c[2];
+                if ('center' in shape) {
+                    let c = shape.center;
+                    ms[12] = c[0];
+                    ms[13] = c[1];
+                    ms[14] = c[2];
                 }
-                glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
+                shape.ms = ms;
             }
-            else if (node.shape.type == "cone") {
+            else if (shape.type == "cone") {
                 if (!('cone' in glcanvas.specialMeshes)) {
                     let center = glMatrix.vec3.fromValues(0, 0, 0);
                     let conemesh = getConeMesh(center, 1.0, 1.0, 100);
                     glcanvas.specialMeshes.cone = conemesh;
                 }
-                node.mesh = glcanvas.specialMeshes.cone;
-                let mc = glMatrix.mat4.create();
-                if ('radius' in node.shape) {
-                    mc[0] = node.shape.radius;
-                    mc[10] = node.shape.radius;
+                shape.mesh = glcanvas.specialMeshes.cone;
+                let ms = glMatrix.mat4.create();
+                if ('radius' in shape) {
+                    ms[0] = shape.radius;
+                    ms[10] = shape.radius;
                 }
-                if ('height' in node.shape) {
-                    mc[5] = node.shape.height;
+                if ('height' in shape) {
+                    ms[5] = shape.height;
                 }
-                if ('center' in node.shape) {
-                    let c = node.shape.center;
-                    mc[12] = c[0];
-                    mc[13] = c[1];
-                    mc[14] = c[2];
+                if ('center' in shape) {
+                    let c = shape.center;
+                    ms[12] = c[0];
+                    ms[13] = c[1];
+                    ms[14] = c[2];
                 }
-                glMatrix.mat4.mul(node.disptransform, node.disptransform, mc);
+                shape.ms = ms;
             }
-            else if (node.shape.type == "scene") {
-                if (!('filename' in node.shape)) {
+            else if (shape.type == "scene") {
+                if (!('filename' in shape)) {
                     console.log("ERROR: filename not specified for scene: " + node);
-                    return;
+                    continue;
                 }
-                let subscene = BlockLoader.loadJSON(node.shape.filename);
+                let subscene = BlockLoader.loadJSON(shape.filename);
                 // Ignore the cameras, but copy over the materials
                 if ('materials' in subscene) {
-                    glcanvas.scene.materials = {...glcanvas.scene.materials, ...subscene.materials }
+                    glcanvas.scene.materials = {...glcanvas.scene.materials, ...subscene.materials };
                 }
                 if ('children' in subscene) {
-                    node.children = subscene.children;
+                    node.children = {...node.children, ...subscene.children};
                 }
             }            
             else {
-                console.log("Warning: Unknown shape type " + node.shape.type);
+                console.log("Warning: Unknown shape type " + shape.type);
             }
-        }
-        if ('material' in node) {
-            node.material = glcanvas.scene.materials[node.material];
-        }
-        else {
-            // Default material is greenish gray flat color
-            node.material = {"color":[0.5, 0.55, 0.5]};
+
+            // Figure out material associated to this shape
+            if ('material' in shape) {
+                shape.material = glcanvas.scene.materials[shape.material];
+            }
+            else {
+                // Default material is greenish gray flat color
+                shape.material = {"color":[0.5, 0.55, 0.5]};
+            }
         }
         
-        if ('children' in node) {
-            for (let i = 0; i < node.children.length; i++) {
-                glcanvas.parseNode(node.children[i]);
-            }
+
+        // Step 3: Branch out to child subtrees recursively
+        if (!('children' in node)) {
+            node.children = [];
         }
+        node.children.forEach(function(child) {
+            glcanvas.parseNode(child);
+        });
     }
 
     /**
@@ -206,14 +215,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
      *                          to tab over based on depth in tree
      */
     glcanvas.getSceneString = function(node, levelStr) {
-        let s = "*" + levelStr + " Empty Node";
-        if ('mesh' in node) {
-            let nodestring = "empty";
-            if ('type' in node.shape) {
-                nodestring = node.shape.type;
+        let s = "";
+        node.shapes.forEach(function(shape) {
+            if ('mesh' in shape) {
+                if ('type' in shape) {
+                    s += "\n*" + levelStr + shape.type;
+                }
             }
-            s = "*" + levelStr + nodestring;
-        }
+        })
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
                 s += "\n" + glcanvas.getSceneString(node.children[i], levelStr+"\t");
@@ -286,16 +295,20 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
         let mvMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.mul(mvMatrix, matrixIn, node.disptransform);
-        if ('mesh' in node) {
-            if ('color' in node.material) {
-                glcanvas.constColor = node.material.color;
+        glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
+        node.shapes.forEach(function(shape) {
+            if ('mesh' in shape) {
+                glcanvas.constColor = [0.5, 0.55, 0.5];
+                if ('material' in shape) {
+                    if ('color' in shape.material) {
+                        glcanvas.constColor = shape.material.color;
+                    }
+                }
+                m = glMatrix.mat4.create();
+                glMatrix.mat4.mul(m, mvMatrix, shape.ms);
+                shape.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
             }
-            else {
-                glcanvas.constColor = [0.5, 0.55, 0.5]
-            }
-            node.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
-        }
+        });
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
                 glcanvas.repaintRecurse(node.children[i], pMatrix, mvMatrix);
@@ -382,9 +395,11 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     }
 
     glcanvas.updateMeshDrawingsRecurse = function(node) {
-        if ('mesh' in node) {
-            node.mesh.needsDisplayUpdate = true;
-        }
+        node.shapes.forEach(function(shape) {
+            if ('mesh' in shape) {
+                shape.mesh.needsDisplayUpdate = true;
+            }
+        });
         if ('children' in node) {
             node.children.forEach(function(child) {
                 glcanvas.updateMeshDrawingsRecurse(child);

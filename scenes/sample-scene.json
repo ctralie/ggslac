@@ -20,97 +20,100 @@
     },
     
     "children":[
-        { 
-            "shape":
+        {
+            "transform":[1, 0, 0, 0,
+                         0, 1, 0, 0.5,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1],
+            "shapes":[
                 {
                 "type":"box",
                 "length":1,
                 "width":1,
                 "height":1,
-                "center":[0, 0, 0]
-                },
-            "material":"green",
-            "transform":[1, 0, 0, 0,
-                         0, 1, 0, 0.5,
-                         0, 0, 1, 0,
-                         0, 0, 0, 1],  
+                "center":[0, 0, 0],
+                "material":"green"
+                }
+            ],
             "children":[
                 { 
-                "shape":
-                    {
-                    "type":"box",
-                    "length":1,
-                    "width":1,
-                    "height":1,
-                    "center":[0, 0, 0]
-                    },
-                "transform":[2, 0, 0, 2,
-                             0, 1, 0, 0,
-                             0, 0, 1, 0,
-                             0, 0, 0, 1]     
+                    "transform":[0.707, 0, 0.707, 2,
+                        0, 1, 0, 0,
+                        -0.707, 0, 0.707, 0,
+                        0, 0, 0, 1],
+                    "children":[
+                        {
+                            "transform":[2, 0, 0, 0,
+                                        0, 1, 0, 0,
+                                        0, 0, 1, 0,
+                                        0, 0, 0, 1],
+                            "shapes":[
+                                {
+                                "type":"box",
+                                "length":1,
+                                "width":1,
+                                "height":1,
+                                "center":[0, 0, 0]
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },
+
         {
-            "shape":{
-                    "type":"mesh",
-                    "filename":"../meshes/square.off"
-                    },
-            "material":"green",
             "transform":[20, 0, 0, 0,
-                         0, 20, 0, 0,
-                         0, 0, 20, 0,
-                         0, 0, 0, 1]     
+                        0, 20, 0, 0,
+                        0, 0, 20, 0,
+                        0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"mesh",
+                "filename":"../meshes/square.off",
+                "material":"green"
+                }
+            ]
         },
+
         {
-            "shape":{
-                    "type":"sphere",
-                    "radius":0.5,
-                    "center":[0, 0, -10]
-                    },
-            "material":"green",
             "transform":[2, 0, 0, 0,
                          0, 1, 0, 0,
                          0, 0, 1, 0,
-                         0, 0, 0, 1]     
+                         0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"sphere",
+                    "radius":0.5,
+                    "center":[0, 0, -10],
+                    "material":"green"
+                }
+            ]
         },
+
         {
-            "shape":{
+            "shapes":[
+                {
                     "type":"sphere",
                     "radius":2,
-                    "center":[4, 0, -10]
-                    },
-            "material":"green",
-            "transform":[1, 0, 0, 0,
-                         0, 1, 0, 0,
-                         0, 0, 1, 0,
-                         0, 0, 0, 1]     
-        },
-        {
-            "shape":{
+                    "center":[4, 0, -10],
+                    "material":"green"
+                },
+                {
                     "type":"cylinder",
                     "radius":1,
                     "height":3,
-                    "center":[-4, 0, 0]
-                    },
-            "material":"red",
-            "transform":[1, 0, 0, 0,
-                         0, 1, 0, 0,
-                         0, 0, 1, 0,
-                         0, 0, 0, 1]     
-        },
-        {
-            "shape":{
+                    "center":[-4, 0, 0],
+                    "material":"red"
+                },
+                {
                     "type":"cone",
                     "radius":1,
                     "height":2,
-                    "center":[-4, 0, -4]
-                    },
-            "material":"red",
-            "transform":[1, 0, 0, 0,
-                         0, 1, 0, 0,
-                         0, 0, 1, 0,
-                         0, 0, 0, 1]     
+                    "center":[-4, 0, -4],
+                    "material":"red" 
+                }
+            ]   
         }
     ]
 }
