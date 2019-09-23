@@ -21,7 +21,7 @@ void main(void) {
     gl_Position = uPMatrix * mvPosition;
     vec3 lightingDir = normalize(uLight1Pos - mvPosition.xyz);
     
-    vec3 transformedNormal = uNMatrix*vNormal;
+    vec3 transformedNormal = normalize(uNMatrix*vNormal);
     //vec3 dPos = vec3(vec4(uLight1Pos, 1.0) - uMVMatrix*vec4(vPos, 1.0));
     
     float dirLightWeight = dot(transformedNormal, lightingDir);
