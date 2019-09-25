@@ -23,7 +23,7 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
 
         //NOTE: glcanvas has all options we need except
         //for "shaderToUse"
-        glcanvas.shaderToUse = glcanvas.shaders.colorShader;
+        glcanvas.shaderToUse = glcanvas.shaders.lambertian;
         glcanvas.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
     }
 

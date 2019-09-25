@@ -114,6 +114,21 @@
                     "material":"red" 
                 }
             ]   
+        },
+
+        {
+            "transform":[
+                0.001, 0, 0, 0,
+                0, 0.001, 0, 0,
+                0, 0, 0.001, 0,
+                0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"mesh",
+                    "filename":"../meshes/proftralie.off"
+                }
+
+            ]
         }
     ]
 }

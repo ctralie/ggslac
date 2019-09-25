@@ -75,25 +75,25 @@ function getShaderProgram(gl, prefix) {
  * @returns{obj} An object with fields containing standard shaders
  */
 function initStandardShaders(gl, relpath) {
-    /** ColorShader: Ordinary color shader for drawing meshes  */
-    let colorShader = getShaderProgram(gl, relpath + "colorshader");
-    colorShader.vPosAttrib = gl.getAttribLocation(colorShader, "vPos");
-    gl.enableVertexAttribArray(colorShader.vPosAttrib);
-    colorShader.vNormalAttrib = gl.getAttribLocation(colorShader, "vNormal");
-    gl.enableVertexAttribArray(colorShader.normalAttrib);
-    colorShader.vColorAttrib = gl.getAttribLocation(colorShader, "vColor");
-    gl.enableVertexAttribArray(colorShader.vColorAttrib);
-    colorShader.pMatrixUniform = gl.getUniformLocation(colorShader, "uPMatrix");
-    colorShader.mvMatrixUniform = gl.getUniformLocation(colorShader, "uMVMatrix");
-    colorShader.nMatrixUniform = gl.getUniformLocation(colorShader, "uNMatrix");
-    colorShader.ambientColorUniform = gl.getUniformLocation(colorShader, "uAmbientColor");
-    colorShader.light1PosUniform = gl.getUniformLocation(colorShader, "uLight1Pos");
-    colorShader.light2PosUniform = gl.getUniformLocation(colorShader, "uLight2Pos");
-    colorShader.lightColorUniform = gl.getUniformLocation(colorShader, "uLightColor");
-    colorShader.uColorUniform = gl.getUniformLocation(colorShader, "uColor");
+    /** lambertian: Ordinary color shader for drawing meshes  */
+    let lambertian = getShaderProgram(gl, relpath + "lambertian");
+    lambertian.vPosAttrib = gl.getAttribLocation(lambertian, "vPos");
+    gl.enableVertexAttribArray(lambertian.vPosAttrib);
+    lambertian.vNormalAttrib = gl.getAttribLocation(lambertian, "vNormal");
+    gl.enableVertexAttribArray(lambertian.normalAttrib);
+    lambertian.vColorAttrib = gl.getAttribLocation(lambertian, "vColor");
+    gl.enableVertexAttribArray(lambertian.vColorAttrib);
+    lambertian.pMatrixUniform = gl.getUniformLocation(lambertian, "uPMatrix");
+    lambertian.mvMatrixUniform = gl.getUniformLocation(lambertian, "uMVMatrix");
+    lambertian.nMatrixUniform = gl.getUniformLocation(lambertian, "uNMatrix");
+    lambertian.ambientColorUniform = gl.getUniformLocation(lambertian, "uAmbientColor");
+    lambertian.light1PosUniform = gl.getUniformLocation(lambertian, "uLight1Pos");
+    lambertian.light2PosUniform = gl.getUniformLocation(lambertian, "uLight2Pos");
+    lambertian.lightColorUniform = gl.getUniformLocation(lambertian, "uLightColor");
+    lambertian.uColorUniform = gl.getUniformLocation(lambertian, "uColor");
 
     /** FlatShader: A shader that draws a constant color for all faces*/
-    let flatShader = getShaderProgram(gl, relpath + "flatcolorshader");
+    let flatShader = getShaderProgram(gl, relpath + "flat");
     flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
     gl.enableVertexAttribArray(flatShader.vPosAttrib);
     flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
@@ -123,7 +123,7 @@ function initStandardShaders(gl, relpath) {
     pointShader.mvMatrixUniform = gl.getUniformLocation(pointShader, "uMVMatrix");
     pointShader.pSizeUniform = gl.getUniformLocation(pointShader, "pSize");
     
-    return { colorShader:colorShader, flatShader:flatShader, lineShader:lineShader, pointShader:pointShader};
+    return { lambertian:lambertian, flatShader:flatShader, lineShader:lineShader, pointShader:pointShader};
 }
 
 

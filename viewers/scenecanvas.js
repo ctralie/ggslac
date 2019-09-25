@@ -441,7 +441,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         requestAnimFrame(glcanvas.repaint);
     }
     
-    glcanvas.shaderToUse = glcanvas.shaders.colorShader;
+    glcanvas.shaderToUse = glcanvas.shaders.lambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
     glcanvas.walkspeed = 2.6;
