@@ -270,9 +270,23 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         if (!('materials' in scene)) {
             scene.materials = {};
         }
+        if (!('light1' in scene)) {
+            scene.light1 = {pos:[0, 0, 0], color:[1, 1, 1]};
+        }
+        if (!('light2' in scene)) {
+            scene.light2 = {pos:[1, 1, 1], color:[1, 1, 1]};
+        }
+        glcanvas.light1 = scene.light1;
+        glcanvas.light2 = scene.light2;
         glcanvas.scene = scene;
         glcanvas.scene.cam1 = new FPSCamera(pixWidth, pixHeight);
         glcanvas.scene.cam2 = new FPSCamera(pixWidth, pixHeight);
+        glcanvas.scene.light1cam = new FPSCamera(pixWidth, pixHeight);
+        glMatrix.vec3.copy(glcanvas.scene.light1cam.pos, scene.light1.pos);
+        glcanvas.scene.light2cam = new FPSCamera(pixWidth, pixHeight);
+        glMatrix.vec3.copy(glcanvas.scene.light2cam.pos, scene.light2.pos);
+        glcanvas.light1.pos = glcanvas.scene.light1cam.pos;
+        glcanvas.light2.pos = glcanvas.scene.light2cam.pos;
         if ("camera1" in glcanvas.scene) {
             glcanvas.fillInCamera(glcanvas.scene.cam1, glcanvas.scene.camera1);
         }
@@ -351,11 +365,30 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.drawer.repaint(pMatrix, mvMatrix);
     }
 
+    glcanvas.drawLightBeacon = function(light, pMatrix, mvMatrix) {
+        // Switch over to a flat shader with no edges
+        let sProg = glcanvas.shaderToUse;
+        let drawEdges = glcanvas.drawEdges;
+        glcanvas.shaderToUse = glcanvas.shaders.flatShader;
+        glcanvas.drawEdges = false;
+
+        let pos = light.pos;
+        glcanvas.constColor = light.color;
+        let m = glMatrix.mat4.create();
+        glMatrix.mat4.fromTranslation(m, pos);
+        glMatrix.mat4.mul(m, mvMatrix, m);
+        glcanvas.specialMeshes.beacon.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+        
+        // Set properties back to what they were
+        glcanvas.shaderToUse = sProg;
+        glcanvas.drawEdges = drawEdges;
+        glcanvas.drawer.repaint(pMatrix, mvMatrix);
+    }
+
     glcanvas.repaint = function() {
         if (glcanvas.scene === null) {
             return;
         }
-        //glcanvas.light1Pos = glcanvas.camera.pos;
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
         
@@ -383,6 +416,15 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
             else {
                 glcanvas.drawCameraBeacon(glcanvas.scene.cam2, pMatrix, mvMatrix, BEACON_COLOR_2);
+            }
+        }
+
+        if (glcanvas.showLights) {
+            if (!(glcanvas.camera === glcanvas.scene.light1cam)) {
+                glcanvas.drawLightBeacon(glcanvas.light1, pMatrix, mvMatrix);
+            }
+            if (!(glcanvas.camera === glcanvas.scene.light2cam)) {
+                glcanvas.drawLightBeacon(glcanvas.light2, pMatrix, mvMatrix);
             }
         }
         
@@ -427,8 +469,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.updateCamerasHTML = function() {
         let cam1PosE = document.getElementById("camera1");
         let cam2PosE = document.getElementById("camera2");
+        let light1PosE = document.getElementById("light1");
+        let light2PosE = document.getElementById("light2");
         cam1PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_1 + "\">" + glcanvas.scene.cam1.toString() + "</font>";
         cam2PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_2 + "\">" + glcanvas.scene.cam2.toString() + "</font>";
+        let p = glcanvas.scene.light1.pos;
+        light1PosE.innerHTML = "[" + p[0].toFixed(2) + ", " + p[1].toFixed(2) + ", " + p[2].toFixed(2) + "]";
+        p = glcanvas.scene.light2.pos;
+        light2PosE.innerHTML = "[" + p[0].toFixed(2) + ", " + p[1].toFixed(2) + ", " + p[2].toFixed(2) + "]";
     }
 
     glcanvas.viewFromCamera1 = function() {
@@ -440,10 +488,20 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.camera = glcanvas.scene.cam2;
         requestAnimFrame(glcanvas.repaint);
     }
+    glcanvas.viewFromLight1 = function() {
+        glcanvas.camera = glcanvas.scene.light1cam;
+        requestAnimFrame(glcanvas.repaint);
+    }
+    
+    glcanvas.viewFromLight2 = function() {
+        glcanvas.camera = glcanvas.scene.light2cam;
+        requestAnimFrame(glcanvas.repaint);
+    }
     
     glcanvas.shaderToUse = glcanvas.shaders.lambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
     glcanvas.walkspeed = 2.6;
     glcanvas.showCameras = true;
+    glcanvas.showLights = true;
 }

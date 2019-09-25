@@ -37,7 +37,6 @@
 <h3>Options</h3>
 <table>
 <tr><td>Display Mesh Edges</td><td><input type="checkbox" id="meshEdgesCheckbox" /></td></tr>
-<tr><td>Show cameras</td><td><input type="checkbox" id="showCamerasCheckbox" /></td></tr>
 <tr><td>
     <HR>
     <table>
@@ -58,12 +57,24 @@
             <div id="debug"></div>
         </td>
     </tr>
+<tr><td>Show Cameras</td><td><input type="checkbox" id="showCamerasCheckbox" /></td></tr>
 <tr>
 <td><button type="button" id = "camera1Button" onclick="callViewFromCamera1()">Camera 1</button></td>
 <td><button type="button" id = "camera2Button" onclick="callViewFromCamera2()">Camera 2</button></td>
 </tr>
 <tr><td>Camera 1:</td><td colspan = "2"><div id="camera1"></div></td></tr>
 <tr><td>Camera 2:</td><td colspan = "2"><div id="camera2"></div></td></tr>
+</table>
+
+<h3>Lights</h3>
+<table>
+<tr><td>Show Lights</td><td><input type="checkbox" id="showLightsCheckbox" /></td></tr>
+<tr>
+<td><button type="button" id = "light1Button" onclick="callViewFromLight1()">Light 1</button></td>
+<td><button type="button" id = "light2Button" onclick="callViewFromLight2()">Light 2</button></td>
+</tr>
+<tr><td>Light 1:</td><td colspan = "2"><div id="light1"></div></td></tr>
+<tr><td>Light 2:</td><td colspan = "2"><div id="light2"></div></td></tr>
 </table>
 
 
@@ -128,6 +139,13 @@
         requestAnimFrame(glcanvas.repaint);
     });
 
+    let showLightsCheckbox = document.getElementById('showLightsCheckbox');
+    showLightsCheckbox.addEventListener('change', function(e) {
+        glcanvas.showLights = showLightsCheckbox.checked;
+        requestAnimFrame(glcanvas.repaint);
+    });
+
+
 
     function callViewFromCamera1() {
         if (glcanvas.scene === null) {
@@ -143,6 +161,20 @@
         }
         glcanvas.viewFromCamera2();
     }
+    function callViewFromLight1() {
+        if (glcanvas.scene === null) {
+            alert("You need to load a scene first!");
+            return;
+        }
+        glcanvas.viewFromLight1();
+    }
+    function callViewFromLight2() {
+        if (glcanvas.scene === null) {
+            alert("You need to load a scene first!");
+            return;
+        }
+        glcanvas.viewFromLight2();
+    }    
 
 
 	var speedSlider = document.getElementById('speedSlider');

@@ -9,7 +9,8 @@ uniform mat3 uNMatrix;
 uniform vec3 uAmbientColor;
 uniform vec3 uLight1Pos;
 uniform vec3 uLight2Pos;
-uniform vec3 uLightColor;
+uniform vec3 uLight1Color;
+uniform vec3 uLight2Color;
 
 varying vec3 vLightCoeff;
 varying vec3 vColorInterp;
@@ -19,16 +20,21 @@ uniform vec3 uColor;
 void main(void) {
     vec4 mvPosition = uMVMatrix*vec4(vPos, 1.0);
     gl_Position = uPMatrix * mvPosition;
-    vec3 lightingDir = normalize(uLight1Pos - mvPosition.xyz);
-    
+    vec4 lightingDirH = uMVMatrix*vec4(uLight1Pos, 1.0) - mvPosition;
+    vec3 lightingDir = normalize(lightingDirH.xyz);
+
     vec3 transformedNormal = normalize(uNMatrix*vNormal);
-    //vec3 dPos = vec3(vec4(uLight1Pos, 1.0) - uMVMatrix*vec4(vPos, 1.0));
     
     float dirLightWeight = dot(transformedNormal, lightingDir);
-    if (dirLightWeight < 0.0) { //Stupid fix for double sides for now
-        dirLightWeight *= -1.0;
+
+    /*vec3 lightingDir = normalize(uLight1Pos - vPos);
+    float dirLightWeight = dot(lightingDir, normalize(vNormal));*/
+    
+    if (dirLightWeight < 0.0) {
+        dirLightWeight = 0.0;
     }
-    vLightCoeff = uAmbientColor + dirLightWeight*uLightColor;
+    
+    vLightCoeff = uAmbientColor + dirLightWeight*uLight1Color;
     // The default value of the uniform color is (2, 2, 2)
     // So ignore and use the vColor from the buffer in this case.
     // Otherwise, override the buffer with the specified uniform color

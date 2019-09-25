@@ -24,6 +24,9 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
         //NOTE: glcanvas has all options we need except
         //for "shaderToUse"
         glcanvas.shaderToUse = glcanvas.shaders.lambertian;
+        glcanvas.drawNormals = false;
+        glcanvas.drawEdges = false;
+        glcanvas.light1 = {pos:glcanvas.camera.eye, color:[1, 1, 1]};
         glcanvas.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
     }
 

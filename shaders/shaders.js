@@ -89,7 +89,8 @@ function initStandardShaders(gl, relpath) {
     lambertian.ambientColorUniform = gl.getUniformLocation(lambertian, "uAmbientColor");
     lambertian.light1PosUniform = gl.getUniformLocation(lambertian, "uLight1Pos");
     lambertian.light2PosUniform = gl.getUniformLocation(lambertian, "uLight2Pos");
-    lambertian.lightColorUniform = gl.getUniformLocation(lambertian, "uLightColor");
+    lambertian.light1ColorUniform = gl.getUniformLocation(lambertian, "uLight1Color");
+    lambertian.light2ColorUniform = gl.getUniformLocation(lambertian, "uLight2Color");
     lambertian.uColorUniform = gl.getUniformLocation(lambertian, "uColor");
 
     /** FlatShader: A shader that draws a constant color for all faces*/

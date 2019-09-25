@@ -927,24 +927,39 @@ function PolyMesh() {
         }
         if ('light1PosUniform' in sProg) {
             let light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
-            if ('light1Pos' in opts) {
-                light1Pos = opts.light1Pos;
+            if ('light1' in opts) {
+                if ('pos' in opts.light1) {
+                    light1Pos = opts.light1.pos;
+                }
             }
             gl.uniform3fv(sProg.light1PosUniform, light1Pos);
         }
+        if ('light1ColorUniform' in sProg) {
+            let light1Color = glMatrix.vec3.fromValues(1, 0, 0);
+            if ('light1' in opts) {
+                if ('color' in opts.light1) {
+                    light1Color = opts.light1.color;
+                }
+            }
+            gl.uniform3fv(sProg.light1ColorUniform, light1Color);
+        }
         if ('light2PosUniform' in sProg) {
             let light2Pos = glMatrix.vec3.fromValues(0, 0, 0);
-            if ('light2Pos' in opts) {
-                light2Pos = opts.light2Pos;
+            if ('light2' in opts) {
+                if ('pos' in opts.light2) {
+                    light1Pos = opts.light2.pos;
+                }
             }
             gl.uniform3fv(sProg.light2PosUniform, light2Pos);
         }
-        if ('lightColorUniform' in sProg) {
-            let lightColorUniform = glMatrix.vec3.fromValues(1, 1, 1);
-            if ('lightColorUniform' in opts) {
-                lightColorUniform = opts.lightColorUniform;
+        if ('light2ColorUniform' in sProg) {
+            let light2Color = glMatrix.vec3.fromValues(1, 1, 1);
+            if ('light2' in opts) {
+                if ('color' in opts.light2) {
+                    light2Color = opts.light2.color;
+                }
             }
-            gl.uniform3fv(sProg.lightColorUniform, lightColorUniform);
+            gl.uniform3fv(sProg.light2ColorUniform, light2Color);
         }
     }
 
