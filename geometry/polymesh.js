@@ -915,7 +915,7 @@ function PolyMesh() {
             //Compute normal transformation matrix from world modelview matrix
             //(transpose of inverse of upper 3x3 part)
             nMatrix = glMatrix.mat3.create();
-            glMatrix.mat3.normalFromMat4(nMatrix, mvMatrix);
+            glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
             gl.uniformMatrix3fv(sProg.nMatrixUniform, false, nMatrix);
         }
 
