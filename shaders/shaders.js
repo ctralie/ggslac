@@ -85,6 +85,7 @@ function initStandardShaders(gl, relpath) {
     gl.enableVertexAttribArray(lambertian.vColorAttrib);
     lambertian.pMatrixUniform = gl.getUniformLocation(lambertian, "uPMatrix");
     lambertian.mvMatrixUniform = gl.getUniformLocation(lambertian, "uMVMatrix");
+    lambertian.tMatrixUniform = gl.getUniformLocation(lambertian, "tMatrix");
     lambertian.nMatrixUniform = gl.getUniformLocation(lambertian, "uNMatrix");
     lambertian.ambientColorUniform = gl.getUniformLocation(lambertian, "uAmbientColor");
     lambertian.light1PosUniform = gl.getUniformLocation(lambertian, "uLight1Pos");
@@ -93,15 +94,16 @@ function initStandardShaders(gl, relpath) {
     lambertian.light2ColorUniform = gl.getUniformLocation(lambertian, "uLight2Color");
     lambertian.uColorUniform = gl.getUniformLocation(lambertian, "uColor");
 
+
     /** FlatShader: A shader that draws a constant color for all faces*/
     let flatShader = getShaderProgram(gl, relpath + "flat");
     flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
     gl.enableVertexAttribArray(flatShader.vPosAttrib);
     flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
     flatShader.mvMatrixUniform = gl.getUniformLocation(flatShader, "uMVMatrix");
+    flatShader.tMatrixUniform = gl.getUniformLocation(flatShader, "tMatrix");
     flatShader.uColorUniform = gl.getUniformLocation(flatShader, "uColor");
     
-
     
     /** Line shader: Simple shader for drawing lines with flat colors,
      * usually for debugging */
@@ -124,7 +126,10 @@ function initStandardShaders(gl, relpath) {
     pointShader.mvMatrixUniform = gl.getUniformLocation(pointShader, "uMVMatrix");
     pointShader.pSizeUniform = gl.getUniformLocation(pointShader, "pSize");
     
-    return { lambertian:lambertian, flatShader:flatShader, lineShader:lineShader, pointShader:pointShader};
+    return { lambertian:lambertian,
+            flatShader:flatShader, 
+            lineShader:lineShader, 
+            pointShader:pointShader};
 }
 
 

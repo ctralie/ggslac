@@ -4,6 +4,7 @@ attribute vec3 vColor;
 
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
+uniform mat4 tMatrix;
 uniform mat3 uNMatrix;
 
 uniform vec3 uAmbientColor;
@@ -18,17 +19,14 @@ varying vec3 vColorInterp;
 uniform vec3 uColor;
 
 void main(void) {
-    vec4 mvPosition = uMVMatrix*vec4(vPos, 1.0);
-    gl_Position = uPMatrix * mvPosition;
-    vec4 lightingDirH = uMVMatrix*vec4(uLight1Pos, 1.0) - mvPosition;
+    vec4 tpos = tMatrix*vec4(vPos, 1.0);
+    gl_Position = uPMatrix*uMVMatrix*tpos;
+    vec4 lightingDirH = vec4(uLight1Pos, 1.0) - tpos;
     vec3 lightingDir = normalize(lightingDirH.xyz);
 
     vec3 transformedNormal = normalize(uNMatrix*vNormal);
     
     float dirLightWeight = dot(transformedNormal, lightingDir);
-
-    /*vec3 lightingDir = normalize(uLight1Pos - vPos);
-    float dirLightWeight = dot(lightingDir, normalize(vNormal));*/
     
     if (dirLightWeight < 0.0) {
         dirLightWeight = 0.0;

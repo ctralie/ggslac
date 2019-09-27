@@ -310,9 +310,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     //  Repaint Function
     /////////////////////////////////////////////////////
-    glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
-        let mvMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
+    glcanvas.repaintRecurse = function(node, transform) {
+        let nextTransform = glMatrix.mat4.create();
+        glMatrix.mat4.mul(nextTransform, transform, node.transform);
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
                 if (!(shape.mesh === null)) {
@@ -322,20 +322,22 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                             glcanvas.constColor = shape.material.color;
                         }
                     }
-                    m = glMatrix.mat4.create();
-                    glMatrix.mat4.mul(m, mvMatrix, shape.ms);
-                    shape.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+                    // There may be an additional transform to apply based
+                    // on shape properties of special shapes (e.g. box width)
+                    let tMatrix = glMatrix.mat4.create();
+                    glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
+                    shape.mesh.render(glcanvas, tMatrix);
                 }
             }
         });
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
-                glcanvas.repaintRecurse(node.children[i], pMatrix, mvMatrix);
+                glcanvas.repaintRecurse(node.children[i], nextTransform);
             }
         }
     }
     
-    glcanvas.drawCameraBeacon = function(camera, pMatrix, mvMatrix, color) {
+    glcanvas.drawCameraBeacon = function(camera, color) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
@@ -354,18 +356,17 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.drawer.drawLine(pos, posrt, [0, 1, 0]);
         glcanvas.drawer.drawLine(pos, posup, [0, 0, 1]);
         glcanvas.constColor = colorFloatFromHex(color);
-        let m = glMatrix.mat4.create();
-        glMatrix.mat4.fromTranslation(m, pos);
-        glMatrix.mat4.mul(m, mvMatrix, m);
-        glcanvas.specialMeshes.beacon.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+        let tMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.fromTranslation(tMatrix, pos);
+        glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
         
         // Set properties back to what they were
         glcanvas.shaderToUse = sProg;
         glcanvas.drawEdges = drawEdges;
-        glcanvas.drawer.repaint(pMatrix, mvMatrix);
+        glcanvas.drawer.repaint(glcanvas.camera);
     }
 
-    glcanvas.drawLightBeacon = function(light, pMatrix, mvMatrix) {
+    glcanvas.drawLightBeacon = function(light) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
@@ -374,15 +375,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
 
         let pos = light.pos;
         glcanvas.constColor = light.color;
-        let m = glMatrix.mat4.create();
-        glMatrix.mat4.fromTranslation(m, pos);
-        glMatrix.mat4.mul(m, mvMatrix, m);
-        glcanvas.specialMeshes.beacon.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+        let tMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.fromTranslation(tMatrix, pos);
+        glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
         
         // Set properties back to what they were
         glcanvas.shaderToUse = sProg;
         glcanvas.drawEdges = drawEdges;
-        glcanvas.drawer.repaint(pMatrix, mvMatrix);
+        glcanvas.drawer.repaint(glcanvas.camera);
     }
 
     glcanvas.repaint = function() {
@@ -391,16 +391,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         }
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
-        
-        let pMatrix = glcanvas.camera.getPMatrix();
-        //First get the global modelview matrix based on the camera
-        let mvMatrix = glcanvas.camera.getMVMatrix();
 
         //Then drawn the scene
         let scene = glcanvas.scene;
+        let identity = glMatrix.mat4.create();
         if ('children' in scene) {
             scene.children.forEach(function(child) {
-                glcanvas.repaintRecurse(child, pMatrix, mvMatrix);
+                glcanvas.repaintRecurse(child, identity);
             });
         }
         
@@ -412,23 +409,23 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Now draw the beacons for the cameras (assuming FPSCamera)
         if (glcanvas.showCameras) {
             if (glcanvas.camera == glcanvas.scene.cam2) {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam1, pMatrix, mvMatrix, BEACON_COLOR_1);
+                glcanvas.drawCameraBeacon(glcanvas.scene.cam1, BEACON_COLOR_1);
             }
             else {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam2, pMatrix, mvMatrix, BEACON_COLOR_2);
+                glcanvas.drawCameraBeacon(glcanvas.scene.cam2, BEACON_COLOR_2);
             }
         }
 
         if (glcanvas.showLights) {
             if (!(glcanvas.camera === glcanvas.scene.light1cam)) {
-                glcanvas.drawLightBeacon(glcanvas.light1, pMatrix, mvMatrix);
+                glcanvas.drawLightBeacon(glcanvas.light1);
             }
             if (!(glcanvas.camera === glcanvas.scene.light2cam)) {
-                glcanvas.drawLightBeacon(glcanvas.light2, pMatrix, mvMatrix);
+                glcanvas.drawLightBeacon(glcanvas.light2);
             }
         }
         
-        //Redraw if walking
+        // Redraw if walking
         let thisTime = (new Date()).getTime();
         let dt = (thisTime - glcanvas.lastTime)/1000.0;
         glcanvas.lastTime = thisTime;

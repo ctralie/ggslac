@@ -82,18 +82,17 @@ function SimpleDrawer(gl, shaders) {
         gl.bufferData(gl.ARRAY_BUFFER, V, gl.STATIC_DRAW);
         this.pointsCVBO.itemSize = 3;
         this.pointsCVBO.numItems = this.pointsColors.length/3;
-        
-        //console.log("linesVBO = " + linesVBO);
-        //console.log("linesCVBO = " + linesCVBO);
-        //console.log("pointsVBO = " + pointsVBO);
-        //console.log("pointsCVBO = " + pointsCVBO);
     }
     
-    //Add the line to the vertex buffer to be drawn with the point [X, Y, Z]
-    //and the color [R, G, B]
-    //P1: 3D array of XYZ locations for first point
-    //P2: 3D array of XYZ locations for second point
-    //C: 3D array of RGB colors in the range [0, 1]
+
+    /** 
+     * Add the line to the vertex buffer to be drawn with the point [X, Y, Z]
+     * and the color [R, G, B]
+     * 
+     * @param {glMatrix.vec3} P1 3D array of XYZ locations for first point
+     * @param {glMatrix.vec3} P2 3D array of XYZ locations for second point
+     * @param {glMatrix.vec3} C 3D array of RGB colors in the range [0, 1]
+     */
     this.drawLine = function(P1, P2, C) {
         for (var i = 0; i < 3; i++) {
             this.linesPoints.push(P1[i]);
@@ -118,10 +117,14 @@ function SimpleDrawer(gl, shaders) {
         this.pSize = pSize;
     }
     
-    //Draw all of the lines
-    //pMatrix: Project matrix (mat4)
-    //mvMatrix: Modelview matrix (mat4)
-    this.repaint = function(pMatrix, mvMatrix) {
+    /** 
+     * Draw all of the points and lines
+     * @param {camera} camera A camera object containing the functions
+     *                          getPMatrix() and getMVMatrix()
+     */
+    this.repaint = function(camera) {
+        let pMatrix = camera.getPMatrix();
+        let mvMatrix = camera.getMVMatrix();
         if (this.needsDisplayUpdate) {
             this.updateBuffers();
             this.needsDisplayUpdate = false;
