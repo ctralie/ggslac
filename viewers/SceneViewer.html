@@ -4,6 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!--External Libraries!-->
 <!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../jslibs/dat.gui.min.js"></script>
 <script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
@@ -123,7 +124,11 @@
             }
             glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
             glcanvas.drawEdges = meshEdgesCheckbox.checked;
+            glcanvas.drawPoints = meshPointsCheckbox.checked;
+            glcanvas.drawNormals = meshNormalsCheckbox.checked;
             glcanvas.showCameras = showCamerasCheckbox.checked;
+            glcanvas.showLights = showLightsCheckbox.checked;
+            glcanvas.updateMeshDrawings();
         }
         reader.readAsText(sceneInput.files[0]);
     });
