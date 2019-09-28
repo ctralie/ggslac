@@ -4,6 +4,29 @@ Files that have been assumed to have been also loaded
 primitives3d.js
 */
 
+
+function splitVecStr(s) {
+    ret = [];
+    s.split(",").forEach(function(x) {
+        ret.push(parseFloat(x));
+    });
+    return ret;
+}
+
+function vecToStr(v, k) {
+    if (k === undefined) {
+        k = 2;
+    }
+    s = "";
+    for (let i = 0; i < v.length; i++) {
+        s += v[i].toFixed(k);
+        if (i < v.length-1) {
+            s += ",";
+        }
+    }
+    return s;
+}
+
 function MousePolarCamera(pixWidth, pixHeight, fovy) {
     //Coordinate system is defined as in OpenGL as a right
     //handed system with +z out of the screen, +x to the right,
@@ -179,6 +202,7 @@ function FPSCamera(pixWidth, pixHeight, fovy, near, far) {
         glMatrix.quat.fromMat3(q, rotMat);
         return q;
     }
+    this.rotation = vecToStr(this.getQuatFromRot());
 
     this.getMVMatrix = function() {
         //To keep right handed, make z vector -towards
@@ -220,6 +244,7 @@ function FPSCamera(pixWidth, pixHeight, fovy, near, far) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
+        this.rotation = vecToStr(this.getQuatFromRot());
     }
     
     //Rotate the right direction around the up direction
@@ -236,6 +261,8 @@ function FPSCamera(pixWidth, pixHeight, fovy, near, far) {
         let dot = glMatrix.vec3.dot(this.right, this.up);
         glMatrix.vec3.scaleAndAdd(this.up, this.up, this.right, -dot);
         glMatrix.vec3.normalize(this.up, this.up);
+        this.q = q;
+        this.rotation = vecToStr(this.getQuatFromRot());
     }
     
     /**

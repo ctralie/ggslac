@@ -35,33 +35,6 @@
 <tr><td>Scene File</td><td><input type = "file" id = "sceneInput"></td></tr>
 </table>
 
-<h3>Viewpoint</h3>
-<table>
-    <tr>
-        <td>
-            <div id="debug"></div>
-        </td>
-    </tr>
-<tr><td>Show Cameras</td><td><input type="checkbox" id="showCamerasCheckbox" /></td></tr>
-<tr>
-<td><button type="button" id = "camera1Button" onclick="callViewFromCamera1()">Camera 1</button></td>
-<td><button type="button" id = "camera2Button" onclick="callViewFromCamera2()">Camera 2</button></td>
-</tr>
-<tr><td>Camera 1:</td><td colspan = "2"><div id="camera1"></div></td></tr>
-<tr><td>Camera 2:</td><td colspan = "2"><div id="camera2"></div></td></tr>
-</table>
-
-<h3>Lights</h3>
-<table>
-<tr><td>Show Lights</td><td><input type="checkbox" id="showLightsCheckbox" /></td></tr>
-<tr>
-<td><button type="button" id = "light1Button" onclick="callViewFromLight1()">Light 1</button></td>
-<td><button type="button" id = "light2Button" onclick="callViewFromLight2()">Light 2</button></td>
-</tr>
-<tr><td>Light 1:</td><td colspan = "2"><div id="light1"></div></td></tr>
-<tr><td>Light 2:</td><td colspan = "2"><div id="light2"></div></td></tr>
-</table>
-
 
 </td></tr>
 <tr>
@@ -105,84 +78,18 @@
                 throw(error);
             }
             glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-            glcanvas.showCameras = showCamerasCheckbox.checked;
-            glcanvas.showLights = showLightsCheckbox.checked;
             glcanvas.updateMeshDrawings();
         }
         reader.readAsText(sceneInput.files[0]);
     });
 
-    let showCamerasCheckbox = document.getElementById('showCamerasCheckbox');
-    showCamerasCheckbox.addEventListener('change', function(e) {
-        glcanvas.showCameras = showCamerasCheckbox.checked;
-        requestAnimFrame(glcanvas.repaint);
-    });
-
-    let showLightsCheckbox = document.getElementById('showLightsCheckbox');
-    showLightsCheckbox.addEventListener('change', function(e) {
-        glcanvas.showLights = showLightsCheckbox.checked;
-        requestAnimFrame(glcanvas.repaint);
-    });
-
-
-
-    function callViewFromCamera1() {
-        if (glcanvas.scene === null) {
-            alert("You need to load a scene first!");
-            return;
-        }
-        glcanvas.viewFromCamera1();
-    }
-    function callViewFromCamera2() {
-        if (glcanvas.scene === null) {
-            alert("You need to load a scene first!");
-            return;
-        }
-        glcanvas.viewFromCamera2();
-    }
-    function callViewFromLight1() {
-        if (glcanvas.scene === null) {
-            alert("You need to load a scene first!");
-            return;
-        }
-        glcanvas.viewFromLight1();
-    }
-    function callViewFromLight2() {
-        if (glcanvas.scene === null) {
-            alert("You need to load a scene first!");
-            return;
-        }
-        glcanvas.viewFromLight2();
-    }
 
     // Load the sample scene as a default
     scene = BlockLoader.loadJSON("../scenes/sample-scene.json");
     glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
     glcanvas.drawEdges = false;
-    glcanvas.showCameras = true;
     glcanvas.updateMeshDrawings();
     requestAnimFrame(glcanvas.repaint);
-
-    let gui = new dat.GUI();
-    // Mesh display options menu
-    let meshOpts = gui.addFolder('Mesh Display Options');
-    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
-        function(s) {
-            let evt = meshOpts.add(glcanvas, s);
-            evt.onChange(function(value) {
-                glcanvas.updateMeshDrawings();
-                requestAnimFrame(glcanvas.repaint);
-            });
-        }
-    );
-    // Camera control menu
-    let cameraOpts = gui.addFolder('Camera Options');
-    cameraOpts.add(glcanvas, 'showCameras').onChange(function() {
-        requestAnimFrame(glcanvas.repaint);
-    });
-    cameraOpts.add(glcanvas, 'camera', {})
-
-    gui.add(glcanvas, 'walkspeed', 0.01, 100);
     
     
 </script>

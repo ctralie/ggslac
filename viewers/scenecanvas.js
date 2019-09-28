@@ -260,50 +260,181 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     }
 
     /**
+     * Setup menus to control positions and orientations of cameras
+     */
+    glcanvas.setupCameraMenus = function(scene, pixWidth, pixHeight) {
+        if (!('cameras') in scene) {
+            scene.cameras = [];
+        }
+        if (scene.cameras.length == 0) {
+            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovy:1.0});
+        }
+        if (!('cameraMenus' in glcanvas)) {
+            glcanvas.cameraMenus = [];
+        }
+        glcanvas.cameraMenus.forEach(function(menu) {
+            glcanvas.cameraMenu.removeFolder(menu);
+        });
+        glcanvas.cameraMenus = [];
+        scene.cameras.forEach(function(c, i) {
+            c.camera = new FPSCamera(pixWidth, pixHeight);
+            glcanvas.fillInCamera(c.camera, c);
+            // Also add each camera to a GUI control
+            let menu = glcanvas.cameraMenu.addFolder("camera " + i);
+            glcanvas.cameraMenus.push(menu);
+            c.camera.position = vecToStr(c.camera.pos);
+            menu.add(c.camera, 'position').listen().onChange(
+                function(value) {
+                    let xyz = splitVecStr(value);
+                    for (let k = 0; k < 3; k++) {
+                        c.camera.pos[k] = xyz[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(c.camera, 'rotation').listen().onChange(
+                function(value) {
+                    let xyzw = splitVecStr(value);
+                    for (let k = 0; k < 4; k++) {
+                        c.camera.rot[k] = xyzw[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            // Setup mechanism to move camera around with keyboard/mouse
+            if (i == 0) {
+                c.viewFrom = true;
+            }
+            else {
+                c.viewFrom = false;
+            }
+            menu.add(c, 'viewFrom').listen().onChange(
+                function(v) {
+                    if (v) {
+                        // Toggle other cameras viewFrom
+                        scene.cameras.forEach(function(other) {
+                            if (!(other === c)) {
+                                other.viewFrom = false;
+                            }
+                        });
+                        // Turn off all viewFrom in lights
+                        scene.lights.forEach(function(light) {
+                            light.viewFrom = false;
+                        });
+                        glcanvas.camera = c.camera;
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                }
+            )
+        });
+        if (scene.cameras.length > 0) {
+            // Add the first camera to the drawing parameters
+            scene.cameras[0].viewFrom = true;
+            glcanvas.camera = scene.cameras[0].camera;
+        }
+    }
+
+
+
+    /**
+     * Setup menus to control positions and colors of lights
+     */
+    glcanvas.setupLightMenus = function(scene, pixWidth, pixHeight) {
+        // Setup default light
+        if (!('lights') in scene) {
+            scene.lights = [];
+        }
+        if (scene.lights.length == 0) {
+            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1]});
+        }
+        // Add a camera object to each light so that the user can
+        // move the lights around
+        if (!('lightMenus' in glcanvas)) {
+            glcanvas.lightMenus = [];
+        }
+        glcanvas.lightMenus.forEach(function(menu) {
+            glcanvas.lightMenu.removeFolder(menu);
+        });
+        glcanvas.lightMenus = [];
+        scene.lights.forEach(function(light, i) {
+            light.camera = new FPSCamera(pixWidth, pixHeight);
+            glMatrix.vec3.copy(light.camera.pos, light.pos);
+            light.pos = light.camera.pos;
+            // Also add each light to a GUI control
+            let menu = glcanvas.lightMenu.addFolder("light " + i);
+            glcanvas.lightMenus.push(menu);
+            light.camera.position = vecToStr(light.pos);
+            menu.add(light.camera, 'position').listen().onChange(
+                function(value) {
+                    let xyz = splitVecStr(value);
+                    for (let k = 0; k < 3; k++) {
+                        light.camera.pos[k] = xyz[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            light.rgbcolor = [255*light.color[0], 255*light.color[1], 255*light.color[2]];
+            menu.addColor(light, 'rgbcolor').onChange(
+                function(v) {
+                    light.color = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            // Setup mechanism to move light around with camera
+            light.viewFrom = false;
+            menu.add(light, 'viewFrom').listen().onChange(
+                function(v) {
+                    if (v) {
+                        // Toggle other lights viewFrom
+                        scene.lights.forEach(function(other) {
+                            if (!(other === light)) {
+                                other.viewFrom = false;
+                            }
+                        });
+                        // Turn off all cameras viewFrom
+                        scene.cameras.forEach(function(camera) {
+                            camera.viewFrom = false;
+                        })
+                        glcanvas.camera = light.camera;
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                }
+            )
+        });
+        if (scene.lights.length > 0) {
+            // Add the first light to mesh drawing parameters
+            glcanvas.light1 = scene.lights[0];
+        }
+    }
+
+    /**
      * A function that starts of the recursive initialization
      * of the scene, and which also sets up cameras
      * 
      * @param {WebGL Handle} glcanvas 
      */
     glcanvas.setupScene = function(scene, pixWidth, pixHeight) {
-        //Setup camera objects for the source and receiver
+        glcanvas.scene = scene
         if (!('materials' in scene)) {
             scene.materials = {};
         }
-        if (!('light1' in scene)) {
-            scene.light1 = {pos:[0, 0, 0], color:[1, 1, 1]};
-        }
-        if (!('light2' in scene)) {
-            scene.light2 = {pos:[1, 1, 1], color:[1, 1, 1]};
-        }
-        glcanvas.light1 = scene.light1;
-        glcanvas.light2 = scene.light2;
         glcanvas.scene = scene;
-        glcanvas.scene.cam1 = new FPSCamera(pixWidth, pixHeight);
-        glcanvas.scene.cam2 = new FPSCamera(pixWidth, pixHeight);
-        glcanvas.scene.light1cam = new FPSCamera(pixWidth, pixHeight);
-        glMatrix.vec3.copy(glcanvas.scene.light1cam.pos, scene.light1.pos);
-        glcanvas.scene.light2cam = new FPSCamera(pixWidth, pixHeight);
-        glMatrix.vec3.copy(glcanvas.scene.light2cam.pos, scene.light2.pos);
-        glcanvas.light1.pos = glcanvas.scene.light1cam.pos;
-        glcanvas.light2.pos = glcanvas.scene.light2cam.pos;
-        if ("camera1" in glcanvas.scene) {
-            glcanvas.fillInCamera(glcanvas.scene.cam1, glcanvas.scene.camera1);
-        }
-        if ("camera2" in glcanvas.scene) {
-            glcanvas.fillInCamera(glcanvas.scene.cam2, glcanvas.scene.camera2);
-        }
+
+        // Setup cameras and camera menus
+        glcanvas.setupCameraMenus(scene, pixWidth, pixHeight);
+
+        // Setup lights and light menus
+        glcanvas.setupLightMenus(scene, pixWidth, pixHeight);
         
         //Now recurse and setup all of the children nodes in the tree
-        glcanvas.scene.children.forEach(function(child, i) {
+        glcanvas.scene.children.forEach(function(child) {
             glcanvas.parseNode(child);
         });
 
         //Output information about the scene tree
-        glcanvas.scene.children.forEach(function(child, i) {
+        glcanvas.scene.children.forEach(function(child) {
             console.log(glcanvas.getSceneString(child, " "));
         });
-        glcanvas.viewFromCamera1();
     }
 
 
@@ -406,23 +537,24 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         //TODO: Paint debugging stuff here if you'd like
 
 
-        // Now draw the beacons for the cameras (assuming FPSCamera)
+        // Now draw the beacons for the cameras and lights (assuming FPSCamera objects)
         if (glcanvas.showCameras) {
-            if (glcanvas.camera == glcanvas.scene.cam2) {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam1, BEACON_COLOR_1);
-            }
-            else {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam2, BEACON_COLOR_2);
-            }
+            glcanvas.scene.cameras.forEach(
+                function(camera) {
+                    if (!(glcanvas.camera === camera.camera)) {
+                        glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
+                    }
+                }
+            )
         }
-
         if (glcanvas.showLights) {
-            if (!(glcanvas.camera === glcanvas.scene.light1cam)) {
-                glcanvas.drawLightBeacon(glcanvas.light1);
-            }
-            if (!(glcanvas.camera === glcanvas.scene.light2cam)) {
-                glcanvas.drawLightBeacon(glcanvas.light2);
-            }
+            glcanvas.scene.lights.forEach(
+                function(light) {
+                    if (!(glcanvas.camera === light.camera)) {
+                        glcanvas.drawLightBeacon(light);
+                    }
+                }
+            );
         }
         
         // Redraw if walking
@@ -433,9 +565,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.camera.translate(0, 0, glcanvas.movefb, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(0, glcanvas.moveud, 0, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(glcanvas.movelr, 0, 0, glcanvas.walkspeed*dt);
+            glcanvas.camera.position = vecToStr(glcanvas.camera.pos);
             requestAnimFrame(glcanvas.repaint);
         }
-        glcanvas.updateCamerasHTML();
     }
 
     glcanvas.updateMeshDrawingsRecurse = function(node) {
@@ -463,42 +595,39 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
-    glcanvas.updateCamerasHTML = function() {
-        let cam1PosE = document.getElementById("camera1");
-        let cam2PosE = document.getElementById("camera2");
-        let light1PosE = document.getElementById("light1");
-        let light2PosE = document.getElementById("light2");
-        cam1PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_1 + "\">" + glcanvas.scene.cam1.toString() + "</font>";
-        cam2PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_2 + "\">" + glcanvas.scene.cam2.toString() + "</font>";
-        let p = glcanvas.scene.light1.pos;
-        light1PosE.innerHTML = "[" + p[0].toFixed(2) + ", " + p[1].toFixed(2) + ", " + p[2].toFixed(2) + "]";
-        p = glcanvas.scene.light2.pos;
-        light2PosE.innerHTML = "[" + p[0].toFixed(2) + ", " + p[1].toFixed(2) + ", " + p[2].toFixed(2) + "]";
-    }
-
-    glcanvas.viewFromCamera1 = function() {
-        glcanvas.camera = glcanvas.scene.cam1;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.viewFromCamera2 = function() {
-        glcanvas.camera = glcanvas.scene.cam2;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    glcanvas.viewFromLight1 = function() {
-        glcanvas.camera = glcanvas.scene.light1cam;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.viewFromLight2 = function() {
-        glcanvas.camera = glcanvas.scene.light2cam;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
     glcanvas.shaderToUse = glcanvas.shaders.lambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
-    glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
     glcanvas.walkspeed = 2.6;
     glcanvas.showCameras = true;
     glcanvas.showLights = true;
+
+
+    glcanvas.gui = new dat.GUI();
+    const gui = glcanvas.gui;
+    // Mesh display options menu
+    let meshOpts = gui.addFolder('Mesh Display Options');
+    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+        function(s) {
+            let evt = meshOpts.add(glcanvas, s);
+            evt.onChange(function(value) {
+                glcanvas.updateMeshDrawings();
+                requestAnimFrame(glcanvas.repaint);
+            });
+        }
+    );
+    // Camera control menu
+    glcanvas.cameraMenu = gui.addFolder('Cameras');
+    let cameraMenu = glcanvas.cameraMenu;
+    cameraMenu.add(glcanvas, 'showCameras').onChange(function() {
+        requestAnimFrame(glcanvas.repaint);
+    });
+
+    // Lighting menu
+    glcanvas.lightMenu = gui.addFolder('Lights');
+    cameraMenu.add(glcanvas, 'showLights').onChange(function() {
+        requestAnimFrame(glcanvas.repaint);
+    });
+
+    // Other options
+    gui.add(glcanvas, 'walkspeed', 0.01, 100);
 }

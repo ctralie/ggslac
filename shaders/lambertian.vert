@@ -9,9 +9,7 @@ uniform mat3 uNMatrix;
 
 uniform vec3 uAmbientColor;
 uniform vec3 uLight1Pos;
-uniform vec3 uLight2Pos;
 uniform vec3 uLight1Color;
-uniform vec3 uLight2Color;
 
 varying vec3 vLightCoeff;
 varying vec3 vColorInterp;
