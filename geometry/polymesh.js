@@ -566,6 +566,28 @@ function PolyMesh() {
         return bbox;
     }
     
+    /**
+     * Get the axis-aligned bounding box of this mesh after applying
+     * a transformation
+     * 
+     * @param {glMatrix.mat4} tMatrix Transformation matrix to apply
+     * 
+     * @returns {AABox3D} The axis-aligned bounding box containing the mesh
+     */
+    this.getBBoxTransformed = function(tMatrix) {
+        if (this.vertices.length == 0) {
+            return AABox3D(0, 0, 0, 0, 0, 0);
+        }
+        let p = glMatrix.vec3.create();
+        glMatrix.vec3.transformMat3(p, this.vertices[0].pos, tMatrix);
+        let bbox = new AABox3D(p[0], p[0], p[1], p[1], p[2], p[2]);
+        this.vertices.forEach(function(v) {
+            glMatrix.vec3.transformMat3(p, v.pos, tMatrix);
+            bbox.addPoint(p);
+        });
+        return bbox;
+    }
+
     /////////////////////////////////////////////////////////////
     ////                INPUT/OUTPUT METHODS                /////
     /////////////////////////////////////////////////////////////
@@ -792,13 +814,13 @@ function PolyMesh() {
     //which it will be if mvMatrix is describing the camera
     /**
      * Draw the surface normals as a bunch of blue line segments
-     * @param {glMatrix.mat4} pMatrix The projection matrix
-     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
-     *      This assumes the upper left 3x3 matrix of the modelview matrix 
-     *      is orthogonal, which it will be if mvMatrix is describing the camera
+     * @param {object} camera A camera object containing 
+     *                        getPMatrix() and getMVMatrix()
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
      * @param {array} color An array of RGB, or blue by default
      */
-    this.drawNormals = function(pMatrix, mvMatrix, color) {
+    this.drawNormals = function(camera, tMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
             return;
@@ -808,25 +830,33 @@ function PolyMesh() {
         }
         if (this.needsDisplayUpdate) {
             //Figure out scale of normals; make 1/20th of the bounding box diagonal
-            let dR = 0.05*this.getBBox().getDiagLength();
+            let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
+            let p1 = glMatrix.vec3.create();
+            let p2 = glMatrix.vec3.create();
+            let n = glMatrix.vec3.create();
+            nMatrix = glMatrix.mat3.create();
+            glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
             for (let i = 0; i < this.vertices.length; i++) {
-                let P1 = this.vertices[i].pos;
-                let P2 = this.vertices[i].getNormal();
-                glMatrix.vec3.scaleAndAdd(P2, P1, P2, dR);
-                this.drawer.drawLine(P1, P2, color);    
+                glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
+                glMatrix.vec3.normalize(n, n);
+                glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
+                glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
+                this.drawer.drawLine(p1, p2, color);    
             }
         }
-        this.drawer.repaint(pMatrix, mvMatrix);
+        this.drawer.repaint(camera);
     }
 
     /**
      * Draw the surface edges as a bunch of blue line segments
      * 
-     * @param {glMatrix.mat4} pMatrix The projection matrix
-     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {object} camera A camera object containing 
+     *                        getPMatrix() and getMVMatrix()
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
      * @param {array} color An array of RGB, or blue by default
      */
-    this.drawEdges = function(pMatrix, mvMatrix, color) {
+    this.drawEdges = function(camera, tMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh edges, but simple drawer is null");
             return;
@@ -835,23 +865,27 @@ function PolyMesh() {
             color = [1.0, 1.0, 1.0];
         }
         if (this.needsDisplayUpdate) {
+            let p1 = glMatrix.vec3.create();
+            let p2 = glMatrix.vec3.create();
             for (let i = 0; i < this.edges.length; i++) {
-                let P1 = this.edges[i].v1.pos;
-                let P2 = this.edges[i].v2.pos;
-                this.drawer.drawLine(P1, P2, color);    
+                glMatrix.vec3.transformMat4(p1, this.edges[i].v1.pos, tMatrix);
+                glMatrix.vec3.transformMat4(p2, this.edges[i].v2.pos, tMatrix);
+                this.drawer.drawLine(p1, p2, color);    
             }
         }
-        this.drawer.repaint(pMatrix, mvMatrix);
+        this.drawer.repaint(camera);
     }
 
     /**
      * Draw the surface points as a scatter plot
      * 
-     * @param {glMatrix.mat4} pMatrix The projection matrix
-     * @param {glMatrix.mat4} mvMatrix The modelview matrix 
+     * @param {object} camera A camera object containing 
+     *                        getPMatrix() and getMVMatrix()
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
      * @param {array} color An array of RGB, or red by default
      */
-    this.drawPoints = function(pMatrix, mvMatrix, color) {
+    this.drawPoints = function(camera, tMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh points, but simple drawer is null");
             return;
@@ -860,11 +894,13 @@ function PolyMesh() {
             color = [1.0, 0.0, 0.0];
         }
         if (this.needsDisplayUpdate) {
+            let p = glMatrix.vec3.create();
             for (let i = 0; i < this.vertices.length; i++) {
-                this.drawer.drawPoint(this.vertices[i].pos, color);    
+                glMatrix.vec3.transformMat4(p, this.vertices[i].pos, tMatrix);
+                this.drawer.drawPoint(p, color);    
             }
         }
-        this.drawer.repaint(pMatrix, mvMatrix);
+        this.drawer.repaint(camera);
     }
     
     /** Bind all buffers according to what the shader accepts.
@@ -1048,13 +1084,13 @@ function PolyMesh() {
             this.drawer.reset();
         }
         if (glcanvas.drawNormals) {
-            this.drawNormals(pMatrix, mvMatrix);
+            this.drawNormals(glcanvas.camera, tMatrix);
         }
         if (glcanvas.drawEdges) {
-            this.drawEdges(pMatrix, mvMatrix);
+            this.drawEdges(glcanvas.camera, tMatrix);
         }
         if (glcanvas.drawPoints) {
-            this.drawPoints(pMatrix, mvMatrix);
+            this.drawPoints(glcanvas.camera, tMatrix);
         }
         
         if (this.needsDisplayUpdate) {
