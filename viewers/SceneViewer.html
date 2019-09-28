@@ -35,24 +35,6 @@
 <tr><td>Scene File</td><td><input type = "file" id = "sceneInput"></td></tr>
 </table>
 
-<h3>Options</h3>
-<table>
-<tr><td>Display Mesh Edges</td><td><input type="checkbox" id="meshEdgesCheckbox" /></td></tr>
-<tr><td>Display Mesh Points</td><td><input type="checkbox" id="meshPointsCheckbox" /></td></tr>
-<tr><td>Display Mesh Normals</td><td><input type="checkbox" id="meshNormalsCheckbox" /></td></tr>
-<tr><td>
-    <HR>
-    <table>
-        <tr><td colspan="2">WalkSpeed</td></tr>
-        <tr><td colspan="2">
-        <input type="range" id="speedSlider" min = "0" max = "1000" value = "500" step = "1" style="width:250px">
-        </td></tr><tr><td><input type="text" id="speedTxt" size="1"></input></td>
-        <td>Meters/second</td>
-        </tr>
-    </table>
-</td></tr>
-</table>
-
 <h3>Viewpoint</h3>
 <table>
     <tr>
@@ -123,36 +105,11 @@
                 throw(error);
             }
             glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-            glcanvas.drawEdges = meshEdgesCheckbox.checked;
-            glcanvas.drawPoints = meshPointsCheckbox.checked;
-            glcanvas.drawNormals = meshNormalsCheckbox.checked;
             glcanvas.showCameras = showCamerasCheckbox.checked;
             glcanvas.showLights = showLightsCheckbox.checked;
             glcanvas.updateMeshDrawings();
         }
         reader.readAsText(sceneInput.files[0]);
-    });
-
-
-    let meshEdgesCheckbox = document.getElementById('meshEdgesCheckbox');
-    meshEdgesCheckbox.addEventListener('change', function(e) {
-        glcanvas.drawEdges = meshEdgesCheckbox.checked;
-        glcanvas.updateMeshDrawings();
-        requestAnimFrame(glcanvas.repaint);
-    });
-
-    let meshPointsCheckbox = document.getElementById('meshPointsCheckbox');
-    meshPointsCheckbox.addEventListener('change', function(e) {
-        glcanvas.drawPoints = meshPointsCheckbox.checked;
-        glcanvas.updateMeshDrawings();
-        requestAnimFrame(glcanvas.repaint);
-    });
-
-    let meshNormalsCheckbox = document.getElementById('meshNormalsCheckbox');
-    meshNormalsCheckbox.addEventListener('change', function(e) {
-        glcanvas.drawNormals = meshNormalsCheckbox.checked;
-        glcanvas.updateMeshDrawings();
-        requestAnimFrame(glcanvas.repaint);
     });
 
     let showCamerasCheckbox = document.getElementById('showCamerasCheckbox');
@@ -196,30 +153,36 @@
             return;
         }
         glcanvas.viewFromLight2();
-    }    
-
-
-	var speedSlider = document.getElementById('speedSlider');
-    speedSlider.value = 600.0;
-    glcanvas.walkspeed = 2.6;
-	var speedTxt = document.getElementById('speedTxt');
-	speedTxt.value = "2.6";
-    speedSlider.addEventListener('input', function(e) {
-        var speed = 4.0*speedSlider.value/1000.0 - 2.0;
-        glcanvas.walkspeed = Math.pow(10.0, speed);
-        speedTxt.value = "" + glcanvas.walkspeed.toFixed(1);
-        requestAnimFrame(glcanvas.repaint);
-    });
+    }
 
     // Load the sample scene as a default
     scene = BlockLoader.loadJSON("../scenes/sample-scene.json");
     glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-    meshEdgesCheckbox.checked = false;
     glcanvas.drawEdges = false;
-    showCamerasCheckbox.checked = true;
     glcanvas.showCameras = true;
     glcanvas.updateMeshDrawings();
     requestAnimFrame(glcanvas.repaint);
+
+    let gui = new dat.GUI();
+    // Mesh display options menu
+    let meshOpts = gui.addFolder('Mesh Display Options');
+    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+        function(s) {
+            let evt = meshOpts.add(glcanvas, s);
+            evt.onChange(function(value) {
+                glcanvas.updateMeshDrawings();
+                requestAnimFrame(glcanvas.repaint);
+            });
+        }
+    );
+    // Camera control menu
+    let cameraOpts = gui.addFolder('Camera Options');
+    cameraOpts.add(glcanvas, 'showCameras').onChange(function() {
+        requestAnimFrame(glcanvas.repaint);
+    });
+    cameraOpts.add(glcanvas, 'camera', {})
+
+    gui.add(glcanvas, 'walkspeed', 0.01, 100);
     
     
 </script>
