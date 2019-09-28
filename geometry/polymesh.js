@@ -828,23 +828,20 @@ function PolyMesh() {
         if (color === undefined) {
             color = [0.0, 0.0, 1.0];
         }
-        if (this.needsDisplayUpdate) {
-            //Figure out scale of normals; make 1/20th of the bounding box diagonal
-            let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
-            let p1 = glMatrix.vec3.create();
-            let p2 = glMatrix.vec3.create();
-            let n = glMatrix.vec3.create();
-            nMatrix = glMatrix.mat3.create();
-            glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
-            for (let i = 0; i < this.vertices.length; i++) {
-                glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
-                glMatrix.vec3.normalize(n, n);
-                glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
-                glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
-                this.drawer.drawLine(p1, p2, color);    
-            }
+        //Figure out scale of normals; make 1/20th of the bounding box diagonal
+        let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
+        let p1 = glMatrix.vec3.create();
+        let p2 = glMatrix.vec3.create();
+        let n = glMatrix.vec3.create();
+        nMatrix = glMatrix.mat3.create();
+        glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
+            glMatrix.vec3.normalize(n, n);
+            glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
+            glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
+            this.drawer.drawLine(p1, p2, color);    
         }
-        this.drawer.repaint(camera);
     }
 
     /**
@@ -864,16 +861,13 @@ function PolyMesh() {
         if (color === undefined) {
             color = [1.0, 1.0, 1.0];
         }
-        if (this.needsDisplayUpdate) {
-            let p1 = glMatrix.vec3.create();
-            let p2 = glMatrix.vec3.create();
-            for (let i = 0; i < this.edges.length; i++) {
-                glMatrix.vec3.transformMat4(p1, this.edges[i].v1.pos, tMatrix);
-                glMatrix.vec3.transformMat4(p2, this.edges[i].v2.pos, tMatrix);
-                this.drawer.drawLine(p1, p2, color);    
-            }
+        let p1 = glMatrix.vec3.create();
+        let p2 = glMatrix.vec3.create();
+        for (let i = 0; i < this.edges.length; i++) {
+            glMatrix.vec3.transformMat4(p1, this.edges[i].v1.pos, tMatrix);
+            glMatrix.vec3.transformMat4(p2, this.edges[i].v2.pos, tMatrix);
+            this.drawer.drawLine(p1, p2, color);    
         }
-        this.drawer.repaint(camera);
     }
 
     /**
@@ -893,14 +887,11 @@ function PolyMesh() {
         if (color === undefined) {
             color = [1.0, 0.0, 0.0];
         }
-        if (this.needsDisplayUpdate) {
-            let p = glMatrix.vec3.create();
-            for (let i = 0; i < this.vertices.length; i++) {
-                glMatrix.vec3.transformMat4(p, this.vertices[i].pos, tMatrix);
-                this.drawer.drawPoint(p, color);    
-            }
+        let p = glMatrix.vec3.create();
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.transformMat4(p, this.vertices[i].pos, tMatrix);
+            this.drawer.drawPoint(p, color);    
         }
-        this.drawer.repaint(camera);
     }
     
     /** Bind all buffers according to what the shader accepts.
@@ -1082,22 +1073,20 @@ function PolyMesh() {
                 this.drawer = new SimpleDrawer(gl, glcanvas.shaders);
             }
             this.drawer.reset();
+            if (glcanvas.drawNormals) {
+                this.drawNormals(glcanvas.camera, tMatrix);
+            }
+            if (glcanvas.drawEdges) {
+                this.drawEdges(glcanvas.camera, tMatrix);
+            }
+            if (glcanvas.drawPoints) {
+                this.drawPoints(glcanvas.camera, tMatrix);
+            }
         }
-        if (glcanvas.drawNormals) {
-            this.drawNormals(glcanvas.camera, tMatrix);
-        }
-        if (glcanvas.drawEdges) {
-            this.drawEdges(glcanvas.camera, tMatrix);
-        }
-        if (glcanvas.drawPoints) {
-            this.drawPoints(glcanvas.camera, tMatrix);
-        }
-        
-        if (this.needsDisplayUpdate) {
-            //By the time rendering is done, there should not be a need to update
-            //the display unless this flag is changed again externally
-            this.needsDisplayUpdate = false;
-        }
+        this.drawer.repaint(glcanvas.camera);
+        //By the time rendering is done, there should not be a need to update
+        //the display unless this flag is changed again externally
+        this.needsDisplayUpdate = false;
     }
 }
 
@@ -1200,16 +1189,16 @@ function getCylinderMesh(center, R, H, res, color) {
     let i2;
     for (let i1 = 0; i1 < res; i1++) {
         i2 = (i1+1) % res;
-        cylinder.addFace([vertexArr[i1][0], vertexArr[i2][0], vertexArr[i2][1]]);
-        cylinder.addFace([vertexArr[i1][0], vertexArr[i2][1], vertexArr[i1][1]]);
+        cylinder.addFace([vertexArr[i2][1], vertexArr[i2][0], vertexArr[i1][0]]);
+        cylinder.addFace([vertexArr[i1][1], vertexArr[i2][1], vertexArr[i1][0]]);
     }
     // Make the faces for the top and bottom
     for (let i1 = 0; i1 < res; i1++) {
         i2 = (i1+1) % res;
         // Top
-        cylinder.addFace([vertexArr[i1][1], vertexArr[i2][1], topc]);
+        cylinder.addFace([topc, vertexArr[i2][1], vertexArr[i1][1]]);
         // Bottom
-        cylinder.addFace([botc, vertexArr[i2][0], vertexArr[i1][0]]);
+        cylinder.addFace([vertexArr[i2][0], vertexArr[i1][0], botc]);
     }
     return cylinder;
 }
@@ -1246,12 +1235,12 @@ function getConeMesh(center, R, H, res, color) {
     let i2;
     for (let i1 = 0; i1 < res; i1++) {
         i2 = (i1+1) % res;
-        cone.addFace([vertexArr[i1], vertexArr[i2], topc]);
+        cone.addFace([topc, vertexArr[i2], vertexArr[i1]]);
     }
     // Make the faces for the bottom
     for (let i1 = 0; i1 < res; i1++) {
         i2 = (i1+1) % res;
-        cone.addFace([botc, vertexArr[i2], vertexArr[i1]]);
+        cone.addFace([vertexArr[i1], vertexArr[i2], botc]);
     }
     return cone;
 }

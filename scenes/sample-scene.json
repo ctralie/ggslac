@@ -106,7 +106,7 @@
                 {
                     "type":"sphere",
                     "radius":2,
-                    "center":[4, 0, -10],
+                    "center":[5, 0, -10],
                     "material":"green"
                 },
                 {
