@@ -75,34 +75,34 @@ function getShaderProgram(gl, prefix) {
  * @returns{obj} An object with fields containing standard shaders
  */
 function initStandardShaders(gl, relpath) {
-    /** lambertian: Ordinary color shader for drawing meshes  */
-    let lambertian = getShaderProgram(gl, relpath + "lambertian");
-    lambertian.vPosAttrib = gl.getAttribLocation(lambertian, "vPos");
-    gl.enableVertexAttribArray(lambertian.vPosAttrib);
-    lambertian.vNormalAttrib = gl.getAttribLocation(lambertian, "vNormal");
-    gl.enableVertexAttribArray(lambertian.normalAttrib);
-    lambertian.vColorAttrib = gl.getAttribLocation(lambertian, "vColor");
-    gl.enableVertexAttribArray(lambertian.vColorAttrib);
-    lambertian.pMatrixUniform = gl.getUniformLocation(lambertian, "uPMatrix");
-    lambertian.mvMatrixUniform = gl.getUniformLocation(lambertian, "uMVMatrix");
-    lambertian.tMatrixUniform = gl.getUniformLocation(lambertian, "tMatrix");
-    lambertian.nMatrixUniform = gl.getUniformLocation(lambertian, "uNMatrix");
-    lambertian.ambientColorUniform = gl.getUniformLocation(lambertian, "uAmbientColor");
-    lambertian.light1PosUniform = gl.getUniformLocation(lambertian, "uLight1Pos");
-    lambertian.light2PosUniform = gl.getUniformLocation(lambertian, "uLight2Pos");
-    lambertian.light1ColorUniform = gl.getUniformLocation(lambertian, "uLight1Color");
-    lambertian.light2ColorUniform = gl.getUniformLocation(lambertian, "uLight2Color");
-    lambertian.uColorUniform = gl.getUniformLocation(lambertian, "uColor");
+    /** gouraudLambertian: Per-vertex lambertian shader  */
+    let gouraudLambertian = getShaderProgram(gl, relpath + "gouraudLambertian");
+    gouraudLambertian.vPosAttrib = gl.getAttribLocation(gouraudLambertian, "vPos");
+    gl.enableVertexAttribArray(gouraudLambertian.vPosAttrib);
+    gouraudLambertian.vNormalAttrib = gl.getAttribLocation(gouraudLambertian, "vNormal");
+    gl.enableVertexAttribArray(gouraudLambertian.normalAttrib);
+    gouraudLambertian.vColorAttrib = gl.getAttribLocation(gouraudLambertian, "vColor");
+    gl.enableVertexAttribArray(gouraudLambertian.vColorAttrib);
+    gouraudLambertian.pMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uPMatrix");
+    gouraudLambertian.mvMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uMVMatrix");
+    gouraudLambertian.tMatrixUniform = gl.getUniformLocation(gouraudLambertian, "tMatrix");
+    gouraudLambertian.nMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uNMatrix");
+    gouraudLambertian.ambientColorUniform = gl.getUniformLocation(gouraudLambertian, "uAmbientColor");
+    gouraudLambertian.light1PosUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Pos");
+    gouraudLambertian.light2PosUniform = gl.getUniformLocation(gouraudLambertian, "uLight2Pos");
+    gouraudLambertian.light1ColorUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Color");
+    gouraudLambertian.light2ColorUniform = gl.getUniformLocation(gouraudLambertian, "uLight2Color");
+    gouraudLambertian.uColorUniform = gl.getUniformLocation(gouraudLambertian, "uColor");
 
 
-    /** FlatShader: A shader that draws a constant color for all faces*/
-    let flatShader = getShaderProgram(gl, relpath + "flat");
-    flatShader.vPosAttrib = gl.getAttribLocation(flatShader, "vPos");
-    gl.enableVertexAttribArray(flatShader.vPosAttrib);
-    flatShader.pMatrixUniform = gl.getUniformLocation(flatShader, "uPMatrix");
-    flatShader.mvMatrixUniform = gl.getUniformLocation(flatShader, "uMVMatrix");
-    flatShader.tMatrixUniform = gl.getUniformLocation(flatShader, "tMatrix");
-    flatShader.uColorUniform = gl.getUniformLocation(flatShader, "uColor");
+    /** flat: A shader that draws a constant color for all faces*/
+    let flat = getShaderProgram(gl, relpath + "flat");
+    flat.vPosAttrib = gl.getAttribLocation(flat, "vPos");
+    gl.enableVertexAttribArray(flat.vPosAttrib);
+    flat.pMatrixUniform = gl.getUniformLocation(flat, "uPMatrix");
+    flat.mvMatrixUniform = gl.getUniformLocation(flat, "uMVMatrix");
+    flat.tMatrixUniform = gl.getUniformLocation(flat, "tMatrix");
+    flat.uColorUniform = gl.getUniformLocation(flat, "uColor");
     
     /** Point shader: Simple shader for drawing points with flat colors */
     let pointShader = getShaderProgram(gl, relpath + "point");
@@ -136,8 +136,8 @@ function initStandardShaders(gl, relpath) {
     normalShader.uColorUniform = gl.getUniformLocation(normalShader, "uColor");
     normalShader.uRUniform = gl.getUniformLocation(normalShader, "uR");
     
-    return { lambertian:lambertian,
-            flatShader:flatShader,
+    return { gouraudLambertian:gouraudLambertian,
+            flat:flat,
             pointShader:pointShader,
             pointColorShader:pointColorShader,
             normalShader:normalShader

@@ -472,7 +472,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
-        glcanvas.shaderToUse = glcanvas.shaders.flatShader;
+        glcanvas.shaderToUse = glcanvas.shaders.flat;
         glcanvas.drawEdges = false;
 
         let pos = camera.pos;
@@ -501,7 +501,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
-        glcanvas.shaderToUse = glcanvas.shaders.flatShader;
+        glcanvas.shaderToUse = glcanvas.shaders.flat;
         glcanvas.drawEdges = false;
 
         let pos = light.pos;
@@ -595,7 +595,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
-    glcanvas.shaderToUse = glcanvas.shaders.lambertian;
+    glcanvas.shaderToUse = glcanvas.shaders.gouraudLambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
     glcanvas.walkspeed = 2.6;
     glcanvas.showCameras = true;
@@ -628,6 +628,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     cameraMenu.add(glcanvas, 'showLights').onChange(function() {
         requestAnimFrame(glcanvas.repaint);
     });
+
+    // Shaders menu
+    glcanvas.shader = "gouraudLambertian";
+    gui.add(glcanvas, "shader", ["gouraudLambertian", "flat"]).onChange(function() {
+        glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
+        requestAnimFrame(glcanvas.repaint);
+    })
 
     // Other options
     gui.add(glcanvas, 'walkspeed', 0.01, 100);

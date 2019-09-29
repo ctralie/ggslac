@@ -1083,7 +1083,7 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
         
         //Step 1: Figure out which shader to use
-        let sProg = glcanvas.shaders.flatColorShader;
+        let sProg = glcanvas.shaders.flat;
         if ('shaderToUse' in glcanvas) {
             sProg = glcanvas.shaderToUse;
         }
