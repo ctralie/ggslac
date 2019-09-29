@@ -270,6 +270,8 @@ function PolyMesh() {
     this.needsIndexDisplayUpdate = true;
     this.vertexBuffer = null;
     this.normalBuffer = null;
+    this.vnormal1Buffer = null;
+    this.vnormal2Buffer = null;
     this.indexBuffer = null;
     this.edgeIndexBuffer = null;
     this.colorBuffer = null;
@@ -727,6 +729,12 @@ function PolyMesh() {
         if (this.normalBuffer === null) {
             this.normalBuffer = gl.createBuffer();
         }
+        if (this.vnormal1Buffer === null) {
+            this.vnormal1Buffer = gl.createBuffer();
+        }
+        if (this.vnormal2Buffer === null) {
+            this.vnormal2Buffer = gl.createBuffer();
+        }
         if (this.indexBuffer === null) {
             this.indexBuffer = gl.createBuffer();
         }
@@ -748,19 +756,33 @@ function PolyMesh() {
         this.vertexBuffer.itemSize = 3;
         this.vertexBuffer.numItems = this.vertices.length;
         
-        //Normal buffer
-        //TODO: NaNs in normals
+        //Normal buffers
         let N = new Float32Array(this.vertices.length*3);
+        let N1 = new Float32Array(this.vertices.length*6);
+        let N2 = new Float32Array(this.vertices.length*6);
         for (let i = 0; i < this.vertices.length; i++) {
             let n = this.vertices[i].getNormal();
-            N[i*3] = n[0];
-            N[i*3+1] = n[1];
-            N[i*3+2] = n[2];
+            for (let k = 0; k < 3; k++) {
+                N[i*3+k] = n[k];
+                N1[i*6+k] = this.vertices[i].pos[k];
+                N1[i*6+3+k] = this.vertices[i].pos[k];
+                N2[i*6+k] = 0;
+                N2[i*6+3+k] = n[k];
+            }
+            
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, N, gl.STATIC_DRAW);
         this.normalBuffer.itemSize = 3;
         this.normalBuffer.numItems = this.vertices.length;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, N1, gl.STATIC_DRAW);
+        this.vnormal1Buffer.itemSize = 3;
+        this.vnormal1Buffer.numItems = this.vertices.length*2;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal2Buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, N2, gl.STATIC_DRAW);
+        this.vnormal2Buffer.itemSize = 3;
+        this.vnormal2Buffer.numItems = this.vertices.length*2;
         
         //Color buffer
         let C = new Float32Array(this.vertices.length*3);
@@ -833,9 +855,10 @@ function PolyMesh() {
      * */
     this.sendBuffersToGPU = function(glcanvas, sProg, pMatrix, mvMatrix, tMatrix) {
         let gl = glcanvas.gl;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
+        if ('vPosAttrib' in sProg) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        }
         //Normal buffer (only relevant if lighting)
         if ('vNormalAttrib' in sProg) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
@@ -898,58 +921,6 @@ function PolyMesh() {
             }
             gl.uniform3fv(sProg.light1ColorUniform, light1Color);
         }
-        if ('light2PosUniform' in sProg) {
-            let light2Pos = glMatrix.vec3.fromValues(0, 0, 0);
-            if ('light2' in glcanvas) {
-                if ('pos' in glcanvas.light2) {
-                    light1Pos = glcanvas.light2.pos;
-                }
-            }
-            gl.uniform3fv(sProg.light2PosUniform, light2Pos);
-        }
-        if ('light2ColorUniform' in sProg) {
-            let light2Color = glMatrix.vec3.fromValues(1, 1, 1);
-            if ('light2' in glcanvas) {
-                if ('color' in glcanvas.light2) {
-                    light2Color = glcanvas.light2.color;
-                }
-            }
-            gl.uniform3fv(sProg.light2ColorUniform, light2Color);
-        }
-    }
-
-    //This assumes the upper left 3x3 matrix of the modelview matrix is orthogonal,
-    //which it will be if mvMatrix is describing the camera
-    /**
-     * Draw the surface normals as a bunch of blue line segments
-     * @param {object} camera A camera object containing 
-     *                        getPMatrix() and getMVMatrix()
-     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
-     *                                to this mesh before viewing
-     * @param {array} color An array of RGB, or blue by default
-     */
-    this.drawNormals = function(camera, tMatrix, color) {
-        if (this.drawer === null) {
-            console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
-            return;
-        }
-        if (color === undefined) {
-            color = [0.0, 0.0, 1.0];
-        }
-        //Figure out scale of normals; make 1/20th of the bounding box diagonal
-        let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
-        let p1 = glMatrix.vec3.create();
-        let p2 = glMatrix.vec3.create();
-        let n = glMatrix.vec3.create();
-        nMatrix = glMatrix.mat3.create();
-        glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
-        for (let i = 0; i < this.vertices.length; i++) {
-            glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
-            glMatrix.vec3.normalize(n, n);
-            glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
-            glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
-            this.drawer.drawLine(p1, p2, color);    
-        }
     }
 
     /**
@@ -972,13 +943,8 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
-        gl.uniformMatrix4fv(sProg.tMatrixUniform, false, tMatrix);
+        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uColorUniform, color);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);        
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
         gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
@@ -1005,15 +971,48 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
-        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
-        gl.uniformMatrix4fv(sProg.tMatrixUniform, false, tMatrix);
+        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uColorUniform, color);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.POINTS, 0, this.vertexBuffer.numItems);
     }
+
+
+    /**
+     * Draw the surface normals as a bunch of blue line segments
+     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
+     * @param {array} color An array of RGB, or blue by default
+     * @param {float} scale The length of the normal, as a proportion of 
+     *                      the bounding box diagonal
+     */
+    this.drawNormals = function(glcanvas, tMatrix, color, scale) {
+        if (tMatrix === undefined) {
+            tMatrix = glMatrix.mat4.create();
+        }
+        if (color === undefined) {
+            color = glMatrix.vec3.fromValues(0.0, 1.0, 1.0);
+        }
+        if (scale === undefined) {
+            scale = 0.05*this.getBBox().getDiagLength();
+        }
+        let gl = glcanvas.gl;
+        let sProg = glcanvas.shaders.normalShader;
+        let mvMatrix = glcanvas.camera.getMVMatrix();
+        let pMatrix = glcanvas.camera.getPMatrix();
+
+        gl.useProgram(sProg);
+        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        gl.uniform3fv(sProg.uColorUniform, color);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
+        gl.vertexAttribPointer(sProg.n1PosAttrib, this.vnormal1Buffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal2Buffer);
+        gl.vertexAttribPointer(sProg.n2PosAttrib, this.vnormal2Buffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.uniform1f(sProg.uRUniform, scale);
+
+        gl.drawArrays(gl.LINES, 0, this.vnormal1Buffer.numItems);
+    }
+
 
     /**
      Render the mesh using some pre-specified shaders
@@ -1092,7 +1091,7 @@ function PolyMesh() {
         
         //Step 4: Draw lines and points for vertices, edges, and normals if requested
         if (glcanvas.drawNormals) {
-            this.drawNormals(glcanvas.camera, tMatrix);
+            this.drawNormals(glcanvas, tMatrix);
         }
         if (glcanvas.drawEdges) {
             this.drawEdges(glcanvas, tMatrix);

@@ -122,11 +122,25 @@ function initStandardShaders(gl, relpath) {
     pointColorShader.pMatrixUniform = gl.getUniformLocation(pointColorShader, "uPMatrix");
     pointColorShader.mvMatrixUniform = gl.getUniformLocation(pointColorShader, "uMVMatrix");
     pointColorShader.tMatrixUniform = gl.getUniformLocation(pointColorShader, "uTMatrix");
+
+    /** Normal shader: A shader used to draw normals as line segments */
+    let normalShader = getShaderProgram(gl, relpath + "normal");
+    normalShader.n1PosAttrib = gl.getAttribLocation(normalShader, "n1Pos");
+    gl.enableVertexAttribArray(normalShader.n1PosAttrib);
+    normalShader.n2PosAttrib = gl.getAttribLocation(normalShader, "n2Pos");
+    gl.enableVertexAttribArray(normalShader.n2PosAttrib);
+    normalShader.pMatrixUniform = gl.getUniformLocation(normalShader, "uPMatrix");
+    normalShader.mvMatrixUniform = gl.getUniformLocation(normalShader, "uMVMatrix");
+    normalShader.tMatrixUniform = gl.getUniformLocation(normalShader, "uTMatrix");
+    normalShader.nMatrixUniform = gl.getUniformLocation(normalShader, "uNMatrix");
+    normalShader.uColorUniform = gl.getUniformLocation(normalShader, "uColor");
+    normalShader.uRUniform = gl.getUniformLocation(normalShader, "uR");
     
     return { lambertian:lambertian,
             flatShader:flatShader,
             pointShader:pointShader,
-            pointColorShader:pointColorShader
+            pointColorShader:pointColorShader,
+            normalShader:normalShader
             };
 }
 
