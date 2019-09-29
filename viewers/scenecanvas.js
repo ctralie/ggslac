@@ -447,11 +447,11 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
                 if (!(shape.mesh === null)) {
-                    glcanvas.constColor = [0.5, 0.55, 0.5];
                     if ('material' in shape) {
-                        if ('color' in shape.material) {
-                            glcanvas.constColor = shape.material.color;
-                        }
+                        glcanvas.material = shape.material;
+                    }
+                    else if ('material' in glcanvas) {
+                        delete glcanvas.material;
                     }
                     // There may be an additional transform to apply based
                     // on shape properties of special shapes (e.g. box width)
@@ -472,6 +472,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
+        let material = glcanvas.material;
         glcanvas.shaderToUse = glcanvas.shaders.flat;
         glcanvas.drawEdges = false;
 
@@ -486,12 +487,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.drawer.drawLine(pos, postw, [1, 0, 0]);
         glcanvas.drawer.drawLine(pos, posrt, [0, 1, 0]);
         glcanvas.drawer.drawLine(pos, posup, [0, 0, 1]);
-        glcanvas.constColor = colorFloatFromHex(color);
+        glcanvas.material = {ka:colorFloatFromHex(color)};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
         glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
         
         // Set properties back to what they were
+        glcanvas.material = material;
         glcanvas.shaderToUse = sProg;
         glcanvas.drawEdges = drawEdges;
         glcanvas.drawer.repaint(glcanvas.camera);
@@ -501,11 +503,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
+        let material = glcanvas.material;
         glcanvas.shaderToUse = glcanvas.shaders.flat;
         glcanvas.drawEdges = false;
 
         let pos = light.pos;
-        glcanvas.constColor = light.color;
+        glcanvas.material = {ka:light.color};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
         glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
@@ -513,6 +516,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         // Set properties back to what they were
         glcanvas.shaderToUse = sProg;
         glcanvas.drawEdges = drawEdges;
+        glcanvas.material = material;
         glcanvas.drawer.repaint(glcanvas.camera);
     }
 
@@ -542,7 +546,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.scene.cameras.forEach(
                 function(camera) {
                     if (!(glcanvas.camera === camera.camera)) {
-                        //glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
+                        glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
                     }
                 }
             )
@@ -551,7 +555,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.scene.lights.forEach(
                 function(light) {
                     if (!(glcanvas.camera === light.camera)) {
-                        //glcanvas.drawLightBeacon(light);
+                        glcanvas.drawLightBeacon(light);
                     }
                 }
             );
@@ -625,7 +629,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
 
     // Lighting menu
     glcanvas.lightMenu = gui.addFolder('Lights');
-    cameraMenu.add(glcanvas, 'showLights').onChange(function() {
+    glcanvas.lightMenu.add(glcanvas, 'showLights').onChange(function() {
         requestAnimFrame(glcanvas.repaint);
     });
 

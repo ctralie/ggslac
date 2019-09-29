@@ -8,6 +8,11 @@ cameras3d.js
 
 */
 
+const DEFAULT_AMBIENT = glMatrix.vec3.fromValues(0.05, 0.05, 0.05);
+const DEFAULT_DIFFUSE = glMatrix.vec3.fromValues(0.5, 0.55, 0.5);
+const DEFAULT_SPECULAR = glMatrix.vec3.create();
+const DEFAULT_SHININESS = 50;
+
 
 function MeshVertex(P, ID) {
     this.pos = glMatrix.vec3.clone(P); //Type glMatrix.vec3
@@ -871,21 +876,44 @@ function PolyMesh() {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
             gl.vertexAttribPointer(sProg.vNormalAttrib, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
-
-        // Color buffers
+        // Color buffers for per-vertex colors
         if ('vColorAttrib' in sProg) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
             gl.vertexAttribPointer(sProg.vColorAttrib, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
-        if ('uColorUniform' in sProg) {
-            // The default value of the uniform color is (2, 2, 2).
-            // The shader knows to ignore it if it receives 2, 2, 2
-            // If the user specified a constant color, then use that instead
-            let color = glMatrix.vec3.fromValues(2.0, 2.0, 2.0);
-            if ('constColor' in glcanvas) {
-                color = glcanvas.constColor;
+
+        // Material properties
+        if ('uKaUniform' in sProg) {
+            let ka = DEFAULT_AMBIENT;
+            if ('ka' in glcanvas.material) {
+                ka = glcanvas.material.ka;
             }
-            gl.uniform3fv(sProg.uColorUniform, color);
+            gl.uniform3fv(sProg.uKaUniform, ka);
+        }
+        if ('uKdUniform' in sProg) {
+            // The default value of the constant diffuse color is (2, 2, 2).
+            // The shader knows to ignore it if it receives 2, 2, 2 and to 
+            // instead rely on the per-vertex color buffer
+            // But if the mesh material specifies a diffuse color, then use that instead
+            let kd = glMatrix.vec3.fromValues(2.0, 2.0, 2.0);
+            if ('kd' in glcanvas.material) {
+                kd = glcanvas.material.kd;
+            }
+            gl.uniform3fv(sProg.uKdUniform, kd);
+        }
+        if ('uKsUniform' in sProg) {
+            let ks = DEFAULT_SPECULAR;
+            if ('ks' in glcanvas.material) {
+                ks = glcanvas.material.ks;
+            }
+            gl.uniform3fv(sProg.uKsUniform, ks);
+        }
+        if ('uShininessUniform' in sProg) {
+            let shininess = DEFAULT_SHININESS;
+            if ('shininess' in glcanvas.material) {
+                shininess = glcanvas.material.shininess;
+            }
+            gl.uniform1f(sProg.uShininessUniform, shininess);
         }
 
         // Projection and transformation matrices
@@ -903,13 +931,6 @@ function PolyMesh() {
         }
 
         // Lighting
-        if ('ambientColorUniform' in sProg) {
-            let ambientColor = glMatrix.vec3.fromValues(0.1, 0.1, 0.1);
-            if ('ambientColor' in glcanvas) {
-                ambientColor = glcanvas.ambientColor;
-            }
-            gl.uniform3fv(sProg.ambientColorUniform, ambientColor);
-        }
         if ('light1PosUniform' in sProg) {
             let light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
             if ('light1' in glcanvas) {
@@ -1078,6 +1099,11 @@ function PolyMesh() {
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
+        if (!('material' in glcanvas)) {
+            // Diffuse slight greenish gray is default material;
+            glcanvas.material = {ka:DEFAULT_AMBIENT, 
+                                 kd:DEFAULT_DIFFUSE};
+        }
 
         let mvMatrix = glcanvas.camera.getMVMatrix();
         let pMatrix = glcanvas.camera.getPMatrix();
@@ -1190,7 +1216,7 @@ function getCylinderMesh(center, R, H, res, color) {
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = [0.5, 0.55, 0.5];
+        color = DEFAULT_DIFFUSE;
     }
     // Make the main cylinder part
     for (let i = 0; i < res; i++) {
@@ -1239,7 +1265,7 @@ function getConeMesh(center, R, H, res, color) {
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = [0.5, 0.55, 0.5];
+        color = DEFAULT_DIFFUSE;
     }
     // Make the base of the cone
     for (let i = 0; i < res; i++) {

@@ -8,7 +8,7 @@ uniform mat3 uNMatrix;
 
 uniform float uR;
 
-uniform vec3 uColor;
+uniform vec3 uKa;
 varying vec4 fColor;
 
 void main(void) {
@@ -23,5 +23,5 @@ void main(void) {
     }
     vec4 p = uTMatrix*vec4(n1Pos, 1.0) + vec4(normal, 0);
     gl_Position = uPMatrix*uMVMatrix*p;
-    fColor = vec4(uColor, 1.0);
+    fColor = vec4(uKa, 1.0);
 }
