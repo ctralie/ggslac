@@ -17,8 +17,10 @@ uniform vec3 uKs; // Specular color for material
 uniform float uShininess; // Specular exponent for material
 
 // Stuff to send to fragment shader
-varying vec3 vLightCoeff;
-varying vec3 vColorInterp;
+varying vec3 vKdCoeff;
+varying vec3 vKa;
+varying vec3 vKd;
+varying vec3 vKs;
 
 void main(void) {
     vec4 tpos = tMatrix*vec4(vPos, 1.0);
@@ -34,14 +36,17 @@ void main(void) {
         dirLightWeight = 0.0;
     }
     
-    vLightCoeff = uKa + dirLightWeight*uLight1Color;
+    vKdCoeff = dirLightWeight*uLight1Color;
     // The default value of the uniform diffuse color is (2, 2, 2)
     // So ignore and use the vColor from the buffer in this case.
     // Otherwise, override the buffer with the specified uniform color
     if (uKd[0] == 2.0 && uKd[1] == 2.0 && uKd[2] == 2.0) {
-        vColorInterp = vColor; 
+        vKd = vColor; 
     }
     else {
-        vColorInterp = uKd;
+        vKd = uKd;
     }
+
+    // Add on ambient term at the end
+    vKa = uKa;
 }
