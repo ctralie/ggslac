@@ -271,9 +271,8 @@ function PolyMesh() {
     this.vertexBuffer = null;
     this.normalBuffer = null;
     this.indexBuffer = null;
+    this.edgeIndexBuffer = null;
     this.colorBuffer = null;
-    this.drawer = null;
-    
     
     /**
      * A static function to return the face that two edges
@@ -724,19 +723,18 @@ function PolyMesh() {
         //Check to see if buffers need to be initialized
         if (this.vertexBuffer === null) {
             this.vertexBuffer = gl.createBuffer();
-            //console.log("New vertex buffer: " + this.vertexBuffer);
         }
         if (this.normalBuffer === null) {
             this.normalBuffer = gl.createBuffer();
-            //console.log("New normal buffer: " + this.normalBuffer);
         }
         if (this.indexBuffer === null) {
             this.indexBuffer = gl.createBuffer();
-            //console.log("New index buffer: " + this.indexBuffer);
+        }
+        if (this.edgeIndexBuffer === null) {
+            this.edgeIndexBuffer = gl.createBuffer();
         }
         if (this.colorBuffer === null) {
             this.colorBuffer = gl.createBuffer();
-            //console.log("New color buffer: " + this.colorBuffer);
         }
         //Vertex Buffer
         let V = new Float32Array(this.vertices.length*3);
@@ -808,90 +806,18 @@ function PolyMesh() {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, I, gl.STATIC_DRAW);
         this.indexBuffer.itemSize = 1;
         this.indexBuffer.numItems = 3*NumTris;
-    }
-    
-    //This assumes the upper left 3x3 matrix of the modelview matrix is orthogonal,
-    //which it will be if mvMatrix is describing the camera
-    /**
-     * Draw the surface normals as a bunch of blue line segments
-     * @param {object} camera A camera object containing 
-     *                        getPMatrix() and getMVMatrix()
-     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
-     *                                to this mesh before viewing
-     * @param {array} color An array of RGB, or blue by default
-     */
-    this.drawNormals = function(camera, tMatrix, color) {
-        if (this.drawer === null) {
-            console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
-            return;
-        }
-        if (color === undefined) {
-            color = [0.0, 0.0, 1.0];
-        }
-        //Figure out scale of normals; make 1/20th of the bounding box diagonal
-        let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
-        let p1 = glMatrix.vec3.create();
-        let p2 = glMatrix.vec3.create();
-        let n = glMatrix.vec3.create();
-        nMatrix = glMatrix.mat3.create();
-        glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
-        for (let i = 0; i < this.vertices.length; i++) {
-            glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
-            glMatrix.vec3.normalize(n, n);
-            glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
-            glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
-            this.drawer.drawLine(p1, p2, color);    
-        }
-    }
 
-    /**
-     * Draw the surface edges as a bunch of blue line segments
-     * 
-     * @param {object} camera A camera object containing 
-     *                        getPMatrix() and getMVMatrix()
-     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
-     *                                to this mesh before viewing
-     * @param {array} color An array of RGB, or blue by default
-     */
-    this.drawEdges = function(camera, tMatrix, color) {
-        if (this.drawer === null) {
-            console.log("Warning: Trying to draw mesh edges, but simple drawer is null");
-            return;
+        //Edge index buffer
+        let NumEdges = this.edges.length;
+        let IEdges = new Uint16Array(NumEdges*3);
+        for (let i = 0; i < NumEdges; i++) {
+            IEdges[i*2] = this.edges[i].v1.ID;
+            IEdges[i*2+1] = this.edges[i].v2.ID;
         }
-        if (color === undefined) {
-            color = [1.0, 1.0, 1.0];
-        }
-        let p1 = glMatrix.vec3.create();
-        let p2 = glMatrix.vec3.create();
-        for (let i = 0; i < this.edges.length; i++) {
-            glMatrix.vec3.transformMat4(p1, this.edges[i].v1.pos, tMatrix);
-            glMatrix.vec3.transformMat4(p2, this.edges[i].v2.pos, tMatrix);
-            this.drawer.drawLine(p1, p2, color);    
-        }
-    }
-
-    /**
-     * Draw the surface points as a scatter plot
-     * 
-     * @param {object} camera A camera object containing 
-     *                        getPMatrix() and getMVMatrix()
-     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
-     *                                to this mesh before viewing
-     * @param {array} color An array of RGB, or red by default
-     */
-    this.drawPoints = function(camera, tMatrix, color) {
-        if (this.drawer === null) {
-            console.log("Warning: Trying to draw mesh points, but simple drawer is null");
-            return;
-        }
-        if (color === undefined) {
-            color = [1.0, 0.0, 0.0];
-        }
-        let p = glMatrix.vec3.create();
-        for (let i = 0; i < this.vertices.length; i++) {
-            glMatrix.vec3.transformMat4(p, this.vertices[i].pos, tMatrix);
-            this.drawer.drawPoint(p, color);    
-        }
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, IEdges, gl.STATIC_DRAW);
+        this.edgeIndexBuffer.itemSize = 1;
+        this.edgeIndexBuffer.numItems = 2*NumEdges;
     }
     
     /** Bind all buffers according to what the shader accepts.
@@ -992,6 +918,103 @@ function PolyMesh() {
         }
     }
 
+    //This assumes the upper left 3x3 matrix of the modelview matrix is orthogonal,
+    //which it will be if mvMatrix is describing the camera
+    /**
+     * Draw the surface normals as a bunch of blue line segments
+     * @param {object} camera A camera object containing 
+     *                        getPMatrix() and getMVMatrix()
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
+     * @param {array} color An array of RGB, or blue by default
+     */
+    this.drawNormals = function(camera, tMatrix, color) {
+        if (this.drawer === null) {
+            console.log("Warning: Trying to draw mesh normals, but simple drawer is null");
+            return;
+        }
+        if (color === undefined) {
+            color = [0.0, 0.0, 1.0];
+        }
+        //Figure out scale of normals; make 1/20th of the bounding box diagonal
+        let dR = 0.05*this.getBBoxTransformed(tMatrix).getDiagLength();
+        let p1 = glMatrix.vec3.create();
+        let p2 = glMatrix.vec3.create();
+        let n = glMatrix.vec3.create();
+        nMatrix = glMatrix.mat3.create();
+        glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.transformMat3(n, this.vertices[i].getNormal(), nMatrix);
+            glMatrix.vec3.normalize(n, n);
+            glMatrix.vec3.transformMat4(p1, this.vertices[i].pos, tMatrix);
+            glMatrix.vec3.scaleAndAdd(p2, p1, n, dR);
+            this.drawer.drawLine(p1, p2, color);    
+        }
+    }
+
+    /**
+     * Draw the mesh edges as a bunch of line segments
+     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
+     * @param {array} color An array of RGB, or blue by default
+     */
+    this.drawEdges = function(glcanvas, tMatrix, color) {
+        if (tMatrix === undefined) {
+            tMatrix = glMatrix.mat4.create();
+        }
+        if (color === undefined) {
+            color = glMatrix.vec3.fromValues(1.0, 1.0, 1.0);
+        }
+        let gl = glcanvas.gl;
+        let sProg = glcanvas.shaders.pointShader;
+        let mvMatrix = glcanvas.camera.getMVMatrix();
+        let pMatrix = glcanvas.camera.getPMatrix();
+
+        gl.useProgram(sProg);
+        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
+        gl.uniformMatrix4fv(sProg.tMatrixUniform, false, tMatrix);
+        gl.uniform3fv(sProg.uColorUniform, color);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);        
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
+        gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    }
+
+    /**
+     * Draw the surface points as a scatter plot
+     * 
+     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to this mesh before viewing
+     * @param {array} color An array of RGB, or red by default
+     */
+    this.drawPoints = function(glcanvas, tMatrix, color) {
+        if (this.drawer === null) {
+            console.log("Warning: Trying to draw mesh points, but simple drawer is null");
+            return;
+        }
+        if (color === undefined) {
+            color = [1.0, 0.0, 0.0];
+        }
+        let gl = glcanvas.gl;
+        let sProg = glcanvas.shaders.pointShader;
+        let mvMatrix = glcanvas.camera.getMVMatrix();
+        let pMatrix = glcanvas.camera.getPMatrix();
+
+        gl.useProgram(sProg);
+        gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);
+        gl.uniformMatrix4fv(sProg.mvMatrixUniform, false, mvMatrix);
+        gl.uniformMatrix4fv(sProg.tMatrixUniform, false, tMatrix);
+        gl.uniform3fv(sProg.uColorUniform, color);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.POINTS, 0, this.vertexBuffer.numItems);
+    }
+
     /**
      Render the mesh using some pre-specified shaders
      * @param {object} glcanvas An object holding information about WebGL state and viewing configuration.
@@ -1063,27 +1086,20 @@ function PolyMesh() {
         // Step 2: Bind all buffers
         this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         
-        //Step 3: Render the mesh
+        // Step 3: Render the mesh
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         
         //Step 4: Draw lines and points for vertices, edges, and normals if requested
-        if (this.needsDisplayUpdate) {
-            if (this.drawer === null) {
-                this.drawer = new SimpleDrawer(gl, glcanvas.shaders);
-            }
-            this.drawer.reset();
-            if (glcanvas.drawNormals) {
-                this.drawNormals(glcanvas.camera, tMatrix);
-            }
-            if (glcanvas.drawEdges) {
-                this.drawEdges(glcanvas.camera, tMatrix);
-            }
-            if (glcanvas.drawPoints) {
-                this.drawPoints(glcanvas.camera, tMatrix);
-            }
+        if (glcanvas.drawNormals) {
+            this.drawNormals(glcanvas.camera, tMatrix);
         }
-        this.drawer.repaint(glcanvas.camera);
+        if (glcanvas.drawEdges) {
+            this.drawEdges(glcanvas, tMatrix);
+        }
+        if (glcanvas.drawPoints) {
+            this.drawPoints(glcanvas, tMatrix);
+        }
         //By the time rendering is done, there should not be a need to update
         //the display unless this flag is changed again externally
         this.needsDisplayUpdate = false;

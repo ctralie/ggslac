@@ -104,32 +104,30 @@ function initStandardShaders(gl, relpath) {
     flatShader.tMatrixUniform = gl.getUniformLocation(flatShader, "tMatrix");
     flatShader.uColorUniform = gl.getUniformLocation(flatShader, "uColor");
     
-    
-    /** Line shader: Simple shader for drawing lines with flat colors,
-     * usually for debugging */
-    let lineShader = getShaderProgram(gl, relpath + "lineshader");
-    lineShader.vPosAttrib = gl.getAttribLocation(lineShader, "vPos");
-    gl.enableVertexAttribArray(lineShader.vPosAttrib);
-    lineShader.vColorAttrib = gl.getAttribLocation(lineShader, "vColor");
-    gl.enableVertexAttribArray(lineShader.vColorAttrib);
-    lineShader.pMatrixUniform = gl.getUniformLocation(lineShader, "uPMatrix");
-    lineShader.mvMatrixUniform = gl.getUniformLocation(lineShader, "uMVMatrix");
-    
-    /** Point shader: Simple shader for drawing points with flat colors,
-    usually for debugging (for now exactly the same as line shader)  */
-    let pointShader = getShaderProgram(gl, relpath + "pointshader");
+    /** Point shader: Simple shader for drawing points with flat colors */
+    let pointShader = getShaderProgram(gl, relpath + "point");
     pointShader.vPosAttrib = gl.getAttribLocation(pointShader, "vPos");
     gl.enableVertexAttribArray(pointShader.vPosAttrib);
-    pointShader.vColorAttrib = gl.getAttribLocation(pointShader, "vColor");
-    gl.enableVertexAttribArray(pointShader.vColorAttrib);
     pointShader.pMatrixUniform = gl.getUniformLocation(pointShader, "uPMatrix");
     pointShader.mvMatrixUniform = gl.getUniformLocation(pointShader, "uMVMatrix");
-    pointShader.pSizeUniform = gl.getUniformLocation(pointShader, "pSize");
+    pointShader.tMatrixUniform = gl.getUniformLocation(pointShader, "uTMatrix");
+    pointShader.uColorUniform = gl.getUniformLocation(pointShader, "uColor");
+
+    /** Point color shader: Simple shader for drawing points with flat, varying colors */
+    let pointColorShader = getShaderProgram(gl, relpath + "pointcolor");
+    pointColorShader.vPosAttrib = gl.getAttribLocation(pointColorShader, "vPos");
+    gl.enableVertexAttribArray(pointColorShader.vPosAttrib);
+    pointColorShader.vColorAttrib = gl.getAttribLocation(pointColorShader, "vColor");
+    gl.enableVertexAttribArray(pointColorShader.vColorAttrib);
+    pointColorShader.pMatrixUniform = gl.getUniformLocation(pointColorShader, "uPMatrix");
+    pointColorShader.mvMatrixUniform = gl.getUniformLocation(pointColorShader, "uMVMatrix");
+    pointColorShader.tMatrixUniform = gl.getUniformLocation(pointColorShader, "uTMatrix");
     
     return { lambertian:lambertian,
-            flatShader:flatShader, 
-            lineShader:lineShader, 
-            pointShader:pointShader};
+            flatShader:flatShader,
+            pointShader:pointShader,
+            pointColorShader:pointColorShader
+            };
 }
 
 

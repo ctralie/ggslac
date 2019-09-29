@@ -1,8 +1,7 @@
 
 function SimpleDrawer(gl, shaders) {
     this.gl = gl;
-    this.lineShader = shaders.lineShader;
-    this.pointShader = shaders.pointShader;
+    this.shader = shaders.pointColorShader;
         
     //Internally store a vertex buffer for all of the different lines/vertices, as
     //well as a color buffer
@@ -121,40 +120,45 @@ function SimpleDrawer(gl, shaders) {
      * Draw all of the points and lines
      * @param {camera} camera A camera object containing the functions
      *                          getPMatrix() and getMVMatrix()
+     * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
+     *                                to the lines/points before viewing
      */
-    this.repaint = function(camera) {
+    this.repaint = function(camera, tMatrix) {
         let pMatrix = camera.getPMatrix();
         let mvMatrix = camera.getMVMatrix();
+        if (tMatrix === undefined) {
+            tMatrix = glMatrix.mat4.create();
+        }
         if (this.needsDisplayUpdate) {
             this.updateBuffers();
             this.needsDisplayUpdate = false;
         }
         var gl = this.gl;
         if (this.linesPoints.length > 0) {
-            //console.log("Drawing lines: ", + this.linesVBO);
-            gl.useProgram(this.lineShader);
+            gl.useProgram(this.shader);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.linesVBO);
-            gl.vertexAttribPointer(this.lineShader.vPosAttrib, this.linesVBO.itemSize, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(this.shader.vPosAttrib, this.linesVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.linesCVBO);
-            gl.vertexAttribPointer(this.lineShader.vColorAttrib, this.linesCVBO.itemSize, gl.FLOAT, false, 0, 0);
-            gl.uniformMatrix4fv(this.lineShader.pMatrixUniform, false, pMatrix);
-            gl.uniformMatrix4fv(this.lineShader.mvMatrixUniform, false, mvMatrix);
+            gl.vertexAttribPointer(this.shader.vColorAttrib, this.linesCVBO.itemSize, gl.FLOAT, false, 0, 0);
+            gl.uniformMatrix4fv(this.shader.pMatrixUniform, false, pMatrix);
+            gl.uniformMatrix4fv(this.shader.mvMatrixUniform, false, mvMatrix);
+            gl.uniformMatrix4fv(this.shader.tMatrixUniform, false, tMatrix);
             gl.drawArrays(gl.LINES, 0, this.linesVBO.numItems);
         }
 
         if (this.points.length > 0) {
-            //console.log("Drawing points: " + this.pointsVBO);
-            gl.useProgram(this.pointShader);
+            gl.useProgram(this.shader);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.pointsVBO);
-            gl.vertexAttribPointer(this.pointShader.vPosAttrib, this.pointsVBO.itemSize, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(this.shader.vPosAttrib, this.pointsVBO.itemSize, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.pointsCVBO);
-            gl.vertexAttribPointer(this.pointShader.vColorAttrib, this.pointsCVBO.itemSize, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(this.shader.vColorAttrib, this.pointsCVBO.itemSize, gl.FLOAT, false, 0, 0);
 
-            gl.uniformMatrix4fv(this.pointShader.pMatrixUniform, false, pMatrix);
-            gl.uniformMatrix4fv(this.pointShader.mvMatrixUniform, false, mvMatrix);
-            gl.uniform1f(this.pointShader.pSizeUniform, false, this.pSize);
+            gl.uniformMatrix4fv(this.shader.pMatrixUniform, false, pMatrix);
+            gl.uniformMatrix4fv(this.shader.mvMatrixUniform, false, mvMatrix);
+            gl.uniformMatrix4fv(this.shader.tMatrixUniform, false, tMatrix);
+            gl.uniform1f(this.shader.pSizeUniform, false, this.pSize);
             gl.drawArrays(gl.POINTS, 0, this.pointsVBO.numItems);
         }
     }

@@ -542,7 +542,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.scene.cameras.forEach(
                 function(camera) {
                     if (!(glcanvas.camera === camera.camera)) {
-                        glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
+                        //glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
                     }
                 }
             )
@@ -551,7 +551,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.scene.lights.forEach(
                 function(light) {
                     if (!(glcanvas.camera === light.camera)) {
-                        glcanvas.drawLightBeacon(light);
+                        //glcanvas.drawLightBeacon(light);
                     }
                 }
             );
@@ -600,6 +600,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.walkspeed = 2.6;
     glcanvas.showCameras = true;
     glcanvas.showLights = true;
+    glcanvas.drawEdges = false;
 
 
     glcanvas.gui = new dat.GUI();
