@@ -21,10 +21,7 @@ void main(void) {
         // Be careful of divide by zero with normalize
         normal = dR*normalize(uNMatrix*n2Pos);
     }
-    vec4 p = uTMatrix*vec4(n1Pos, 1.0);
-    p.x += normal.x;
-    p.y += normal.y;
-    p.z += normal.z;
+    vec4 p = uTMatrix*vec4(n1Pos, 1.0) + vec4(normal, 0);
     gl_Position = uPMatrix*uMVMatrix*p;
     fColor = vec4(uColor, 1.0);
 }

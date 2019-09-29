@@ -275,6 +275,7 @@ function PolyMesh() {
     this.indexBuffer = null;
     this.edgeIndexBuffer = null;
     this.colorBuffer = null;
+    this.bbox = AABox3D(0, 0, 0, 0, 0, 0);
     
     /**
      * A static function to return the face that two edges
@@ -745,11 +746,17 @@ function PolyMesh() {
             this.colorBuffer = gl.createBuffer();
         }
         //Vertex Buffer
+        this.bbox = new AABox3D(0, 0, 0, 0, 0, 0);
+        if (this.vertices.length > 0) {
+            P0 = this.vertices[0].pos;
+            this.bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
+        }
         let V = new Float32Array(this.vertices.length*3);
         for (let i = 0; i < this.vertices.length; i++) {
             V[i*3] = this.vertices[i].pos[0];
             V[i*3+1] = this.vertices[i].pos[1];
             V[i*3+2] = this.vertices[i].pos[2];
+            this.bbox.addPoint(this.vertices[i].pos);
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, V, gl.STATIC_DRAW);
@@ -994,7 +1001,7 @@ function PolyMesh() {
             color = glMatrix.vec3.fromValues(0.0, 1.0, 1.0);
         }
         if (scale === undefined) {
-            scale = 0.05*this.getBBox().getDiagLength();
+            scale = 0.05*this.bbox.getDiagLength();
         }
         let gl = glcanvas.gl;
         let sProg = glcanvas.shaders.normalShader;
