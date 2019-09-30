@@ -119,7 +119,7 @@ function initStandardShaders(gl, relpath) {
     phongLambertian.uKdUniform = gl.getUniformLocation(phongLambertian, "uKd");
     phongLambertian.uKsUniform = gl.getUniformLocation(phongLambertian, "uKs");
     phongLambertian.uShininessUniform = gl.getUniformLocation(phongLambertian, "uShininess");
-
+    phongLambertian.uEyeUniform = gl.getUniformLocation(phongLambertian, "uEye");
 
     /** flat: A shader that draws a constant color for all faces*/
     let flat = getShaderProgram(gl, relpath + "flat");

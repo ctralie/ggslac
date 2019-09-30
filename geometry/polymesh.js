@@ -915,6 +915,9 @@ function PolyMesh() {
             }
             gl.uniform1f(sProg.uShininessUniform, shininess);
         }
+        if ('uEyeUniform' in sProg) {
+            gl.uniform3fv(sProg.uEyeUniform, glcanvas.camera.pos);
+        }
 
         // Projection and transformation matrices
         gl.uniformMatrix4fv(sProg.pMatrixUniform, false, pMatrix);

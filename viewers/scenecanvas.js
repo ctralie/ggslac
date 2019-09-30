@@ -586,7 +586,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 glcanvas.repaintRecurse(child, identity);
             });
         }
-        
+
         //Draw lines and points for debugging
         glcanvas.drawer.reset(); //Clear lines and points drawn last time
         //TODO: Paint debugging stuff here if you'd like

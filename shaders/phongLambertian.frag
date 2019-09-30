@@ -15,17 +15,20 @@ uniform mat3 uNMatrix;
 uniform vec3 uLight1Pos;
 uniform vec3 uLight1Color;
 
+// Camera properties
+uniform vec3 uEye;
+
+
 varying vec3 V; // Untransformed Position, Interpolated
 varying vec3 N; // Untransformed Normal, Interpolated
 varying vec3 C; // Varying per-fragment color, interpolated
 
 
 void main(void) {
-    vec4 tpos = tMatrix*vec4(V, 1.0);
-    vec4 LH = vec4(uLight1Pos, 1.0) - tpos;
-    vec3 L = normalize(LH.xyz);
-
-    vec3 NT = normalize(uNMatrix*N);
+    vec4 tpos4 = tMatrix*vec4(V, 1.0); // Transformed material location
+    vec3 tpos = tpos4.xyz;
+    vec3 L = normalize(uLight1Pos - tpos); // Unit vector from material to light
+    vec3 NT = normalize(uNMatrix*N); // Transformed normal
     
     // Lambertian Term
     float kdCoeff = dot(NT, L);
@@ -42,8 +45,13 @@ void main(void) {
     }
 
     // Specular Term
-    // TODO: FILL THIS IN
+    // TODO: FILL THIS IN.  Find a vector from
+    // the uEye to tpos.  Then take its dot product with
+    // the vector to the light reflected about the normal,
+    // raised to a power 
+    float ksCoeff = 0.0; // TODO: This is currently a dummy value
+
     
 
-    gl_FragColor = vec4(kdCoeff*cKd + uKa, 1.0);
+    gl_FragColor = vec4(uLight1Color*(kdCoeff*cKd + ksCoeff*uKs) + uKa, 1.0);
 }
