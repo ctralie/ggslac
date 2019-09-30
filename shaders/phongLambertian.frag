@@ -32,7 +32,6 @@ void main(void) {
     if (kdCoeff < 0.0) {
         kdCoeff = 0.0;
     }
-
     // Diffuse color
     // The default value of the uniform diffuse color is (2, 2, 2)
     // So ignore and use the interpolated per fragment color C in this case.
@@ -41,5 +40,10 @@ void main(void) {
     if (uKd[0] == 2.0 && uKd[1] == 2.0 && uKd[2] == 2.0) {
         cKd = C;
     }
+
+    // Specular Term
+    // TODO: FILL THIS IN
+    
+
     gl_FragColor = vec4(kdCoeff*cKd + uKa, 1.0);
 }

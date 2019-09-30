@@ -972,7 +972,7 @@ function PolyMesh() {
 
         gl.useProgram(sProg);
         this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
-        gl.uniform3fv(sProg.uColorUniform, color);
+        gl.uniform3fv(sProg.uKaUniform, color);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
         gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
@@ -1000,7 +1000,7 @@ function PolyMesh() {
 
         gl.useProgram(sProg);
         this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
-        gl.uniform3fv(sProg.uColorUniform, color);
+        gl.uniform3fv(sProg.uKaUniform, color);
         gl.drawArrays(gl.POINTS, 0, this.vertexBuffer.numItems);
     }
 
@@ -1031,7 +1031,7 @@ function PolyMesh() {
 
         gl.useProgram(sProg);
         this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
-        gl.uniform3fv(sProg.uColorUniform, color);
+        gl.uniform3fv(sProg.uKaUniform, color);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
         gl.vertexAttribPointer(sProg.n1PosAttrib, this.vnormal1Buffer.itemSize, gl.FLOAT, false, 0, 0);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal2Buffer);
