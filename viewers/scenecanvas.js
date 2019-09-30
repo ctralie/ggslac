@@ -428,6 +428,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 if (!('ks' in material)) {
                     material.ks = DEFAULT_SPECULAR;
                 }
+                if (!('shininess' in material)) {
+                    material.shininess = DEFAULT_SHININESS;
+                }
                 let menu = glcanvas.materialsMenu.addFolder(name);
                 glcanvas.materialMenus.push(menu);
                 material.ka_rgb = [255*material.ka[0], 255*material.ka[1], 255*material.ka[2]];
@@ -451,6 +454,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                         requestAnimFrame(glcanvas.repaint);
                     }
                 );
+                menu.add(material, 'shininess', 0.01, 100);
             }
         }
     }
@@ -646,17 +650,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
-    glcanvas.shaderToUse = glcanvas.shaders.gouraudLambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
-    glcanvas.walkspeed = 2.6;
-    glcanvas.showCameras = true;
-    glcanvas.showLights = true;
-    glcanvas.drawEdges = false;
-
-
+    
     glcanvas.gui = new dat.GUI();
     const gui = glcanvas.gui;
     // Mesh display options menu
+    glcanvas.drawEdges = false;
     let meshOpts = gui.addFolder('Mesh Display Options');
     ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
         function(s) {
@@ -670,6 +669,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
 
     // Lighting menu
     glcanvas.lightMenu = gui.addFolder('Lights');
+    glcanvas.showLights = true;
     glcanvas.lightMenu.add(glcanvas, 'showLights').onChange(function() {
         requestAnimFrame(glcanvas.repaint);
     });
@@ -677,6 +677,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     // Camera control menu
     glcanvas.cameraMenu = gui.addFolder('Cameras');
     let cameraMenu = glcanvas.cameraMenu;
+    glcanvas.showCameras = true;
     cameraMenu.add(glcanvas, 'showCameras').onChange(function() {
         requestAnimFrame(glcanvas.repaint);
     });
@@ -685,12 +686,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.materialsMenu = gui.addFolder('Materials');
 
     // Shaders menu
-    glcanvas.shader = "gouraudLambertian";
-    gui.add(glcanvas, "shader", ["gouraudLambertian", "flat"]).onChange(function() {
+    glcanvas.shaderToUse = glcanvas.shaders.phongLambertian;
+    glcanvas.shader = "phongLambertian";
+    gui.add(glcanvas, "shader", ["phongLambertian", "gouraudLambertian", "flat"]).onChange(function() {
         glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
         requestAnimFrame(glcanvas.repaint);
     })
 
     // Other options
+    glcanvas.walkspeed = 2.6;
     gui.add(glcanvas, 'walkspeed', 0.01, 100);
 }

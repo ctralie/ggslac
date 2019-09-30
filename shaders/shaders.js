@@ -98,6 +98,29 @@ function initStandardShaders(gl, relpath) {
     gouraudLambertian.uShininessUniform = gl.getUniformLocation(gouraudLambertian, "uShininess");
 
 
+    /** phongLambertian: Per-vertex lambertian shader  */
+    let phongLambertian = getShaderProgram(gl, relpath + "phongLambertian");
+    phongLambertian.vPosAttrib = gl.getAttribLocation(phongLambertian, "vPos");
+    gl.enableVertexAttribArray(phongLambertian.vPosAttrib);
+    phongLambertian.vNormalAttrib = gl.getAttribLocation(phongLambertian, "vNormal");
+    gl.enableVertexAttribArray(phongLambertian.normalAttrib);
+    phongLambertian.vColorAttrib = gl.getAttribLocation(phongLambertian, "vColor");
+    gl.enableVertexAttribArray(phongLambertian.vColorAttrib);
+    phongLambertian.pMatrixUniform = gl.getUniformLocation(phongLambertian, "uPMatrix");
+    phongLambertian.mvMatrixUniform = gl.getUniformLocation(phongLambertian, "uMVMatrix");
+    phongLambertian.tMatrixUniform = gl.getUniformLocation(phongLambertian, "tMatrix");
+    phongLambertian.nMatrixUniform = gl.getUniformLocation(phongLambertian, "uNMatrix");
+    phongLambertian.ambientColorUniform = gl.getUniformLocation(phongLambertian, "uAmbientColor");
+    phongLambertian.light1PosUniform = gl.getUniformLocation(phongLambertian, "uLight1Pos");
+    phongLambertian.light2PosUniform = gl.getUniformLocation(phongLambertian, "uLight2Pos");
+    phongLambertian.light1ColorUniform = gl.getUniformLocation(phongLambertian, "uLight1Color");
+    phongLambertian.light2ColorUniform = gl.getUniformLocation(phongLambertian, "uLight2Color");
+    phongLambertian.uKaUniform = gl.getUniformLocation(phongLambertian, "uKa");
+    phongLambertian.uKdUniform = gl.getUniformLocation(phongLambertian, "uKd");
+    phongLambertian.uKsUniform = gl.getUniformLocation(phongLambertian, "uKs");
+    phongLambertian.uShininessUniform = gl.getUniformLocation(phongLambertian, "uShininess");
+
+
     /** flat: A shader that draws a constant color for all faces*/
     let flat = getShaderProgram(gl, relpath + "flat");
     flat.vPosAttrib = gl.getAttribLocation(flat, "vPos");
@@ -139,12 +162,14 @@ function initStandardShaders(gl, relpath) {
     normalShader.uKaUniform = gl.getUniformLocation(normalShader, "uKa"); // Ambient flat color
     normalShader.uRUniform = gl.getUniformLocation(normalShader, "uR");
     
-    return { gouraudLambertian:gouraudLambertian,
+    return { 
+            phongLambertian:phongLambertian,
+            gouraudLambertian:gouraudLambertian,
             flat:flat,
             pointShader:pointShader,
             pointColorShader:pointColorShader,
             normalShader:normalShader
-            };
+           };
 }
 
 
