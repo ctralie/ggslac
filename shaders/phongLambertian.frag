@@ -45,11 +45,16 @@ void main(void) {
     }
 
     // Specular Term
-    // TODO: FILL THIS IN.  Find a vector from
-    // the uEye to tpos.  Then take its dot product with
-    // the vector to the light reflected about the normal,
-    // raised to a power 
-    float ksCoeff = 0.0; // TODO: This is currently a dummy value
+    // Find a vector from the uEye to tpos.  Then take its 
+    // dot product with the vector to the light reflected 
+    // about the normal, raised to a power 
+    vec3 dh = normalize(uEye - tpos);
+    vec3 h = -reflect(L, NT);
+    float ksCoeff = dot(h, dh);
+    if (ksCoeff < 0.0) {
+        ksCoeff = 0.0;
+    }
+    ksCoeff = pow(ksCoeff, uShininess);
 
     
 
