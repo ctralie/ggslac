@@ -454,7 +454,11 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                         requestAnimFrame(glcanvas.repaint);
                     }
                 );
-                menu.add(material, 'shininess', 0.01, 100);
+                menu.add(material, 'shininess', 0.01, 100).onChange(
+                    function() {
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
             }
         }
     }
