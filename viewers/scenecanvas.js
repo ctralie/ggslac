@@ -686,9 +686,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.materialsMenu = gui.addFolder('Materials');
 
     // Shaders menu
-    glcanvas.shaderToUse = glcanvas.shaders.phongLambertian;
-    glcanvas.shader = "phongLambertian";
-    gui.add(glcanvas, "shader", ["phongLambertian", "gouraudLambertian", "flat"]).onChange(function() {
+    glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
+    glcanvas.shader = "blinnPhong";
+    gui.add(glcanvas, "shader", ["blinnPhong", "gouraudLambertian", "flat"]).onChange(function() {
         glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
         requestAnimFrame(glcanvas.repaint);
     })

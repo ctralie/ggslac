@@ -98,28 +98,28 @@ function initStandardShaders(gl, relpath) {
     gouraudLambertian.uShininessUniform = gl.getUniformLocation(gouraudLambertian, "uShininess");
 
 
-    /** phongLambertian: Per-vertex lambertian shader  */
-    let phongLambertian = getShaderProgram(gl, relpath + "phongLambertian");
-    phongLambertian.vPosAttrib = gl.getAttribLocation(phongLambertian, "vPos");
-    gl.enableVertexAttribArray(phongLambertian.vPosAttrib);
-    phongLambertian.vNormalAttrib = gl.getAttribLocation(phongLambertian, "vNormal");
-    gl.enableVertexAttribArray(phongLambertian.normalAttrib);
-    phongLambertian.vColorAttrib = gl.getAttribLocation(phongLambertian, "vColor");
-    gl.enableVertexAttribArray(phongLambertian.vColorAttrib);
-    phongLambertian.pMatrixUniform = gl.getUniformLocation(phongLambertian, "uPMatrix");
-    phongLambertian.mvMatrixUniform = gl.getUniformLocation(phongLambertian, "uMVMatrix");
-    phongLambertian.tMatrixUniform = gl.getUniformLocation(phongLambertian, "tMatrix");
-    phongLambertian.nMatrixUniform = gl.getUniformLocation(phongLambertian, "uNMatrix");
-    phongLambertian.ambientColorUniform = gl.getUniformLocation(phongLambertian, "uAmbientColor");
-    phongLambertian.light1PosUniform = gl.getUniformLocation(phongLambertian, "uLight1Pos");
-    phongLambertian.light2PosUniform = gl.getUniformLocation(phongLambertian, "uLight2Pos");
-    phongLambertian.light1ColorUniform = gl.getUniformLocation(phongLambertian, "uLight1Color");
-    phongLambertian.light2ColorUniform = gl.getUniformLocation(phongLambertian, "uLight2Color");
-    phongLambertian.uKaUniform = gl.getUniformLocation(phongLambertian, "uKa");
-    phongLambertian.uKdUniform = gl.getUniformLocation(phongLambertian, "uKd");
-    phongLambertian.uKsUniform = gl.getUniformLocation(phongLambertian, "uKs");
-    phongLambertian.uShininessUniform = gl.getUniformLocation(phongLambertian, "uShininess");
-    phongLambertian.uEyeUniform = gl.getUniformLocation(phongLambertian, "uEye");
+    /** blinnPhong: Per-vertex lambertian shader  */
+    let blinnPhong = getShaderProgram(gl, relpath + "blinnPhong");
+    blinnPhong.vPosAttrib = gl.getAttribLocation(blinnPhong, "vPos");
+    gl.enableVertexAttribArray(blinnPhong.vPosAttrib);
+    blinnPhong.vNormalAttrib = gl.getAttribLocation(blinnPhong, "vNormal");
+    gl.enableVertexAttribArray(blinnPhong.normalAttrib);
+    blinnPhong.vColorAttrib = gl.getAttribLocation(blinnPhong, "vColor");
+    gl.enableVertexAttribArray(blinnPhong.vColorAttrib);
+    blinnPhong.pMatrixUniform = gl.getUniformLocation(blinnPhong, "uPMatrix");
+    blinnPhong.mvMatrixUniform = gl.getUniformLocation(blinnPhong, "uMVMatrix");
+    blinnPhong.tMatrixUniform = gl.getUniformLocation(blinnPhong, "tMatrix");
+    blinnPhong.nMatrixUniform = gl.getUniformLocation(blinnPhong, "uNMatrix");
+    blinnPhong.ambientColorUniform = gl.getUniformLocation(blinnPhong, "uAmbientColor");
+    blinnPhong.light1PosUniform = gl.getUniformLocation(blinnPhong, "uLight1Pos");
+    blinnPhong.light2PosUniform = gl.getUniformLocation(blinnPhong, "uLight2Pos");
+    blinnPhong.light1ColorUniform = gl.getUniformLocation(blinnPhong, "uLight1Color");
+    blinnPhong.light2ColorUniform = gl.getUniformLocation(blinnPhong, "uLight2Color");
+    blinnPhong.uKaUniform = gl.getUniformLocation(blinnPhong, "uKa");
+    blinnPhong.uKdUniform = gl.getUniformLocation(blinnPhong, "uKd");
+    blinnPhong.uKsUniform = gl.getUniformLocation(blinnPhong, "uKs");
+    blinnPhong.uShininessUniform = gl.getUniformLocation(blinnPhong, "uShininess");
+    blinnPhong.uEyeUniform = gl.getUniformLocation(blinnPhong, "uEye");
 
     /** flat: A shader that draws a constant color for all faces*/
     let flat = getShaderProgram(gl, relpath + "flat");
@@ -163,7 +163,7 @@ function initStandardShaders(gl, relpath) {
     normalShader.uRUniform = gl.getUniformLocation(normalShader, "uR");
     
     return { 
-            phongLambertian:phongLambertian,
+            blinnPhong:blinnPhong,
             gouraudLambertian:gouraudLambertian,
             flat:flat,
             pointShader:pointShader,
