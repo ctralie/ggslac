@@ -260,72 +260,271 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     }
 
     /**
+     * Setup menus to control positions and colors of lights
+     */
+    glcanvas.setupLightMenus = function(scene, pixWidth, pixHeight) {
+        // Setup default light
+        if (!('lights') in scene) {
+            scene.lights = [];
+        }
+        if (scene.lights.length == 0) {
+            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1]});
+        }
+        // Add a camera object to each light so that the user can
+        // move the lights around
+        if (!('lightMenus' in glcanvas)) {
+            glcanvas.lightMenus = [];
+        }
+        glcanvas.lightMenus.forEach(function(menu) {
+            glcanvas.lightMenu.removeFolder(menu);
+        });
+        glcanvas.lightMenus = [];
+        scene.lights.forEach(function(light, i) {
+            light.camera = new FPSCamera(pixWidth, pixHeight);
+            glMatrix.vec3.copy(light.camera.pos, light.pos);
+            light.pos = light.camera.pos;
+            // Also add each light to a GUI control
+            let menu = glcanvas.lightMenu.addFolder("light " + i);
+            glcanvas.lightMenus.push(menu);
+            light.camera.position = vecToStr(light.pos);
+            menu.add(light.camera, 'position').listen().onChange(
+                function(value) {
+                    let xyz = splitVecStr(value);
+                    for (let k = 0; k < 3; k++) {
+                        light.camera.pos[k] = xyz[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            light.color_rgb = [255*light.color[0], 255*light.color[1], 255*light.color[2]];
+            menu.addColor(light, 'color_rgb').onChange(
+                function(v) {
+                    light.color = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            // Setup mechanism to move light around with camera
+            light.viewFrom = false;
+            menu.add(light, 'viewFrom').listen().onChange(
+                function(v) {
+                    if (v) {
+                        // Toggle other lights viewFrom
+                        scene.lights.forEach(function(other) {
+                            if (!(other === light)) {
+                                other.viewFrom = false;
+                            }
+                        });
+                        // Turn off all cameras viewFrom
+                        scene.cameras.forEach(function(camera) {
+                            camera.viewFrom = false;
+                        })
+                        glcanvas.camera = light.camera;
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                }
+            )
+        });
+        if (scene.lights.length > 0) {
+            // Add the first light to mesh drawing parameters
+            glcanvas.light1 = scene.lights[0];
+        }
+    }
+
+    /**
+     * Setup menus to control positions and orientations of cameras
+     */
+    glcanvas.setupCameraMenus = function(scene, pixWidth, pixHeight) {
+        if (!('cameras') in scene) {
+            scene.cameras = [];
+        }
+        if (scene.cameras.length == 0) {
+            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovy:1.0});
+        }
+        if (!('cameraMenus' in glcanvas)) {
+            glcanvas.cameraMenus = [];
+        }
+        glcanvas.cameraMenus.forEach(function(menu) {
+            glcanvas.cameraMenu.removeFolder(menu);
+        });
+        glcanvas.cameraMenus = [];
+        scene.cameras.forEach(function(c, i) {
+            c.camera = new FPSCamera(pixWidth, pixHeight);
+            glcanvas.fillInCamera(c.camera, c);
+            // Also add each camera to a GUI control
+            let menu = glcanvas.cameraMenu.addFolder("camera " + i);
+            glcanvas.cameraMenus.push(menu);
+            c.camera.position = vecToStr(c.camera.pos);
+            menu.add(c.camera, 'position').listen().onChange(
+                function(value) {
+                    let xyz = splitVecStr(value);
+                    for (let k = 0; k < 3; k++) {
+                        c.camera.pos[k] = xyz[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(c.camera, 'rotation').listen().onChange(
+                function(value) {
+                    let xyzw = splitVecStr(value);
+                    for (let k = 0; k < 4; k++) {
+                        c.camera.rot[k] = xyzw[k];
+                    }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            // Setup mechanism to move camera around with keyboard/mouse
+            if (i == 0) {
+                c.viewFrom = true;
+            }
+            else {
+                c.viewFrom = false;
+            }
+            menu.add(c, 'viewFrom').listen().onChange(
+                function(v) {
+                    if (v) {
+                        // Toggle other cameras viewFrom
+                        scene.cameras.forEach(function(other) {
+                            if (!(other === c)) {
+                                other.viewFrom = false;
+                            }
+                        });
+                        // Turn off all viewFrom in lights
+                        scene.lights.forEach(function(light) {
+                            light.viewFrom = false;
+                        });
+                        glcanvas.camera = c.camera;
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                }
+            )
+        });
+        if (scene.cameras.length > 0) {
+            // Add the first camera to the drawing parameters
+            scene.cameras[0].viewFrom = true;
+            glcanvas.camera = scene.cameras[0].camera;
+        }
+    }
+
+    glcanvas.setupMaterialsMenu = function(scene) {
+        if (!('materials' in scene)) {
+            scene.materials = {};
+        }
+        if (!('materialMenus' in glcanvas)) {
+            glcanvas.materialMenus = [];
+        }
+        glcanvas.materialMenus.forEach(function(menu) {
+            glcanvas.materialsMenu.removeFolder(menu);
+        });
+        glcanvas.materialMenus = [];
+        for (let name in scene.materials) {
+            if (Object.prototype.hasOwnProperty.call(scene.materials, name)) {
+                let material = scene.materials[name];
+                if (!('ka' in material)) {
+                    material.ka = DEFAULT_AMBIENT;
+                }
+                if (!('kd' in material)) {
+                    material.kd = DEFAULT_DIFFUSE;
+                }
+                if (!('ks' in material)) {
+                    material.ks = DEFAULT_SPECULAR;
+                }
+                if (!('shininess' in material)) {
+                    material.shininess = DEFAULT_SHININESS;
+                }
+                let menu = glcanvas.materialsMenu.addFolder(name);
+                glcanvas.materialMenus.push(menu);
+                material.ka_rgb = [255*material.ka[0], 255*material.ka[1], 255*material.ka[2]];
+                menu.addColor(material, 'ka_rgb').onChange(
+                    function(v) {
+                        material.ka = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
+                material.kd_rgb = [255*material.kd[0], 255*material.kd[1], 255*material.kd[2]];
+                menu.addColor(material, 'kd_rgb').onChange(
+                    function(v) {
+                        material.kd = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
+                material.ks_rgb = [255*material.ks[0], 255*material.ks[1], 255*material.ks[2]];
+                menu.addColor(material, 'ks_rgb').onChange(
+                    function(v) {
+                        material.ks = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
+                menu.add(material, 'shininess', 0.01, 100);
+            }
+        }
+    }
+
+    /**
      * A function that starts of the recursive initialization
      * of the scene, and which also sets up cameras
      * 
      * @param {WebGL Handle} glcanvas 
      */
     glcanvas.setupScene = function(scene, pixWidth, pixHeight) {
-        //Setup camera objects for the source and receiver
-        if (!('materials' in scene)) {
-            scene.materials = {};
-        }
-        glcanvas.scene = scene;
-        glcanvas.scene.cam1 = new FPSCamera(pixWidth, pixHeight);
-        glcanvas.scene.cam2 = new FPSCamera(pixWidth, pixHeight);
-        if ("camera1" in glcanvas.scene) {
-            glcanvas.fillInCamera(glcanvas.scene.cam1, glcanvas.scene.camera1);
-        }
-        if ("camera2" in glcanvas.scene) {
-            glcanvas.fillInCamera(glcanvas.scene.cam2, glcanvas.scene.camera2);
-        }
+        glcanvas.scene = scene
+
+        // Setup lights and light menus
+        glcanvas.setupLightMenus(scene, pixWidth, pixHeight);
+
+        // Setup cameras and camera menus
+        glcanvas.setupCameraMenus(scene, pixWidth, pixHeight);
+
+        // Setup materials and materials menu
+        glcanvas.setupMaterialsMenu(scene);
         
         //Now recurse and setup all of the children nodes in the tree
-        glcanvas.scene.children.forEach(function(child, i) {
+        glcanvas.scene.children.forEach(function(child) {
             glcanvas.parseNode(child);
         });
 
         //Output information about the scene tree
-        glcanvas.scene.children.forEach(function(child, i) {
+        glcanvas.scene.children.forEach(function(child) {
             console.log(glcanvas.getSceneString(child, " "));
         });
-        glcanvas.viewFromCamera1();
     }
 
 
     /////////////////////////////////////////////////////
     //  Repaint Function
     /////////////////////////////////////////////////////
-    glcanvas.repaintRecurse = function(node, pMatrix, matrixIn) {
-        let mvMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.mul(mvMatrix, matrixIn, node.transform);
+    glcanvas.repaintRecurse = function(node, transform) {
+        let nextTransform = glMatrix.mat4.create();
+        glMatrix.mat4.mul(nextTransform, transform, node.transform);
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
                 if (!(shape.mesh === null)) {
-                    glcanvas.constColor = [0.5, 0.55, 0.5];
                     if ('material' in shape) {
-                        if ('color' in shape.material) {
-                            glcanvas.constColor = shape.material.color;
-                        }
+                        glcanvas.material = shape.material;
                     }
-                    m = glMatrix.mat4.create();
-                    glMatrix.mat4.mul(m, mvMatrix, shape.ms);
-                    shape.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+                    else if ('material' in glcanvas) {
+                        delete glcanvas.material;
+                    }
+                    // There may be an additional transform to apply based
+                    // on shape properties of special shapes (e.g. box width)
+                    let tMatrix = glMatrix.mat4.create();
+                    glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
+                    shape.mesh.render(glcanvas, tMatrix);
                 }
             }
         });
         if ('children' in node) {
             for (let i = 0; i < node.children.length; i++) {
-                glcanvas.repaintRecurse(node.children[i], pMatrix, mvMatrix);
+                glcanvas.repaintRecurse(node.children[i], nextTransform);
             }
         }
     }
     
-    glcanvas.drawCameraBeacon = function(camera, pMatrix, mvMatrix, color) {
+    glcanvas.drawCameraBeacon = function(camera, color) {
         // Switch over to a flat shader with no edges
         let sProg = glcanvas.shaderToUse;
         let drawEdges = glcanvas.drawEdges;
-        glcanvas.shaderToUse = glcanvas.shaders.flatShader;
+        let material = glcanvas.material;
+        glcanvas.shaderToUse = glcanvas.shaders.flat;
         glcanvas.drawEdges = false;
 
         let pos = camera.pos;
@@ -339,54 +538,81 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.drawer.drawLine(pos, postw, [1, 0, 0]);
         glcanvas.drawer.drawLine(pos, posrt, [0, 1, 0]);
         glcanvas.drawer.drawLine(pos, posup, [0, 0, 1]);
-        glcanvas.constColor = colorFloatFromHex(color);
-        let m = glMatrix.mat4.create();
-        glMatrix.mat4.fromTranslation(m, pos);
-        glMatrix.mat4.mul(m, mvMatrix, m);
-        glcanvas.specialMeshes.beacon.render(glcanvas.gl, glcanvas.shaders, pMatrix, m, glcanvas);
+        glcanvas.material = {ka:colorFloatFromHex(color)};
+        let tMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.fromTranslation(tMatrix, pos);
+        glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
+        
+        // Set properties back to what they were
+        glcanvas.material = material;
+        glcanvas.shaderToUse = sProg;
+        glcanvas.drawEdges = drawEdges;
+        glcanvas.drawer.repaint(glcanvas.camera);
+    }
+
+    glcanvas.drawLightBeacon = function(light) {
+        // Switch over to a flat shader with no edges
+        let sProg = glcanvas.shaderToUse;
+        let drawEdges = glcanvas.drawEdges;
+        let material = glcanvas.material;
+        glcanvas.shaderToUse = glcanvas.shaders.flat;
+        glcanvas.drawEdges = false;
+
+        let pos = light.pos;
+        glcanvas.material = {ka:light.color};
+        let tMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.fromTranslation(tMatrix, pos);
+        glcanvas.specialMeshes.beacon.render(glcanvas, tMatrix);
         
         // Set properties back to what they were
         glcanvas.shaderToUse = sProg;
         glcanvas.drawEdges = drawEdges;
-        glcanvas.drawer.repaint(pMatrix, mvMatrix);
+        glcanvas.material = material;
+        glcanvas.drawer.repaint(glcanvas.camera);
     }
 
     glcanvas.repaint = function() {
         if (glcanvas.scene === null) {
             return;
         }
-        //glcanvas.light1Pos = glcanvas.camera.pos;
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
-        
-        let pMatrix = glcanvas.camera.getPMatrix();
-        //First get the global modelview matrix based on the camera
-        let mvMatrix = glcanvas.camera.getMVMatrix();
 
         //Then drawn the scene
         let scene = glcanvas.scene;
+        let identity = glMatrix.mat4.create();
         if ('children' in scene) {
             scene.children.forEach(function(child) {
-                glcanvas.repaintRecurse(child, pMatrix, mvMatrix);
+                glcanvas.repaintRecurse(child, identity);
             });
         }
-        
+
         //Draw lines and points for debugging
         glcanvas.drawer.reset(); //Clear lines and points drawn last time
         //TODO: Paint debugging stuff here if you'd like
 
 
-        // Now draw the beacons for the cameras (assuming FPSCamera)
+        // Now draw the beacons for the cameras and lights (assuming FPSCamera objects)
         if (glcanvas.showCameras) {
-            if (glcanvas.camera == glcanvas.scene.cam2) {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam1, pMatrix, mvMatrix, BEACON_COLOR_1);
-            }
-            else {
-                glcanvas.drawCameraBeacon(glcanvas.scene.cam2, pMatrix, mvMatrix, BEACON_COLOR_2);
-            }
+            glcanvas.scene.cameras.forEach(
+                function(camera) {
+                    if (!(glcanvas.camera === camera.camera)) {
+                        glcanvas.drawCameraBeacon(camera.camera, BEACON_COLOR_1);
+                    }
+                }
+            )
+        }
+        if (glcanvas.showLights) {
+            glcanvas.scene.lights.forEach(
+                function(light) {
+                    if (!(glcanvas.camera === light.camera)) {
+                        glcanvas.drawLightBeacon(light);
+                    }
+                }
+            );
         }
         
-        //Redraw if walking
+        // Redraw if walking
         let thisTime = (new Date()).getTime();
         let dt = (thisTime - glcanvas.lastTime)/1000.0;
         glcanvas.lastTime = thisTime;
@@ -394,9 +620,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.camera.translate(0, 0, glcanvas.movefb, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(0, glcanvas.moveud, 0, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(glcanvas.movelr, 0, 0, glcanvas.walkspeed*dt);
+            glcanvas.camera.position = vecToStr(glcanvas.camera.pos);
             requestAnimFrame(glcanvas.repaint);
         }
-        glcanvas.updateCamerasHTML();
     }
 
     glcanvas.updateMeshDrawingsRecurse = function(node) {
@@ -424,26 +650,50 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     /////////////////////////////////////////////////////
     //Step 3: Initialize GUI Callbacks
     /////////////////////////////////////////////////////
-    glcanvas.updateCamerasHTML = function() {
-        let cam1PosE = document.getElementById("camera1");
-        let cam2PosE = document.getElementById("camera2");
-        cam1PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_1 + "\">" + glcanvas.scene.cam1.toString() + "</font>";
-        cam2PosE.innerHTML = "<font color = \"#" + BEACON_COLOR_2 + "\">" + glcanvas.scene.cam2.toString() + "</font>";
-    }
-
-    glcanvas.viewFromCamera1 = function() {
-        glcanvas.camera = glcanvas.scene.cam1;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.viewFromCamera2 = function() {
-        glcanvas.camera = glcanvas.scene.cam2;
-        requestAnimFrame(glcanvas.repaint);
-    }
-    
-    glcanvas.shaderToUse = glcanvas.shaders.lambertian;
     glcanvas.drawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//Simple drawer object for debugging
-    glcanvas.pathDrawer = new SimpleDrawer(glcanvas.gl, glcanvas.shaders);//For drawing reflection paths
-    glcanvas.walkspeed = 2.6;
+    
+    glcanvas.gui = new dat.GUI();
+    const gui = glcanvas.gui;
+    // Mesh display options menu
+    glcanvas.drawEdges = false;
+    let meshOpts = gui.addFolder('Mesh Display Options');
+    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+        function(s) {
+            let evt = meshOpts.add(glcanvas, s);
+            evt.onChange(function(value) {
+                glcanvas.updateMeshDrawings();
+                requestAnimFrame(glcanvas.repaint);
+            });
+        }
+    );
+
+    // Lighting menu
+    glcanvas.lightMenu = gui.addFolder('Lights');
+    glcanvas.showLights = true;
+    glcanvas.lightMenu.add(glcanvas, 'showLights').onChange(function() {
+        requestAnimFrame(glcanvas.repaint);
+    });
+
+    // Camera control menu
+    glcanvas.cameraMenu = gui.addFolder('Cameras');
+    let cameraMenu = glcanvas.cameraMenu;
     glcanvas.showCameras = true;
+    cameraMenu.add(glcanvas, 'showCameras').onChange(function() {
+        requestAnimFrame(glcanvas.repaint);
+    });
+
+    // Materials menu
+    glcanvas.materialsMenu = gui.addFolder('Materials');
+
+    // Shaders menu
+    glcanvas.shaderToUse = glcanvas.shaders.phongLambertian;
+    glcanvas.shader = "phongLambertian";
+    gui.add(glcanvas, "shader", ["phongLambertian", "gouraudLambertian", "flat"]).onChange(function() {
+        glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
+        requestAnimFrame(glcanvas.repaint);
+    })
+
+    // Other options
+    glcanvas.walkspeed = 2.6;
+    gui.add(glcanvas, 'walkspeed', 0.01, 100);
 }
