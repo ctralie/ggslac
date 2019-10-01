@@ -264,7 +264,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
      */
     glcanvas.setupLightMenus = function(scene, pixWidth, pixHeight) {
         // Setup default light
-        if (!('lights') in scene) {
+        if (!('lights' in scene)) {
             scene.lights = [];
         }
         if (scene.lights.length == 0) {
