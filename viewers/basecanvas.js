@@ -228,7 +228,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     if (!glcanvas.gl) {
         alert("Could not initialise WebGL, sorry :-(.  Try a new version of chrome or firefox and make sure your newest graphics drivers are installed");
     }
-    glcanvas.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
+    if (!(shadersrelpath === undefined)) {
+        glcanvas.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
+    }
     //glcanvas.initPickingFramebuffer();
 
     glcanvas.camera = null;
