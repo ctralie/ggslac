@@ -126,6 +126,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
 
     //Keyboard handlers for camera
     glcanvas.keyDown = function(evt) {
+        if (!glcanvas.active) {
+            return;
+        }
         if (evt.keyCode == 87) { //W
             glcanvas.movefb = 1;
         }
@@ -149,6 +152,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     }
     
     glcanvas.keyUp = function(evt) {
+        if (!glcanvas.active) {
+            return;
+        }
         if (evt.keyCode == 87) { //W
             glcanvas.movefb = 0;
         }
@@ -228,4 +234,5 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.camera = null;
     glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     glcanvas.gl.enable(glcanvas.gl.DEPTH_TEST);
+    glcanvas.active = true;
 }
