@@ -5,6 +5,13 @@ primitives3d.js
 */
 
 
+// Default values, assuming 4:3 aspect ratio
+DEFAULT_FOVX = 1.4
+DEFAULT_FOVY = 1.05
+DEFAULT_NEAR = 0.01
+DEFAULT_FAR = 1000
+
+
 function splitVecStr(s) {
     ret = [];
     s.split(",").forEach(function(x) {
@@ -155,19 +162,19 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     this.pixWidth = pixWidth;
     this.pixHeight = pixHeight;
     if (fovx === undefined) {
-        fovx = 1.9;
+        fovx = DEFAULT_FOVY;
     }
     this.fovx = fovx;
     if (fovy === undefined) {
-        fovy = 1.9;
+        fovy = DEFAULT_FOVY;
     }
     this.fovy = fovy;
     if (near === undefined) {
-        near = 0.01;
+        near = DEFAULT_NEAR;
     }
     this.near = near;
     if (far === undefined) {
-        far = 1000;
+        far = DEFAULT_FAR;
     }
     this.far = far;
     
@@ -230,8 +237,8 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
 
     this.getPMatrix = function() {
         let pMatrix = glMatrix.mat4.create();
-        let fovx2 = this.fovx * 360/Math.PI;
-        let fovy2 = this.fovy * 360/Math.PI;
+        let fovx2 = this.fovx * 90/Math.PI;
+        let fovy2 = this.fovy * 90/Math.PI;
         let fov = {upDegrees:fovy2, downDegrees:fovy2, 
                    leftDegrees:fovx2, rightDegrees:fovx2};
         glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, this.near, this.far);
@@ -248,7 +255,7 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     
     //Rotate the up direction around the right direction
     this.rotateUpDown = function(ud) {
-        let thetaud = (Math.PI/2)*this.fovy*ud/this.pixHeight;
+        let thetaud = 2.0*this.fovy*ud/this.pixHeight;
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
@@ -258,7 +265,7 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     //Rotate the right direction around the up direction
     //but project onto the XY plane
     this.rotateLeftRight = function(lr) {
-        let thetalr = (Math.PI/2)*lr/this.pixWidth;
+        let thetalr = 2.0*this.fovx*lr/this.pixWidth;
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);

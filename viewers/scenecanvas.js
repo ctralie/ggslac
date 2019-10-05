@@ -288,25 +288,25 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             camera.fovx = obj.fovx;
         }
         else {
-            camera.fovx = 1.9;
+            camera.fovx = DEFAULT_FOVX;
         }
         if ('fovy' in obj) {
             camera.fovy = obj.fovy;
         }
         else {
-            camera.fovy = 1.9;
+            camera.fovy = DEFAULT_FOVY;
         }
         if ('near' in obj) {
             camera.near = obj.near;
         }
         else {
-            camera.near = 0.01;
+            camera.near = DEFAULT_NEAR;
         }
         if ('far' in obj) {
             camera.far = obj.far;
         }
         else {
-            camera.far = 1000;
+            camera.far = DEFAULT_FAR;
         }
     }
 
@@ -410,12 +410,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
-            menu.add(c.camera, 'fovx', 1, 3).onChange(
+            menu.add(c.camera, 'fovx', 0.5, 3).onChange(
                 function() {
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
-            menu.add(c.camera, 'fovy', 1, 3).onChange(
+            menu.add(c.camera, 'fovy', 0.5, 3).onChange(
                 function() {
                     requestAnimFrame(glcanvas.repaint);
                 }
