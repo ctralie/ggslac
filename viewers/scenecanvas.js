@@ -192,13 +192,10 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
 
             // Figure out material associated to this shape
-            if ('material' in shape) {
-                shape.material = glcanvas.scene.materials[shape.material];
+            if (!('material' in shape)) {
+                shape.material = 'default';
             }
-            else {
-                // Default material is greenish gray flat color
-                shape.material = {"color":[0.5, 0.55, 0.5]};
-            }
+            shape.material = glcanvas.scene.materials[shape.material];
         }
         
 
@@ -416,6 +413,14 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.materialsMenu.removeFolder(menu);
         });
         glcanvas.materialMenus = [];
+        if (!('default' in scene.materials)) {
+            scene.materials['default'] = {"ka":[0, 0, 0],
+                                          "kd":[0.5, 0.55, 0.5],
+                                          "ks":[0, 0, 0],
+                                          "kt":[0, 0, 0],
+                                          "shininess":1,
+                                          "refraction":1}
+        }
         for (let name in scene.materials) {
             if (Object.prototype.hasOwnProperty.call(scene.materials, name)) {
                 let material = scene.materials[name];
