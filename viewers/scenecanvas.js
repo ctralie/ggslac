@@ -296,13 +296,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
      * Setup menus to control positions and colors of lights
      */
     glcanvas.setupLightMenus = function(scene, pixWidth, pixHeight) {
-        // Setup default light
-        if (!('lights' in scene)) {
-            scene.lights = [];
-        }
-        if (scene.lights.length == 0) {
-            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1]});
-        }
         // Add a camera object to each light so that the user can
         // move the lights around
         if (!('lightMenus' in glcanvas)) {
@@ -367,12 +360,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
      * Setup menus to control positions and orientations of cameras
      */
     glcanvas.setupCameraMenus = function(scene, pixWidth, pixHeight) {
-        if (!('cameras') in scene) {
-            scene.cameras = [];
-        }
-        if (scene.cameras.length == 0) {
-            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovy:1.0});
-        }
         if (!('cameraMenus' in glcanvas)) {
             glcanvas.cameraMenus = [];
         }
@@ -439,9 +426,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     }
 
     glcanvas.setupMaterialsMenu = function(scene) {
-        if (!('materials' in scene)) {
-            scene.materials = {};
-        }
         if (!('materialMenus' in glcanvas)) {
             glcanvas.materialMenus = [];
         }
@@ -449,14 +433,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.materialsMenu.removeFolder(menu);
         });
         glcanvas.materialMenus = [];
-        if (!('default' in scene.materials)) {
-            scene.materials['default'] = {"ka":[0, 0, 0],
-                                          "kd":[0.5, 0.55, 0.5],
-                                          "ks":[0, 0, 0],
-                                          "kt":[0, 0, 0],
-                                          "shininess":1,
-                                          "refraction":1}
-        }
         for (let name in scene.materials) {
             if (Object.prototype.hasOwnProperty.call(scene.materials, name)) {
                 let material = scene.materials[name];
@@ -531,6 +507,44 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.setupScene = function(scene, pixWidth, pixHeight) {
         glcanvas.scene = scene
 
+        // Step 1: Setup defaults
+        // Setup default light
+        if (!('lights' in scene)) {
+            scene.lights = [];
+        }
+        if (scene.lights.length == 0) {
+            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1]});
+        }
+        // Setup default camera
+        if (!('cameras') in scene) {
+            scene.cameras = [];
+        }
+        if (scene.cameras.length == 0) {
+            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovy:1.0});
+        }
+        // Setup default material
+        if (!('materials' in scene)) {
+            scene.materials = {};
+        }
+        if (!('default' in scene.materials)) {
+            scene.materials['default'] = {"ka":[0, 0, 0],
+                                          "kd":[0.5, 0.55, 0.5],
+                                          "ks":[0, 0, 0],
+                                          "kt":[0, 0, 0],
+                                          "shininess":1,
+                                          "refraction":1}
+        }
+
+        // Step 2: Recurse and setup all of the children nodes in the tree
+        glcanvas.scene.children.forEach(function(child) {
+            glcanvas.parseNode(child);
+        });
+        //Output information about the scene tree
+        glcanvas.scene.children.forEach(function(child) {
+            console.log(glcanvas.getSceneString(child, " "));
+        });
+
+        // Step 3: Setup menus
         // Setup lights and light menus
         glcanvas.setupLightMenus(scene, pixWidth, pixHeight);
 
@@ -539,16 +553,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
 
         // Setup materials and materials menu
         glcanvas.setupMaterialsMenu(scene);
-        
-        //Now recurse and setup all of the children nodes in the tree
-        glcanvas.scene.children.forEach(function(child) {
-            glcanvas.parseNode(child);
-        });
-
-        //Output information about the scene tree
-        glcanvas.scene.children.forEach(function(child) {
-            console.log(glcanvas.getSceneString(child, " "));
-        });
     }
 
 
