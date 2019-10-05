@@ -75,10 +75,10 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
             else if (shape.type == "sphere") {
                 if (!('sphere' in glcanvas.specialMeshes)) {
-                    let spheremesh = new PolyMesh();
+                    let sphereMesh = new PolyMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "sphere1026.off")
-                    spheremesh.loadFileFromLines(lines.split("\n"));
-                    glcanvas.specialMeshes.sphere = spheremesh;
+                    sphereMesh.loadFileFromLines(lines.split("\n"));
+                    glcanvas.specialMeshes.sphere = sphereMesh;
                 }
                 shape.mesh = glcanvas.specialMeshes.sphere;
                 // Apply a transform that realizes the proper center and radius
@@ -100,10 +100,10 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
             else if (shape.type == "box") {
                 if (!('box' in glcanvas.specialMeshes)) {
-                    let boxmesh = new PolyMesh();
+                    let boxMesh = new PolyMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "box2402.off");
-                    boxmesh.loadFileFromLines(lines.split("\n"));
-                    glcanvas.specialMeshes.box = boxmesh;
+                    boxMesh.loadFileFromLines(lines.split("\n"));
+                    glcanvas.specialMeshes.box = boxMesh;
                 }
                 shape.mesh = glcanvas.specialMeshes.box;
                 let ms = glMatrix.mat4.create();
@@ -127,8 +127,8 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             else if (shape.type == "cylinder") {
                 if (!('cylinder' in glcanvas.specialMeshes)) {
                     let center = glMatrix.vec3.fromValues(0, 0, 0);
-                    let cylindermesh = getCylinderMesh(center, 1.0, 1.0, 100);
-                    glcanvas.specialMeshes.cylinder = cylindermesh;
+                    let cylinderMesh = getCylinderMesh(center, 1.0, 1.0, 100);
+                    glcanvas.specialMeshes.cylinder = cylinderMesh;
                 }
                 shape.mesh = glcanvas.specialMeshes.cylinder;
                 let ms = glMatrix.mat4.create();
