@@ -90,11 +90,17 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     ms[5] = r;
                     ms[10] = r;
                 }
+                else {
+                    shape.radius = 1.0;
+                }
                 if ('center' in shape) {
                     let c = shape.center;
                     ms[12] = c[0];
                     ms[13] = c[1];
                     ms[14] = c[2];
+                }
+                else {
+                    shape.center = glMatrix.vec3.create();
                 }
                 shape.ms = ms;
             }
@@ -110,17 +116,29 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 if ('width' in shape) {
                     ms[0] = shape.width;
                 }
+                else {
+                    shape.width = 1.0;
+                }
                 if ('height' in shape) {
                     ms[5] = shape.height;
                 }
+                else {
+                    shape.height = 1.0;
+                }
                 if ('length' in shape) {
                     ms[10] = shape.length;
+                }
+                else {
+                    shape.length = 1.0;
                 }
                 if ('center' in shape) {
                     let c = shape.center;
                     ms[12] = c[0];
                     ms[13] = c[1];
                     ms[14] = c[2];
+                }
+                else {
+                    shape.center = glMatrix.vec3.create();
                 }
                 shape.ms = ms;
             }
@@ -136,14 +154,23 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     ms[0] = shape.radius;
                     ms[10] = shape.radius;
                 }
+                else {
+                    shape.radius = 1.0;
+                }
                 if ('height' in shape) {
                     ms[5] = shape.height;
+                }
+                else {
+                    shape.height = 1.0;
                 }
                 if ('center' in shape) {
                     let c = shape.center;
                     ms[12] = c[0];
                     ms[13] = c[1];
                     ms[14] = c[2];
+                }
+                else {
+                    shape.center = glMatrix.vec3.create();
                 }
                 shape.ms = ms;
             }
@@ -159,14 +186,23 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     ms[0] = shape.radius;
                     ms[10] = shape.radius;
                 }
+                else {
+                    shape.radius = 1.0;
+                }
                 if ('height' in shape) {
                     ms[5] = shape.height;
+                }
+                else {
+                    shape.height = 1.0;
                 }
                 if ('center' in shape) {
                     let c = shape.center;
                     ms[12] = c[0];
                     ms[13] = c[1];
                     ms[14] = c[2];
+                }
+                else {
+                    shape.center = glMatrix.vec3.create();
                 }
                 shape.ms = ms;
             }
