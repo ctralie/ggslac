@@ -11,7 +11,9 @@ cameras3d.js
 const DEFAULT_AMBIENT = glMatrix.vec3.fromValues(0.05, 0.05, 0.05);
 const DEFAULT_DIFFUSE = glMatrix.vec3.fromValues(0.5, 0.55, 0.5);
 const DEFAULT_SPECULAR = glMatrix.vec3.create();
+const DEFAULT_TRANSMISSION = glMatrix.vec3.create();
 const DEFAULT_SHININESS = 50;
+const DEFAULT_REFRACTION_RATIO = 1;
 
 
 function MeshVertex(P, ID) {

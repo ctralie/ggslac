@@ -428,6 +428,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 if (!('ks' in material)) {
                     material.ks = DEFAULT_SPECULAR;
                 }
+                if (!('kt' in material)) {
+                    material.kt = DEFAULT_TRANSMISSION;
+                }
+                if (!('refraction' in material)) {
+                    material.refraction = DEFAULT_REFRACTION_RATIO;
+                }
                 if (!('shininess' in material)) {
                     material.shininess = DEFAULT_SHININESS;
                 }
@@ -454,7 +460,19 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                         requestAnimFrame(glcanvas.repaint);
                     }
                 );
+                material.kt_rgb = [255*material.kt[0], 255*material.kt[1], 255*material.kt[2]];
+                menu.addColor(material, 'kt_rgb').onChange(
+                    function(v) {
+                        material.kt = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
                 menu.add(material, 'shininess', 0.01, 100).onChange(
+                    function() {
+                        requestAnimFrame(glcanvas.repaint);
+                    }
+                );
+                menu.add(material, 'refraction', 0.2, 5).onChange(
                     function() {
                         requestAnimFrame(glcanvas.repaint);
                     }
