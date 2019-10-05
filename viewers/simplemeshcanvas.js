@@ -18,7 +18,7 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
         
         let pMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.perspective(pMatrix, 45, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, glcanvas.camera.R/100.0, glcanvas.camera.R*2);
+        glMatrix.mat4.perspective(pMatrix, Math.PI/4, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, glcanvas.camera.R/100.0, glcanvas.camera.R*2);
         let mvMatrix = glcanvas.camera.getMVMatrix();
 
         //NOTE: glcanvas has all options we need except

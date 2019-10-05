@@ -281,14 +281,32 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             q = glMatrix.quat.fromValues(q[0], q[1], q[2], q[3]);
             camera.setRotFromQuat(q);
         }
+        else {
+            camera.setRotFromQuat(glMatrix.quat.create());
+        }
+        if ('fovx' in obj) {
+            camera.fovx = obj.fovx;
+        }
+        else {
+            camera.fovx = 1.9;
+        }
         if ('fovy' in obj) {
             camera.fovy = obj.fovy;
+        }
+        else {
+            camera.fovy = 1.9;
         }
         if ('near' in obj) {
             camera.near = obj.near;
         }
+        else {
+            camera.near = 0.01;
+        }
         if ('far' in obj) {
             camera.far = obj.far;
+        }
+        else {
+            camera.far = 1000;
         }
     }
 
@@ -389,6 +407,16 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     for (let k = 0; k < 4; k++) {
                         c.camera.rot[k] = xyzw[k];
                     }
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(c.camera, 'fovx', 1, 3).onChange(
+                function() {
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(c.camera, 'fovy', 1, 3).onChange(
+                function() {
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
@@ -520,7 +548,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             scene.cameras = [];
         }
         if (scene.cameras.length == 0) {
-            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovy:1.0});
+            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovx:1.9, fovy:1.9});
         }
         // Setup default material
         if (!('materials' in scene)) {

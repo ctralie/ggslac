@@ -150,12 +150,16 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
 
 
 //For use with WASD + mouse bindings
-function FPSCamera(pixWidth, pixHeight, fovy, near, far) {
+function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     this.type = "fps";
     this.pixWidth = pixWidth;
     this.pixHeight = pixHeight;
+    if (fovx === undefined) {
+        fovx = 1.9;
+    }
+    this.fovx = fovx;
     if (fovy === undefined) {
-        fovy = 0.75;
+        fovy = 1.9;
     }
     this.fovy = fovy;
     if (near === undefined) {
@@ -226,7 +230,11 @@ function FPSCamera(pixWidth, pixHeight, fovy, near, far) {
 
     this.getPMatrix = function() {
         let pMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.perspective(pMatrix, this.fovy, this.pixWidth / this.pixHeight, this.near, this.far);
+        let fovx2 = this.fovx * 360/Math.PI;
+        let fovy2 = this.fovy * 360/Math.PI;
+        let fov = {upDegrees:fovy2, downDegrees:fovy2, 
+                   leftDegrees:fovx2, rightDegrees:fovx2};
+        glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, this.near, this.far);
         return pMatrix;
     }
     
