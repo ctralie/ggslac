@@ -1,6 +1,6 @@
 //Purpose: Code to parse and render scene files
 
-BEACON_SIZE = 0.2;
+BEACON_SIZE = 0.1;
 BEACON_COLOR_1 = "A7383E";
 BEACON_COLOR_2 = "378B2E";
 
