@@ -786,7 +786,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     gui.add(glcanvas, "shader", ["blinnPhong", "gouraudLambertian", "flat"]).onChange(function() {
         glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
         requestAnimFrame(glcanvas.repaint);
-    })
+    });
 
     // Other options
     glcanvas.walkspeed = 2.6;
