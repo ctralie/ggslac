@@ -23,7 +23,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     // Initialize the icosahedron for the camera beacons
     glcanvas.specialMeshes.beacon = getIcosahedronMesh()
     glcanvas.specialMeshes.beacon.Scale(BEACON_SIZE, BEACON_SIZE, BEACON_SIZE);
-
     /**
      * Recursive function to load all of the meshes and to 
      * put all of the matrix transformations into glMatrix.mat4 objects
@@ -72,6 +71,16 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 shape.mesh = new PolyMesh();
                 let lines = BlockLoader.loadTxt(shape.filename);
                 shape.mesh.loadFileFromLines(lines.split("\n"));
+            }
+            else if (shape.type == "polygon") {
+                shape.mesh = new PolyMesh();
+                shape.type = "mesh";
+                let face = [];
+                for (i = 0; i < shape.vertices.length; i++) {
+                    let p = glMatrix.vec3.fromValues.apply(null, shape.vertices[i]);
+                    face.push(shape.mesh.addVertex(p));
+                }
+                shape.mesh.addFace(face);
             }
             else if (shape.type == "sphere") {
                 if (!('sphere' in glcanvas.specialMeshes)) {
