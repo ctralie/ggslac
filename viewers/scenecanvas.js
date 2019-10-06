@@ -347,6 +347,10 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 let towards = vec3.fromValues(light.towards[0], light.towards[1], light.towards[2]);
                 glMatrix.vec3.cross(light.camera.up, light.camera.right, towards);
             }
+            else {
+                // Light points down by default
+                light.towards = [0, -1, 0];
+            }
             if (!('angle' in light)) {
                 light.angle = Math.PI;
             }
