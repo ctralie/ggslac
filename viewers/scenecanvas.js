@@ -397,7 +397,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 function() {
                     requestAnimationFrame(glcanvas.repaint);
                 }
-            )
+            );
             // Setup mechanism to move light around with camera
             light.viewFrom = false;
             menu.add(light, 'viewFrom').listen().onChange(
