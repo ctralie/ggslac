@@ -954,6 +954,15 @@ function PolyMesh() {
             }
             gl.uniform3fv(sProg.light1ColorUniform, light1Color);
         }
+        if ('light1AttenUniform' in sProg) {
+            let light1Atten = glMatrix.vec3.fromValues(1, 0, 0);
+            if ('light1' in glcanvas) {
+                if ('atten' in glcanvas.light1) {
+                    light1Atten = glcanvas.light1.atten;
+                }
+            }
+            gl.uniform3fv(sProg.light1AttenUniform, light1Atten);
+        }
     }
 
     /**

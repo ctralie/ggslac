@@ -14,6 +14,7 @@ uniform mat3 uNMatrix;
 // Light properties
 uniform vec3 uLight1Pos;
 uniform vec3 uLight1Color;
+uniform vec3 uLight1Atten;
 
 // Camera properties
 uniform vec3 uEye;
@@ -27,7 +28,10 @@ varying vec3 C; // Varying per-fragment color, interpolated
 void main(void) {
     vec4 tpos4 = tMatrix*vec4(V, 1.0); // Transformed material location
     vec3 tpos = tpos4.xyz;
-    vec3 L = normalize(uLight1Pos - tpos); // Unit vector from material to light
+    // Unit vector from material to light
+    vec3 L = uLight1Pos - tpos; 
+    float LDistSqr = dot(L, L);
+    L = normalize(L);
     vec3 NT = normalize(uNMatrix*N); // Transformed normal
     
     // Lambertian Term
@@ -56,7 +60,7 @@ void main(void) {
     }
     ksCoeff = pow(ksCoeff, uShininess);
 
-    
+    vec3 lColor = uLight1Color/(uLight1Atten.x + uLight1Atten.y*sqrt(LDistSqr) + uLight1Atten.z*LDistSqr);
 
-    gl_FragColor = vec4(uLight1Color*(kdCoeff*cKd + ksCoeff*uKs) + uKa, 1.0);
+    gl_FragColor = vec4(lColor*(kdCoeff*cKd + ksCoeff*uKs) + uKa, 1.0);
 }

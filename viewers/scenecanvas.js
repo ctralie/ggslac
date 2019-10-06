@@ -334,6 +334,15 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glcanvas.lightMenus = [];
         scene.lights.forEach(function(light, i) {
             light.camera = new FPSCamera(pixWidth, pixHeight);
+            if (!('pos' in light)) {
+                light.pos = [0, 0, 0];
+            }
+            if (!('color' in light)) {
+                light.color = [1, 1, 1];
+            }
+            if (!('atten' in light)) {
+                light.atten = [1, 0, 0];
+            }
             glMatrix.vec3.copy(light.camera.pos, light.pos);
             light.pos = light.camera.pos;
             // Also add each light to a GUI control
@@ -353,6 +362,27 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             menu.addColor(light, 'color_rgb').onChange(
                 function(v) {
                     light.color = glMatrix.vec3.fromValues(v[0]/255, v[1]/255, v[2]/255);
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            light.atten_c = light.atten[0];
+            light.atten_l = light.atten[1];
+            light.atten_q = light.atten[2];
+            menu.add(light, 'atten_c', 0, 5).step(0.02).onChange(
+                function(v) {
+                    light.atten[0] = v;
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(light, 'atten_l', 0, 5).step(0.02).onChange(
+                function(v) {
+                    light.atten[1] = v;
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(light, 'atten_q', 0, 5).step(0.02).onChange(
+                function(v) {
+                    light.atten[2] = v;
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
@@ -521,7 +551,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                         requestAnimFrame(glcanvas.repaint);
                     }
                 );
-                menu.add(material, 'shininess', 0.01, 100).onChange(
+                menu.add(material, 'shininess', 0.01, 1000).onChange(
                     function() {
                         requestAnimFrame(glcanvas.repaint);
                     }
@@ -550,7 +580,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             scene.lights = [];
         }
         if (scene.lights.length == 0) {
-            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1]});
+            scene.lights.push({pos:[0, 0, 0], color:[1, 1, 1], atten:[1, 0, 0]});
         }
         // Setup default camera
         if (!('cameras') in scene) {

@@ -89,9 +89,7 @@ function initStandardShaders(gl, relpath) {
     gouraudLambertian.nMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uNMatrix");
     gouraudLambertian.ambientColorUniform = gl.getUniformLocation(gouraudLambertian, "uAmbientColor");
     gouraudLambertian.light1PosUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Pos");
-    gouraudLambertian.light2PosUniform = gl.getUniformLocation(gouraudLambertian, "uLight2Pos");
     gouraudLambertian.light1ColorUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Color");
-    gouraudLambertian.light2ColorUniform = gl.getUniformLocation(gouraudLambertian, "uLight2Color");
     gouraudLambertian.uKaUniform = gl.getUniformLocation(gouraudLambertian, "uKa");
     gouraudLambertian.uKdUniform = gl.getUniformLocation(gouraudLambertian, "uKd");
     gouraudLambertian.uKsUniform = gl.getUniformLocation(gouraudLambertian, "uKs");
@@ -112,9 +110,8 @@ function initStandardShaders(gl, relpath) {
     blinnPhong.nMatrixUniform = gl.getUniformLocation(blinnPhong, "uNMatrix");
     blinnPhong.ambientColorUniform = gl.getUniformLocation(blinnPhong, "uAmbientColor");
     blinnPhong.light1PosUniform = gl.getUniformLocation(blinnPhong, "uLight1Pos");
-    blinnPhong.light2PosUniform = gl.getUniformLocation(blinnPhong, "uLight2Pos");
     blinnPhong.light1ColorUniform = gl.getUniformLocation(blinnPhong, "uLight1Color");
-    blinnPhong.light2ColorUniform = gl.getUniformLocation(blinnPhong, "uLight2Color");
+    blinnPhong.light1AttenUniform = gl.getUniformLocation(blinnPhong, "uLight1Atten");
     blinnPhong.uKaUniform = gl.getUniformLocation(blinnPhong, "uKa");
     blinnPhong.uKdUniform = gl.getUniformLocation(blinnPhong, "uKd");
     blinnPhong.uKsUniform = gl.getUniformLocation(blinnPhong, "uKs");
