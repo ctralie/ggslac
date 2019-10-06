@@ -343,6 +343,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             if (!('atten' in light)) {
                 light.atten = [1, 0, 0];
             }
+            if ('towards' in light) {
+                let towards = vec3.fromValues(light.towards[0], light.towards[1], light.towards[2]);
+                glMatrix.vec3.cross(light.camera.up, light.camera.right, towards);
+            }
+            if (!('angle' in light)) {
+                light.angle = Math.PI;
+            }
             glMatrix.vec3.copy(light.camera.pos, light.pos);
             light.pos = light.camera.pos;
             // Also add each light to a GUI control
@@ -386,6 +393,11 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
+            menu.add(light, 'angle', 0, Math.PI).step(0.01).onChange(
+                function() {
+                    requestAnimationFrame(glcanvas.repaint);
+                }
+            )
             // Setup mechanism to move light around with camera
             light.viewFrom = false;
             menu.add(light, 'viewFrom').listen().onChange(
