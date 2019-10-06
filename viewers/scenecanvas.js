@@ -344,7 +344,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 light.atten = [1, 0, 0];
             }
             if ('towards' in light) {
-                let towards = vec3.fromValues(light.towards[0], light.towards[1], light.towards[2]);
+                let towards = glMatrix.vec3.fromValues.apply(null, light.towards);
                 glMatrix.vec3.cross(light.camera.up, light.camera.right, towards);
             }
             else {
