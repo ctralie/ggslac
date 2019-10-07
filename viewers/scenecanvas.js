@@ -537,6 +537,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 if (!('shininess' in material)) {
                     material.shininess = DEFAULT_SHININESS;
                 }
+                if (!('special' in material)) {
+                    material.special = false;
+                }
                 let menu = glcanvas.materialsMenu.addFolder(name);
                 glcanvas.materialMenus.push(menu);
                 material.ka_rgb = [255*material.ka[0], 255*material.ka[1], 255*material.ka[2]];
@@ -577,6 +580,11 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                         requestAnimFrame(glcanvas.repaint);
                     }
                 );
+                menu.add(material, 'special').onChange(
+                    function() {
+                        requestAnimationFrame(glcanvas.repaint);
+                    }
+                )
             }
         }
     }
