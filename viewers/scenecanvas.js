@@ -786,7 +786,13 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     glcanvas.updateMeshDrawingsRecurse = function(node) {
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
-                shape.mesh.needsDisplayUpdate = true;
+                if (shape.mesh === null) {
+                    console.log("Shape for type " + shape.type + " is null");
+                }
+                else {
+                    shape.mesh.needsDisplayUpdate = true;
+                }
+                
             }
         });
         if ('children' in node) {
