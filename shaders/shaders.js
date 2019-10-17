@@ -118,6 +118,27 @@ function initStandardShaders(gl, relpath) {
     blinnPhong.uShininessUniform = gl.getUniformLocation(blinnPhong, "uShininess");
     blinnPhong.uEyeUniform = gl.getUniformLocation(blinnPhong, "uEye");
 
+    /** depth: A shader that shades by depth */
+    let depth = getShaderProgram(gl, relpath + "depth");
+    depth.vPosAttrib = gl.getAttribLocation(depth, "vPos");
+    gl.enableVertexAttribArray(depth.vPosAttrib);
+    depth.pMatrixUniform = gl.getUniformLocation(depth, "uPMatrix");
+    depth.mvMatrixUniform = gl.getUniformLocation(depth, "uMVMatrix");
+    depth.tMatrixUniform = gl.getUniformLocation(depth, "tMatrix");
+    depth.uNearUniform = gl.getUniformLocation(depth, "uNear");
+    depth.uFarUniform = gl.getUniformLocation(depth, "uFar");
+
+    /** normal: A shader to color points by their normals */
+    let normal = getShaderProgram(gl, relpath + "normalView");
+    normal.vPosAttrib = gl.getAttribLocation(normal, "vPos");
+    gl.enableVertexAttribArray(normal.vPosAttrib);
+    normal.vNormalAttrib = gl.getAttribLocation(normal, "vNormal");
+    gl.enableVertexAttribArray(normal.normalAttrib);
+    normal.pMatrixUniform = gl.getUniformLocation(normal, "uPMatrix");
+    normal.mvMatrixUniform = gl.getUniformLocation(normal, "uMVMatrix");
+    normal.tMatrixUniform = gl.getUniformLocation(normal, "tMatrix");
+    normal.nMatrixUniform = gl.getUniformLocation(normal, "uNMatrix");
+
     /** flat: A shader that draws a constant color for all faces*/
     let flat = getShaderProgram(gl, relpath + "flat");
     flat.vPosAttrib = gl.getAttribLocation(flat, "vPos");
@@ -162,6 +183,8 @@ function initStandardShaders(gl, relpath) {
     return { 
             blinnPhong:blinnPhong,
             gouraudLambertian:gouraudLambertian,
+            depth:depth,
+            normal:normal,
             flat:flat,
             pointShader:pointShader,
             pointColorShader:pointColorShader,

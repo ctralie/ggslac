@@ -917,8 +917,16 @@ function PolyMesh() {
             }
             gl.uniform1f(sProg.uShininessUniform, shininess);
         }
+
+        // Camera information
         if ('uEyeUniform' in sProg) {
             gl.uniform3fv(sProg.uEyeUniform, glcanvas.camera.pos);
+        }
+        if ('uNearUniform' in sProg) {
+            gl.uniform1f(sProg.uNearUniform, glcanvas.camera.near);
+        }
+        if ('uFarUniform' in sProg) {
+            gl.uniform1f(sProg.uFarUniform, glcanvas.camera.far);
         }
 
         // Projection and transformation matrices

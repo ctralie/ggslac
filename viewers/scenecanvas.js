@@ -852,7 +852,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     // Shaders menu
     glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
     glcanvas.shader = "blinnPhong";
-    gui.add(glcanvas, "shader", ["blinnPhong", "gouraudLambertian", "flat"]).onChange(function() {
+    gui.add(glcanvas, "shader", ["blinnPhong", "gouraudLambertian", "depth", "normal", "flat"]).onChange(function() {
         glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
         requestAnimFrame(glcanvas.repaint);
     });
