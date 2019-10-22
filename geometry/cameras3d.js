@@ -34,22 +34,60 @@ function vecToStr(v, k) {
     return s;
 }
 
-function MousePolarCamera(pixWidth, pixHeight, fovy) {
+/**
+ * Superclass for 3D cameras
+ * @param {int} pixWidth Width of viewing window
+ * @param {int} pixHeight Height of viewing window
+ * @param {float} fovx Field of view in x direction
+ * @param {float} fovy Field of view in y direction
+ * @param {float} near Distance to near viewing plane
+ * @param {float} far Distance to far viewing plane
+ */
+function Camera3D(camera, pixWidth, pixHeight, fovx, fovy, near, far) {
+    camera.pixWidth = pixWidth;
+    camera.pixHeight = pixHeight;
+    if (fovx === undefined) {
+        fovx = DEFAULT_FOVY;
+    }
+    camera.fovx = fovx;
+    if (fovy === undefined) {
+        fovy = DEFAULT_FOVY;
+    }
+    camera.fovy = fovy;
+    if (near === undefined) {
+        near = DEFAULT_NEAR;
+    }
+    camera.near = near;
+    if (far === undefined) {
+        far = DEFAULT_FAR;
+    }
+    camera.far = far;
+
+    camera.getPMatrix = function() {
+        let pMatrix = glMatrix.mat4.create();
+        let fovx2 = camera.fovx * 90/Math.PI;
+        let fovy2 = camera.fovy * 90/Math.PI;
+        let fov = {upDegrees:fovy2, downDegrees:fovy2, 
+                   leftDegrees:fovx2, rightDegrees:fovx2};
+        glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, camera.near, camera.far);
+        return pMatrix;
+    }
+}
+
+function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     //Coordinate system is defined as in OpenGL as a right
     //handed system with +z out of the screen, +x to the right,
     //and +y up
     //phi is CCW down from +y, theta is CCW away from +z
+    Camera3D(this, pixWidth, pixHeight, fovx, fovy, near, far);
     this.type = "polar";
-    this.pixWidth = pixWidth;
-    this.pixHeight = pixHeight;
-    this.fovy = fovy;
     this.center = glMatrix.vec3.fromValues(0, 0, 0);
     this.R = 1;
     this.theta = 0;
     this.phi = 0;
     this.towards = glMatrix.vec3.create();
     this.up = glMatrix.vec3.create();
-    this.eye = glMatrix.vec3.create();
+    this.pos = glMatrix.vec3.create();
     
     this.updateVecsFromPolar = function() {
         let sinT = Math.sin(this.theta);
@@ -65,7 +103,7 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
         this.up[0] = -cosP*cosT;
         this.up[1] = sinP;
         this.up[2] = cosP*sinT;
-        glMatrix.vec3.scaleAndAdd(this.eye, this.center, this.towards, this.R);    
+        glMatrix.vec3.scaleAndAdd(this.pos, this.center, this.towards, this.R);    
     }
     
     this.centerOnBBox = function(bbox, theta, phi) {
@@ -84,10 +122,6 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
         let bbox = mesh.getBBox();
         this.centerOnBBox(bbox);
     }
-    
-/*    this.centerOnPointCloud = function(pcl):
-        bbox = pcl.getBBox()
-        this.centerOnBBox(bbox)*/
 
     this.getMVMatrix = function() {
         let sinT = Math.sin(this.theta);
@@ -99,7 +133,7 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
         let T = glMatrix.vec3.fromValues(-sinP*cosT, -cosP, sinP*sinT); //Towards
         let U = glMatrix.vec3.fromValues(-cosP*cosT, sinP, cosP*sinT);  //Up
         let R = glMatrix.vec3.fromValues(-sinT, 0, -cosT);  //Right
-        let eye = glMatrix.vec3.fromValues(camCenter[0] - camR*T[0], camCenter[1] - camR*T[1], camCenter[2] - camR*T[2]);
+        let pos = glMatrix.vec3.fromValues(camCenter[0] - camR*T[0], camCenter[1] - camR*T[1], camCenter[2] - camR*T[2]);
         let rotMat = glMatrix.mat4.create();
         rotMat[0] = R[0]; rotMat[1] = R[1]; rotMat[2] = R[2]; rotMat[3] = 0;
         rotMat[4] = U[0]; rotMat[5] = U[1]; rotMat[6] = U[2]; rotMat[7] = 0;
@@ -108,8 +142,8 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
         glMatrix.mat4.transpose(rotMat, rotMat);
 
         let transMat = glMatrix.mat4.create();
-        glMatrix.vec3.scale(eye, eye, -1.0);
-        glMatrix.mat4.translate(transMat, transMat, eye);
+        glMatrix.vec3.scale(pos, pos, -1.0);
+        glMatrix.mat4.translate(transMat, transMat, pos);
         let mvMatrix = glMatrix.mat4.create();
         glMatrix.mat4.mul(mvMatrix, rotMat, transMat);
         return mvMatrix;
@@ -135,7 +169,7 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
     
     this.translate = function(pdx, pdy) {
         let dR = glMatrix.vec3.create();
-        glMatrix.vec3.sub(dR, this.center, this.eye);
+        glMatrix.vec3.sub(dR, this.center, this.pos);
         let length = glMatrix.vec3.length(dR)*Math.tan(this.fovy);
         let dx = length*pdx / this.pixWidth;
         let dy = length*pdy / this.pixHeight;
@@ -143,13 +177,13 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
         glMatrix.vec3.cross(r, this.towards, this.up);
         glMatrix.vec3.scaleAndAdd(this.center, this.center, r, -dx);
         glMatrix.vec3.scaleAndAdd(this.center, this.center, this.up, -dy);
-        glMatrix.vec3.scaleAndAdd(this.eye, this.eye, r, -dx);
-        glMatrix.vec3.scaleAndAdd(this.eye, this.eye, r, -dy);
+        glMatrix.vec3.scaleAndAdd(this.pos, this.pos, r, -dx);
+        glMatrix.vec3.scaleAndAdd(this.pos, this.pos, r, -dy);
         this.updateVecsFromPolar();
     }
     
     this.getPos = function() {
-        return eye;
+        return pos;
     }
     
     this.updateVecsFromPolar();
@@ -158,26 +192,8 @@ function MousePolarCamera(pixWidth, pixHeight, fovy) {
 
 //For use with WASD + mouse bindings
 function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
+    Camera3D(this, pixWidth, pixHeight, fovx, fovy, near, far);
     this.type = "fps";
-    this.pixWidth = pixWidth;
-    this.pixHeight = pixHeight;
-    if (fovx === undefined) {
-        fovx = DEFAULT_FOVY;
-    }
-    this.fovx = fovx;
-    if (fovy === undefined) {
-        fovy = DEFAULT_FOVY;
-    }
-    this.fovy = fovy;
-    if (near === undefined) {
-        near = DEFAULT_NEAR;
-    }
-    this.near = near;
-    if (far === undefined) {
-        far = DEFAULT_FAR;
-    }
-    this.far = far;
-    
     this.right = glMatrix.vec3.fromValues(1, 0, 0);
     this.up = glMatrix.vec3.fromValues(0, 1, 0);
     this.pos = glMatrix.vec3.fromValues(0, 0, 0);
@@ -231,18 +247,8 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         glMatrix.mat4.translate(transMat, transMat, this.pos);
         let mvMatrix = glMatrix.mat4.create();
         glMatrix.mat4.mul(mvMatrix, rotMat, transMat);
-        glMatrix.vec3.scale(this.pos, this.pos, -1.0); //Have to move eye back
+        glMatrix.vec3.scale(this.pos, this.pos, -1.0); //Have to move pos back
         return mvMatrix;
-    }
-
-    this.getPMatrix = function() {
-        let pMatrix = glMatrix.mat4.create();
-        let fovx2 = this.fovx * 90/Math.PI;
-        let fovy2 = this.fovy * 90/Math.PI;
-        let fov = {upDegrees:fovy2, downDegrees:fovy2, 
-                   leftDegrees:fovx2, rightDegrees:fovx2};
-        glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, this.near, this.far);
-        return pMatrix;
     }
     
     this.translate = function(dx, dy, dz, speed) {

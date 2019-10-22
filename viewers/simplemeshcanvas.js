@@ -7,7 +7,7 @@
 function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     BaseCanvas(glcanvas, shadersrelpath);
     glcanvas.mesh = new PolyMesh();
-    glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height, 0.75);
+    glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height);
 
 
     /////////////////////////////////////////////////////
@@ -16,18 +16,14 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     glcanvas.repaint = function() {
         glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
         glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
-        
-        let pMatrix = glMatrix.mat4.create();
-        glMatrix.mat4.perspective(pMatrix, Math.PI/4, glcanvas.gl.viewportWidth / glcanvas.gl.viewportHeight, glcanvas.camera.R/100.0, glcanvas.camera.R*2);
-        let mvMatrix = glcanvas.camera.getMVMatrix();
 
         //NOTE: glcanvas has all options we need except
         //for "shaderToUse"
-        glcanvas.shaderToUse = glcanvas.shaders.lambertian;
+        glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
         glcanvas.drawNormals = false;
         glcanvas.drawEdges = false;
-        glcanvas.light1 = {pos:glcanvas.camera.eye, color:[1, 1, 1]};
-        glcanvas.mesh.render(glcanvas.gl, glcanvas.shaders, pMatrix, mvMatrix, glcanvas);
+        glcanvas.light1 = {pos:glcanvas.camera.pos, color:[1, 1, 1]};
+        glcanvas.mesh.render(glcanvas);
     }
 
     glcanvas.centerCamera = function() {

@@ -198,7 +198,7 @@ function MeshEdge(v1, v2, ID) {
             this.f2 = face;
         }
         else {
-            console.log("Error (addFace): Cannot add face to edge; already 2 there\n");
+            throw "Cannot add face to edge; already 2 there";
         }
     }
     
@@ -215,7 +215,7 @@ function MeshEdge(v1, v2, ID) {
             self.f2 = null;
         }
         else {
-            console.log("Error (removeFace); Cannot remove edge pointer to face that was never part of edge\n");
+            throw "Cannot remove edge pointer to face that was never part of edge";
         }
     }
     
@@ -401,18 +401,16 @@ function PolyMesh() {
             vertsPos[i] = meshVerts[i].pos;
         }
         if (!arePlanar(vertsPos)) {
-            console.log("Error (PolyMesh.addFace): Trying to add mesh face that is not planar\n")
             for (let i = 0; i < vertsPos.length; i++) {
                 console.log(glMatrix.vecStr(vertsPos[i]) + ", ");
             }
-            return null;
+            throw "Error (PolyMesh.addFace): Trying to add mesh face that is not planar\n"
         }
         if (!are2DConvex(vertsPos)) {
-            console.log("Error (PolyMesh.addFace): Trying to add mesh face that is not convex\n");
             for (let i = 0; i < vertsPos.length; i++) {
                 console.log(glMatrix.vecStr(vertsPos[i]) + ", ");
             }
-            return null;
+            throw "Error (PolyMesh.addFace): Trying to add mesh face that is not convex\n"
         }
         let face = new MeshFace(this.faces.length);
         face.startV = meshVerts[0];
@@ -662,14 +660,14 @@ function PolyMesh() {
                         nEdges = parseInt(fields[2]);                    
                     }
                     else if (nVertices == 0) {
-                        console.log("Error parsing OFF file: Not enough fields for nVertices, nFaces, nEdges");
+                        throw "Error parsing OFF file: Not enough fields for nVertices, nFaces, nEdges";
                     }
                 }
             }
             //Reading vertices
             else if (vertex < nVertices) {
                 if (fields.length < 3) {
-                    console.log("Error parsing OFF File: Too few fields on a vertex line");
+                    throw "Error parsing OFF File: Too few fields on a vertex line";
                     continue;
                 }
                 P = glMatrix.vec3.fromValues(parseFloat(fields[0]), parseFloat(fields[1]), parseFloat(fields[2]));
@@ -695,7 +693,7 @@ function PolyMesh() {
                 //Assume the vertices are specified in CCW order
                 let NVertices = parseInt(fields[0]);
                 if (fields.length < NVertices+1) {
-                    console.log("Error parsing OFF File: Not enough vertex indices specified for a face of length " + NVertices);
+                    throw "Error parsing OFF File: Not enough vertex indices specified for a face of length " + NVertices;
                 }
                 let verts = Array(NVertices);
                 for (let i = 0; i < NVertices; i++) {
@@ -1091,32 +1089,26 @@ function PolyMesh() {
             return;
         }
         if (!('gl' in glcanvas)) {
-            console.log("ERROR: Unable to find gl object in the gl canvas when rendering a mesh");
-            return;
+            throw "Unable to find gl object in the gl canvas when rendering a mesh";
         }
         let gl = glcanvas.gl;
         if (this.needsDisplayUpdate) {
             this.updateBuffers(gl);
         }
         if (this.vertexBuffer === null) {
-            console.log("ERROR: Trying to render when buffers have not been initialized");
-            return;
+            throw "Trying to render when buffers have not been initialized";
         }
         if (!('shaders' in glcanvas)) {
-            console.log("ERROR: Must initialize shaders and store them as a 'shaders' field in glcanvas before rendering a mesh")
-            return shaders;
+            throw "Must initialize shaders and store them as a 'shaders' field in glcanvas before rendering a mesh"
         }
         if (!('camera' in glcanvas)) {
-            console.log("ERROR: Expecting a camera object to be in the glcanvas when rendering a mesh");
-            return;
+            throw "Expecting a camera object to be in the glcanvas when rendering a mesh";
         }
         if (!('getMVMatrix' in glcanvas.camera)) {
-            console.log("ERROR: Expecting getMVMatrix() function in glcanvas.camera when rendering a mesh");
-            return;
+            throw "Expecting getMVMatrix() function in glcanvas.camera when rendering a mesh";
         }
         if (!('getPMatrix' in glcanvas.camera)) {
-            console.log("ERROR: Expecting getPMatrix() function in glcanvas.camera when rendering a mesh");
-            return;
+            throw "Expecting getPMatrix() function in glcanvas.camera when rendering a mesh";
         }
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
@@ -1131,7 +1123,7 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
         
         //Step 1: Figure out which shader to use
-        let sProg = glcanvas.shaders.flat;
+        let sProg = glcanvas.shaders.blinnPhong;
         if ('shaderToUse' in glcanvas) {
             sProg = glcanvas.shaderToUse;
         }
