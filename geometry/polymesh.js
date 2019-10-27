@@ -714,7 +714,7 @@ function PolyMesh() {
                 }
             }
         }
-        console.log("Succesfully loaded OFF File with " + this.vertices.length + " vertices and " + this.faces.length + " faces");
+        console.log("Succesfully loaded OFF File with " + this.vertices.length + " vertices, " + this.edges.length + " edges, and " + this.faces.length + " faces");
     }
     
     
