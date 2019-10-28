@@ -671,4 +671,46 @@ function PolyMesh(mesh) {
         //the display unless this flag is changed again externally
         mesh.needsDisplayUpdate = false;
     }
+
+    /**
+     * Save the mesh as an OFF file
+     * https://stackoverflow.com/questions/13405129/javascript-create-and-save-file
+     */
+    mesh.saveOffFile = function(filename) {
+        if (filename === undefined) {
+            filename = "mymesh.off";
+        }
+        let data = "OFF\n"+mesh.vertices.length+" "+mesh.faces.length+" 0\n";
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            mesh.vertices[i].ID = i;
+            let pos = mesh.vertices[i].pos;
+            for (let k = 0; k < 3; k++) {
+                data += pos[k] + " ";
+            }
+            data += "\n";
+        }
+        for (let i = 0; i < mesh.faces.length; i++) {
+            let vs = mesh.faces[i].getVertices();
+            data += vs.length + " ";
+            for (let k = 0; k < vs.length; k++) {
+                data += vs[k].ID + " ";
+            }
+            data += "\n";
+        }
+        var file = new Blob([data], {type: "txt"});
+        if (window.navigator.msSaveOrOpenBlob) // IE10+
+            window.navigator.msSaveOrOpenBlob(file, filename);
+        else { // Others
+            var a = document.createElement("a"),
+                    url = URL.createObjectURL(file);
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);  
+            }, 0); 
+        }
+    }
 }
