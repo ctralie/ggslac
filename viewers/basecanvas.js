@@ -119,7 +119,18 @@ function BaseCanvas(glcanvas, shadersrelpath) {
             //Rotate camera by mouse dragging
             this.camera.rotateLeftRight(-dX);
             this.camera.rotateUpDown(-dY);
-            requestAnimFrame(glcanvas.repaint);
+            let noKeysPressing = true;
+            for (let name in glcanvas.keysDown) {
+                if (Object.prototype.hasOwnProperty.call(glcanvas.keysDown, name)) {
+                    if (glcanvas.keysDown[name]) {
+                        noKeysPressing = false;
+                        break;
+                    }
+                }
+            }
+            if (noKeysPressing) {
+                requestAnimFrame(glcanvas.repaint);
+            }
         }
         return false;
     }
@@ -129,26 +140,53 @@ function BaseCanvas(glcanvas, shadersrelpath) {
         if (!glcanvas.active) {
             return;
         }
+        let newKeyDown = false;
         if (evt.keyCode == 87) { //W
-            glcanvas.movefb = 1;
+            if (!glcanvas.keysDown[87]) {
+                newKeyDown = true;
+                glcanvas.keysDown[87] = true;
+                glcanvas.movefb = 1;
+            }
         }
         else if (evt.keyCode == 83) { //S
-            glcanvas.movefb = -1;
+            if (!glcanvas.keysDown[83]) {
+                newKeyDown = true;
+                glcanvas.keysDown[83] = true;
+                glcanvas.movefb = -1;
+            }
         }
         else if (evt.keyCode == 65) { //A
-            glcanvas.movelr = -1;
+            if (!glcanvas.keysDown[65]) {
+                newKeyDown = true;
+                glcanvas.keysDown[65] = true;
+                glcanvas.movelr = -1;
+            }
         }
         else if (evt.keyCode == 68) { //D
-            glcanvas.movelr = 1;
+            if (!glcanvas.keysDown[68]) {
+                newKeyDown = true;
+                glcanvas.keysDown[68] = true;
+                glcanvas.movelr = 1;
+            }
         }
         else if (evt.keyCode == 67) { //C
-            glcanvas.moveud = -1;
+            if (!glcanvas.keysDown[67]) {
+                newKeyDown = true;
+                glcanvas.keysDown[67] = true;
+                glcanvas.moveud = -1;
+            }
         }
         else if (evt.keyCode == 69) { //E
-            glcanvas.moveud = 1;
+            if (!glcanvas.keysDown[69]) {
+                newKeyDown = true;
+                glcanvas.keysDown[69] = true;
+                glcanvas.moveud = 1;
+            }
         }
         glcanvas.lastTime = (new Date()).getTime();
-        requestAnimFrame(glcanvas.repaint);
+        if (newKeyDown) {
+            requestAnimFrame(glcanvas.repaint);
+        }
     }
     
     glcanvas.keyUp = function(evt) {
@@ -157,23 +195,28 @@ function BaseCanvas(glcanvas, shadersrelpath) {
         }
         if (evt.keyCode == 87) { //W
             glcanvas.movefb = 0;
+            glcanvas.keysDown[87] = false;
         }
         else if (evt.keyCode == 83) { //S
             glcanvas.movefb = 0;
+            glcanvas.keysDown[83] = false;
         }
         else if (evt.keyCode == 65) { //A
             glcanvas.movelr = 0;
+            glcanvas.keysDown[65] = false;
         }
         else if (evt.keyCode == 68) { //D
             glcanvas.movelr = 0;
+            glcanvas.keysDown[68] = false;
         }
         else if (evt.keyCode == 67) { //C
             glcanvas.moveud = 0;
+            glcanvas.keysDown[67] = false;
         }
         else if (evt.keyCode == 69) { //E
             glcanvas.moveud = 0;
+            glcanvas.keysDown[69] = false;
         }
-        requestAnimFrame(glcanvas.repaint);
     }    
     
     /////////////////////////////////////////////////////
@@ -214,6 +257,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.addEventListener('touchmove', glcanvas.clickerDragged);
 
     //Keyboard listener
+    glcanvas.keysDown = {87:false, 83:false, 65:false, 68:false, 67:false, 69:false};
     document.addEventListener('keydown', glcanvas.keyDown, true);
     document.addEventListener('keyup', glcanvas.keyUp, true);
 
