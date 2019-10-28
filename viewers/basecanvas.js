@@ -183,21 +183,21 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.pickingFramebuffer = null;
     glcanvas.pickingTexture = null;
     glcanvas.initPickingFramebuffer = function() {
-        this.pickingFramebuffer = this.gl.createFramebuffer();
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.pickingFramebuffer);
-        this.pickingFramebuffer.width = this.glcanvas.width;
-        this.pickingFramebuffer.height = this.glcanvas.height;
-        this.pickingTexture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.pickingTexture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.pickingFramebuffer.width, this.pickingFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        let renderbuffer = this.gl.createRenderbuffer();
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
-        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.pickingFramebuffer.width, this.pickingFramebuffer.height);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.pickingTexture, 0);
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        glcanvas.pickingFramebuffer = glcanvas.gl.createFramebuffer();
+        glcanvas.gl.bindFramebuffer(glcanvas.gl.FRAMEBUFFER, glcanvas.pickingFramebuffer);
+        glcanvas.pickingFramebuffer.width = glcanvas.width;
+        glcanvas.pickingFramebuffer.height = glcanvas.height;
+        glcanvas.pickingTexture = glcanvas.gl.createTexture();
+        glcanvas.gl.bindTexture(glcanvas.gl.TEXTURE_2D, glcanvas.pickingTexture);
+        glcanvas.gl.texImage2D(glcanvas.gl.TEXTURE_2D, 0, glcanvas.gl.RGBA, glcanvas.pickingFramebuffer.width, glcanvas.pickingFramebuffer.height, 0, glcanvas.gl.RGBA, glcanvas.gl.UNSIGNED_BYTE, null);
+        let renderbuffer = glcanvas.gl.createRenderbuffer();
+        glcanvas.gl.bindRenderbuffer(glcanvas.gl.RENDERBUFFER, renderbuffer);
+        glcanvas.gl.renderbufferStorage(glcanvas.gl.RENDERBUFFER, glcanvas.gl.DEPTH_COMPONENT16, glcanvas.pickingFramebuffer.width, glcanvas.pickingFramebuffer.height);
+        glcanvas.gl.framebufferTexture2D(glcanvas.gl.FRAMEBUFFER, glcanvas.gl.COLOR_ATTACHMENT0, glcanvas.gl.TEXTURE_2D, glcanvas.pickingTexture, 0);
+        glcanvas.gl.framebufferRenderbuffer(glcanvas.gl.FRAMEBUFFER, glcanvas.gl.DEPTH_ATTACHMENT, glcanvas.gl.RENDERBUFFER, renderbuffer);
+        glcanvas.gl.bindTexture(glcanvas.gl.TEXTURE_2D, null);
+        glcanvas.gl.bindRenderbuffer(glcanvas.gl.RENDERBUFFER, null);
+        glcanvas.gl.bindFramebuffer(glcanvas.gl.FRAMEBUFFER, null);
     }
     
     /////////////////////////////////////////////////////
@@ -231,7 +231,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     if (!(shadersrelpath === undefined)) {
         glcanvas.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
     }
-    //glcanvas.initPickingFramebuffer();
+    glcanvas.initPickingFramebuffer();
 
     glcanvas.camera = null;
     glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);

@@ -6,7 +6,7 @@
  */
 function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     BaseCanvas(glcanvas, shadersrelpath);
-    glcanvas.mesh = new PolyMesh();
+    glcanvas.mesh = new BasicMesh();
     glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height);
 
 

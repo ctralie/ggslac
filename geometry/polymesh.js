@@ -16,497 +16,147 @@ const DEFAULT_SHININESS = 50;
 const DEFAULT_REFRACTION_RATIO = 1;
 
 
-function MeshVertex(P, ID) {
-    this.pos = glMatrix.vec3.clone(P); //Type glMatrix.vec3
-    this.texCoords = [0.0, 0.0];
-    this.ID = ID;
-    this.edges = [];
-    this.component = -1;//Which connected component it's in
-    this.color = null;
-    
-    /**
-     * Return a list of vertices attached to this neighbor
-     * through an edge.
-     * WARNING: This function does a *slow* linear search through all edges
-     * 
-     * @returns {list of MeshVertex} A list of attached vertices
-     */
-    this.getVertexNeighbors = function() {
-        let ret = Array(this.edges.length);
-        for (let i = 0; i < this.edges.length; i++) {
-            ret[i] = this.edges[i].vertexAcross(this);
+
+
+/**
+ * Load in an .off file from an array of lines
+ * 
+ * @param {array} lines An array of strings for the lines in the file
+ * 
+ * @returns {object} {'vertices': Array of glMatrix.vec3 objects for vertex positions,
+ *                    'colors': An array of glMatrix.vec3 objects for per-vertex colors,
+ *                    'faces': An array of arrays of ints indexing into vertices, each
+ *                              of which represents a face}
+ */
+function loadOffFile(lines) {
+    vertices = [];
+    colors = [];
+    faces = [];
+    let nVertices = 0;
+    let nFaces = 0;
+    let face = 0; // Face index
+    let vertex = 0; // Vertex index
+    let divideColor = false;
+    for (let line = 0; line < lines.length; line++) {
+        //http://blog.tompawlak.org/split-string-into-tokens-javascript
+        let fields = lines[line].match(/\S+/g);
+        if (fields === null) { //Blank line
+            continue;
         }
-        return ret;
-    }
-    
-    /** 
-     * Return a set of all faces attached to this vertex
-     * WARNING: This function does a *slow* linear search through all edges
-     * 
-     * @returns {list of MeshFace} A list of attached faces
-     *
-     */
-    this.getAttachedFaces = function() {
-        let ret = new Set();
-        for (let i = 0; i < this.edges.length; i++) {
-            let f1 = this.edges[i].f1;
-            let f2 = this.edges[i].f2;
-            if (!(f1 === null) && !(ret.has(f1))) {
-                ret.add(f1);
+        if (fields[0].length == 0) {
+            continue;
+        }
+        if (fields[0][0] == "#" || fields[0][0] == "\0" || fields[0][0] == " ") {
+            continue;
+        }
+        //Reading header
+        if (nVertices == 0) {
+            if (fields[0] == "OFF" || fields[0] == "COFF") {
+                if (fields.length > 2) {
+                    nVertices = parseInt(fields[1]);
+                    nFaces = parseInt(fields[2]);
+                }
             }
-            if (!(f2 === null) && !(ret.has(f2))) {
-                ret.add(f2);
-            }
-        }
-        return Array.from(ret);
-    }
-    
-    /**
-     * Get an estimate of the vertex normal by taking a weighted
-     * average of normals of attached faces    
-     */
-    this.getNormal = function() {
-        faces = this.getAttachedFaces();
-        let normal = glMatrix.vec3.fromValues(0, 0, 0);
-        let w;
-        let N;
-        for (let i = 0; i < faces.length; i++) {
-            w = faces[i].getArea();
-            N = faces[i].getNormal();
-            glMatrix.vec3.scale(N, N, w);
-            glMatrix.vec3.add(normal, normal, N);
-        }
-        glMatrix.vec3.normalize(normal, normal);
-        //console.log(glMatrix.vec3.sqrLen(normal));
-        return normal;
-    }
-}
-
-function MeshFace(ID) {
-    this.ID = ID;
-    this.edges = []; //Store edges in CCW order
-    this.startV = 0; //Vertex object that starts it off
-    
-    /**
-     * Reverse the specification of the edges to make the normal
-     * point in the opposite direction
-     */
-    this.flipNormal = function() {
-        this.edges.reverse();
-        this.normal = null;
-    }
-    
-    /**
-     * Walk around the face edges and compile a list of all vertices
-     * 
-     * @returns {list of MeshVertex} Vertices on this face
-     */
-    this.getVertices = function() {
-        let ret = Array(this.edges.length);
-        let v = this.startV;
-        for (let i = 0; i < this.edges.length; i++) {
-            ret[i] = v;
-            v = this.edges[i].vertexAcross(v);
-        }
-        return ret;
-    }
-    
-    /**
-     * Return a cloned array of mesh vertices
-     * 
-     * @returns {list of MeshVertex} Cloned list
-     */
-    this.getVerticesPos = function() {
-        let ret = Array(this.edges.length);
-        let v = this.startV;
-        for (let i = 0; i < this.edges.length; i++) {
-            ret[i] = glMatrix.vec3.clone(v.pos);
-            v = this.edges[i].vertexAcross(v);
-        }
-        return ret;
-    }
-    
-    /**
-     * Return the area of this face
-     * 
-     * @returns {number} Area
-     */
-    this.getArea = function() {
-        let verts = this.getVertices();
-        for (var i = 0; i < verts.length; i++) {
-            verts[i] = verts[i].pos;
-        }
-        return GeomUtils.getPolygonArea(verts);
-    }
-
-    /**
-     * Return the normal of this face
-     * 
-     * @returns {glMatrix.vec3} Normal, or null if the points are all collinear
-     */
-    this.getNormal = function() {
-        return GeomUtils.getFaceNormal(this.getVerticesPos());
-    }
-    
-    /**
-     * Compute a plane spanned by this face
-     * 
-     * @returns {Plane3D} Plane spanned by this face
-     */
-    this.getPlane = function() {
-        return new Plane3D(this.startV.pos, this.getNormal());
-    }
-}
-
-function MeshEdge(v1, v2, ID) {
-    this.ID = ID;
-    this.v1 = v1;
-    this.v2 = v2;
-    this.f1 = null;
-    this.f2 = null;
-    
-    /**
-     * Return the vertex across the edge from this given
-     * vertex, or null if the given vertex is not part
-     * of the edge
-     * 
-     * @param {MeshVertex} Starting vertex
-     * 
-     * @returns {MeshVertex} Vertex across edge
-     */
-    this.vertexAcross = function(startV) {
-        if (startV === this.v1) {
-            return this.v2;
-        }
-        if (startV === this.v2) {
-            return this.v1;
-        }
-        console.log("Warning (vertexAcross): Vertex not member of edge\n");
-        return null;
-    }
-    
-    /**
-     * Attach a face to this edge
-     * 
-     * @param {MeshFace} face face to add
-     */
-    this.addFace = function(face) {
-        if (this.f1 === null) {
-            this.f1 = face;
-        }
-        else if (this.f2 === null) {
-            this.f2 = face;
-        }
-        else {
-            throw "Cannot add face to edge; already 2 there";
-        }
-    }
-    
-    /**
-     * Un-attach a face from this edge
-     * 
-     * @param {MeshFace} face face to remove
-     */
-    this.removeFace = function(face) {
-        if (this.f1 === face) {
-            self.f1 = null;
-        }
-        else if(self.f2 === face) {
-            self.f2 = null;
-        }
-        else {
-            throw "Cannot remove edge pointer to face that was never part of edge";
-        }
-    }
-    
-    /**
-     * Return the face across an edge from a given face, or null
-     * if the given face is not attached to this edge
-     * 
-     * @param {MeshFace} startF the given face
-     * 
-     * @returns {MeshFace} Face across
-     */
-    this.faceAcross = function(startF) {
-        if (startF === this.f1) {
-            return this.f2;
-        }
-        if (startF === this.f2) {
-            return this.f1;
-        }
-        console.log("Warning (faceAcross): Face not member of edge\n");
-        return null;
-    }
-    
-    /**
-     * Return the centroid of the edge
-     * 
-     * @returns {glMatrix.vec3} Centroid
-     */
-    this.getCenter = function() {
-        let ret = glMatrix.vec3.create();
-        glMatrix.vec3.lerp(ret, this.v1.pos, this.v2.pos, 0.5);
-        return ret;
-    }
-    
-    /**
-     * Return the number of faces that are attached to this edge
-     * 
-     * @returns {int} 0, 1, or 2 faces attached
-     */
-    this.numAttachedFaces = function() {
-        let ret = 0;
-        if (!(this.f1 === null)) {
-            ret++;
-        }
-        if (!(this.f2 === null)) {
-            ret++;
-        }
-        return ret;
-    }
-}
-
-
-//Main Polygon Mesh Class
-function PolyMesh() {
-    this.vertices = [];
-    this.edges = [];
-    this.faces = [];
-    this.components = [];
-    this.needsDisplayUpdate = true;
-    this.needsIndexDisplayUpdate = true;
-    this.vertexBuffer = null;
-    this.normalBuffer = null;
-    this.vnormal1Buffer = null;
-    this.vnormal2Buffer = null;
-    this.indexBuffer = null;
-    this.edgeIndexBuffer = null;
-    this.colorBuffer = null;
-    this.bbox = AABox3D(0, 0, 0, 0, 0, 0);
-    
-    /**
-     * A static function to return the face that two edges
-     * have in common, if they happen to meet at a face
-     * @param {MeshEdge} e1 First edge
-     * @param {MeshEdge} e2 Second edge
-     * 
-     * @returns {MeshFace} The face they have in common, or null
-     * if they don't have anything in common
-     */
-    this.getFaceInCommon = function(e1, e2) {
-        let e2faces = [];
-        if (!(e2.f1 === null)) {
-            e2faces.push(e2.f1);
-        }
-        if (!(e2.f2 === null)) {
-            e2faces.push(e2.f2);
-        }
-        if (e2faces.indexOf(e1.f1)) {
-            return e1.f1;
-        }
-        if (e2faces.indexOf(e1.f2)) {
-            return e1.f2;
-        }
-        return null;
-    }
-
-    /**
-     * A static function to return the vertex at which two edges intersect
-     * 
-     * @param {MeshEdge} e1 First edge
-     * @param {MeshEdge} e2 Second edge
-     * 
-     * @returns {MeshVertex} Vertex shared by the two
-     * edges, or null if they don't intersect
-     */
-    this.getVertexInCommon = function(e1, e2) {
-        let v = [e1.v1, e1.v2, e2.v1, e2.v2];
-        for (let i = 0; i < 4; i++) {
-            for(let j = i + 1; j < 4; j++) {
-                if (v[i] === v[j]) {
-                    return v[i];
+            else {
+                if (fields.length >= 3) {
+                    nVertices = parseInt(fields[0]);
+                    nFaces = parseInt(fields[1]);                 
+                }
+                else if (nVertices == 0) {
+                    throw "Error parsing OFF file: Not enough fields for nVertices, nFaces, nEdges";
                 }
             }
         }
-        return null;
-    }
-
-    /**
-     * A static function to find what edge two vertices have in common
-     * 
-     * @param {MeshVertex} v1 The first vertex
-     * @param {MeshVertex} v2 The second vertex
-     * 
-     * @returns {MeshEdge} The edge that they both have in common, or
-     * null if they don't share an edge
-     */
-    this.getEdgeInCommon = function(v1, v2) {
-        for (let i = 0; i < v1.edges.length; i++) {
-            if (v1.edges[i].vertexAcross(v1) === v2) {
-                return v1.edges[i];
+        //Reading vertices
+        else if (vertex < nVertices) {
+            if (fields.length < 3) {
+                throw "Error parsing OFF File: Too few fields on a vertex line";
             }
-        }
-        return null;
-    }
-
-    /////////////////////////////////////////////////////////////
-    ////                ADD/REMOVE METHODS                  /////
-    /////////////////////////////////////////////////////////////    
-    
-    /**
-     * Add a vertex to this mesh
-     * @param {glMatrix.vec3} P Position of vertex
-     * @param {list} color Color of vertex, or null if unspecified
-     * 
-     * @returns {MeshVertex} The new vertex object
-     */
-    this.addVertex = function(P, color) {
-        vertex = new MeshVertex(P, this.vertices.length);
-        vertex.color = (typeof color !== 'undefined' ? color : null);
-        this.vertices.push(vertex);
-        return vertex;
-    }
-    
-
-    /**
-     * Create an edge between v1 and v2 in the mesh
-     * This function assumes v1 and v2 are valid vertices in the mesh
-     * 
-     * @param {MeshVertex} v1
-     * @param {MeshVertex} v2
-     * 
-     * @returns {MeshEdge} The edge that was added
-    */
-    this.addEdge = function(v1, v2) {
-        edge = new MeshEdge(v1, v2, this.edges.length);
-        this.edges.push(edge);
-        v1.edges.push(edge);
-        v2.edges.push(edge);
-        return edge;
-    }
-    
-
-    /**
-     * Given a list of pointers to mesh vertices in CCW order
-     * create a face object from them and add it to the mesh.
-     * Also add any edges that have not been added to the mesh yet
-     * 
-     * @param {list of MeshVert} meshVerts List of vertices in CCW order
-     * 
-     * @returns {MeshFace} New face object that's created
-     */
-    this.addFace = function(meshVerts) {
-        let vertsPos = Array(meshVerts.length);
-        for (let i = 0; i < vertsPos.length; i++) {
-            vertsPos[i] = meshVerts[i].pos;
-        }
-        if (!arePlanar(vertsPos)) {
-            for (let i = 0; i < vertsPos.length; i++) {
-                console.log(glMatrix.vecStr(vertsPos[i]) + ", ");
+            P = glMatrix.vec3.fromValues(parseFloat(fields[0]), parseFloat(fields[1]), parseFloat(fields[2]));
+            let C = null;
+            if (fields.length >= 6) {
+                //There is color information
+                if (divideColor) {
+                    C = glMatrix.vec3.fromValues(parseFloat(fields[3])/255.0, parseFloat(fields[4])/255.0, parseFloat(fields[5])/255.0);
+                }
+                else {
+                    C = glMatrix.vec3.fromValues(parseFloat(fields[3]), parseFloat(fields[4]), parseFloat(fields[5]));
+                }
             }
-            throw "Error (PolyMesh.addFace): Trying to add mesh face that is not planar\n"
+            vertices.push(P);
+            colors.push(C);
+            vertex++;
         }
-        if (!are2DConvex(vertsPos)) {
-            for (let i = 0; i < vertsPos.length; i++) {
-                console.log(glMatrix.vecStr(vertsPos[i]) + ", ");
+        //Reading faces
+        else if (face < nFaces) {
+            if (fields.length == 0) {
+                continue;
             }
-            throw "Error (PolyMesh.addFace): Trying to add mesh face that is not convex\n"
-        }
-        let face = new MeshFace(this.faces.length);
-        face.startV = meshVerts[0];
-        for (let i = 0; i < meshVerts.length; i++) {
-            let v1 = meshVerts[i];
-            let v2 = meshVerts[(i+1)%meshVerts.length];
-            let edge = this.getEdgeInCommon(v1, v2);
-            if (edge === null) {
-                edge = this.addEdge(v1, v2);
+            //Assume the vertices are specified in CCW order
+            let NVertices = parseInt(fields[0]);
+            if (fields.length < NVertices+1) {
+                throw "Error parsing OFF File: Not enough vertex indices specified for a face of length " + NVertices;
             }
-            face.edges.push(edge);
-            edge.addFace(face, v1); //Add pointer to face from edge
-        }
-        this.faces.push(face);
-        return face;
-    }
-    
-    /**
-     * Remove a face from the list of faces and remove the pointers
-     * from all edges to this face
-     * 
-     * @param {MeshFace} face
-     */
-    this.removeFace = function(face) {
-        //Swap the face to remove with the last face (O(1) removal)
-        this.faces[face.ID] = this.faces[this.faces.length-1];
-        this.faces[face.ID].ID = face.ID //Update ID of swapped face
-        face.ID = -1;
-        this.faces.pop();
-        //Remove pointers from all of the face's edges
-        for (let i = 0; i < faces.edges.length; i++) {
-            edge.removeFace(faces[i]);
+            let verts = Array(NVertices);
+            for (let i = 0; i < NVertices; i++) {
+                verts[i] = parseInt(fields[i+1]);
+            }
+            faces.push(verts);
+            face++;
         }
     }
-    
+    return {'vertices':vertices, 'colors':colors, 'faces':faces};
+}
 
 
-    /**
-     * Remove an edge from the list of edges and remove 
-     * references to the edge from both of its vertices
-     * (NOTE: This function is not responsible for cleaning up
-     * faces that may have used this edge; that is up to the client)
-     * 
-     * @param {MeshEdge} edge Edge to remove
-     */
-    this.removeEdge = function(edge) {
-        //Swap the edge to remove with the last edge
-        this.edges[edge.ID] = this.edges[this.edges.length-1];
-        this.edges[edge.ID].ID = edge.ID; //Update ID of swapped face
-        edge.ID = -1;
-        this.edges.pop();
-        //Remove pointers from the two vertices that make up this edge
-        let i = edge.v1.edges.indexOf(edge);
-        edge.v1.edges[i] = edge.v1.edges[edge.v1.edges.length-1];
-        edge.v1.edges.pop();
-        i = edge.v2.edges.indexOf(edge);
-        edge.v2.edges[i] = edge.v2.edges[edge.v2.edges.length-1];
-        edge.v2.edges.pop();
+/**
+ * Load in the mesh from an array of lines
+ * @param {array} lines An array of strings for the lines in the file
+ * 
+ * @returns {object} {'vertices': Array of glMatrix.vec3 objects for vertex positions,
+ *                    'colors': An array of glMatrix.vec3 objects for per-vertex colors,
+ *                    'faces': An array of arrays of ints indexing into vertices, each
+ *                              of which represents a face}
+ */
+function loadFileFromLines(lines) {
+    if (lines.length == 0) {
+        return {'vertices':[], 'colors':[], 'faces':[]};
     }
-    
-    /**
-     * Remove a vertex from the list of vertices in this mesh
-     * NOTE: This function is not responsible for cleaning up any of
-     * the edges or faces that may have used this vertex
-     * 
-     * @param {MeshVertex} Vertex to remove
-     */
-    this.removeVertex = function(vertex) {
-        this.vertices[vertex.ID] = this.vertices[this.vertices.length-1];
-        this.vertices[vertex.ID].ID = vertex.ID;
-        vertex.ID = -1;
-        this.vertices.pop();
+    let fields = lines[0].match(/\S+/g);
+    if (fields[0].toUpperCase() == "OFF" || fields[0].toUpperCase() == "COFF") {
+        return loadOffFile(lines);
     }
-    
+    else {
+        throw "Unsupported file type " + fields[0] + " for loading mesh";
+    }
+}
 
-    /**
-     * Make a clone of this mesh in memory and return it
-     * 
-     * @returns {PolyMesh} A clone of this mesh
-     */
-    this.Clone = function() {
-        newMesh = new PolyMesh();
-        for (let i = 0; i < this.vertices.length; i++) {
-            newMesh.addVertex(this.vertices[i].pos, this.vertices[i].color);
-        }
-        for (let i = 0; i < this.faces.length; i++) {
-            vertices = this.faces[i].getVertices();
-            for (let j = 0; j < vertices.length; j++) {
-                vertices[j] = newMesh.vertices[vertices[j].ID];
-            }
-            newMesh.addFace(vertices);
-        }
-        return newMesh;
-    }
-    
-    
+
+/**
+ * A prototype class for mesh manipulation, which includes some important
+ * common functions for buffers and rendering, as well as declarations of
+ * functions that should be implemented by subclasses
+ * 
+ * @param {MeshType} mesh Mesh object for which to fill in 
+ *                        functions/instance variables
+ */
+function PolyMesh(mesh) {
+    // A list of vertices, each assumed to have a pos attribute
+    mesh.vertices = []; 
+    // A list of edges (implementation specific)
+    mesh.edges = [];
+    // A list of faces (implementation specific)
+    mesh.faces = [];
+    mesh.needsDisplayUpdate = true;
+    mesh.vertexBuffer = null;
+    mesh.normalBuffer = null;
+    mesh.vnormal1Buffer = null;
+    mesh.vnormal2Buffer = null;
+    mesh.indexBuffer = null;
+    mesh.edgeIndexBuffer = null;
+    mesh.colorBuffer = null;
+    mesh.bbox = AABox3D(0, 0, 0, 0, 0, 0);
+
     /////////////////////////////////////////////////////////////
     ////                 GEOMETRY METHODS                   /////
     /////////////////////////////////////////////////////////////
@@ -519,12 +169,11 @@ function PolyMesh() {
      * 
      * @param {glMatrix.mat4} Homogenous 4x4 matrix to apply
      */
-    this.Transform = function(matrix) {
-        this.vertices.forEach(function(v) {
+    mesh.Transform = function(matrix) {
+        mesh.vertices.forEach(function(v) {
             glMatrix.vec3.transformMat4(v.pos, v.pos, matrix);
         });
-        this.needsDisplayUpdate = true;
-        this.needsIndexDisplayUpdate = true;
+        mesh.needsDisplayUpdate = true;
     }
     
     /**
@@ -532,12 +181,11 @@ function PolyMesh() {
      * 
      * @param {glMatrix.vec3} Vector by which to translate
      */
-    this.Translate = function(dV) {
-        this.vertices.forEach(function(v) {
+    mesh.Translate = function(dV) {
+        mesh.vertices.forEach(function(v) {
             glMatrix.vec3.add(v.pos, v.pos, dV);
         });
-        this.needsDisplayUpdate = true;
-        this.needsIndexDisplayUpdate = true;
+        mesh.needsDisplayUpdate = true;
     }
     
     /**
@@ -546,14 +194,13 @@ function PolyMesh() {
      * @param {number} dy Scale factor by dy
      * @param {number} dz Scale by factor dz
      */
-    this.Scale = function(dx, dy, dz) {
-        this.vertices.forEach(function(v) {
+    mesh.Scale = function(dx, dy, dz) {
+        mesh.vertices.forEach(function(v) {
             v.pos[0] *= dx;
             v.pos[1] *= dy;
             v.pos[2] *= dz;
         });
-        this.needsDisplayUpdate = true;
-        this.needsIndexDisplayUpdate = true;
+        mesh.needsDisplayUpdate = true;
     }
     
     /**
@@ -561,13 +208,13 @@ function PolyMesh() {
      * 
      * @returns {AABox3D} The axis-aligned bounding box containing the mesh
      */
-    this.getBBox = function() {
-        if (this.vertices.length == 0) {
+    mesh.getBBox = function() {
+        if (mesh.vertices.length == 0) {
             return AABox3D(0, 0, 0, 0, 0, 0);
         }
-        let P0 = this.vertices[0].pos;
+        let P0 = mesh.vertices[0].pos;
         let bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
-        this.vertices.forEach(function(v) {
+        mesh.vertices.forEach(function(v) {
             bbox.addPoint(v.pos);
         });
         return bbox;
@@ -581,14 +228,14 @@ function PolyMesh() {
      * 
      * @returns {AABox3D} The axis-aligned bounding box containing the mesh
      */
-    this.getBBoxTransformed = function(tMatrix) {
-        if (this.vertices.length == 0) {
+    mesh.getBBoxTransformed = function(tMatrix) {
+        if (mesh.vertices.length == 0) {
             return AABox3D(0, 0, 0, 0, 0, 0);
         }
         let p = glMatrix.vec3.create();
-        glMatrix.vec3.transformMat3(p, this.vertices[0].pos, tMatrix);
+        glMatrix.vec3.transformMat3(p, mesh.vertices[0].pos, tMatrix);
         let bbox = new AABox3D(p[0], p[0], p[1], p[1], p[2], p[2]);
-        this.vertices.forEach(function(v) {
+        mesh.vertices.forEach(function(v) {
             glMatrix.vec3.transformMat3(p, v.pos, tMatrix);
             bbox.addPoint(p);
         });
@@ -598,211 +245,107 @@ function PolyMesh() {
     /////////////////////////////////////////////////////////////
     ////                INPUT/OUTPUT METHODS                /////
     /////////////////////////////////////////////////////////////
-    
-    /**
-     * Load in the mesh from an array of lines
-     */
-    this.loadFileFromLines = function(lines) {
-        if (lines.length == 0) {
-            return;
-        }
-        let fields = lines[0].match(/\S+/g);
-        if (fields[0].toUpperCase() == "OFF" || fields[0].toUpperCase() == "COFF") {
-            this.loadOffFile(lines);
-        }
-        else {
-            console.log("Unsupported file type " + fields[0] + " for loading mesh");
-        }
-        this.needsDisplayUpdate = true;
-        this.needsIndexDisplayUpdate = true;
-    }    
-    
-    /**
-     * Load in an .off file from an array of lines
-     */
-    this.loadOffFile = function(lines) {
-        this.vertices = [];
-        this.edges = [];
-        this.faces = [];
-        this.components = [];
-        let nVertices = 0;
-        let nFaces = 0;
-        let nEdges = 0;
-        let face = 0;
-        let vertex = 0;
-        let divideColor = false;
-        let fieldNum = 0;
-        for (let line = 0; line < lines.length; line++) {
-            //http://blog.tompawlak.org/split-string-into-tokens-javascript
-            let fields = lines[line].match(/\S+/g);
-            if (fields === null) { //Blank line
-                continue;
-            }
-            if (fields[0].length == 0) {
-                continue;
-            }
-            if (fields[0][0] == "#" || fields[0][0] == "\0" || fields[0][0] == " ") {
-                continue;
-            }
-            //Reading header
-            if (nVertices == 0) {
-                if (fields[0] == "OFF" || fields[0] == "COFF") {
-                    if (fields.length > 2) {
-                        nVertices = parseInt(fields[1]);
-                        nFaces = parseInt(fields[2]);
-                        nEdges = parseInt(fields[3]);
-                    }
-                }
-                else {
-                    if (fields.length >= 3) {
-                        nVertices = parseInt(fields[0]);
-                        nFaces = parseInt(fields[1]);
-                        nEdges = parseInt(fields[2]);                    
-                    }
-                    else if (nVertices == 0) {
-                        throw "Error parsing OFF file: Not enough fields for nVertices, nFaces, nEdges";
-                    }
-                }
-            }
-            //Reading vertices
-            else if (vertex < nVertices) {
-                if (fields.length < 3) {
-                    throw "Error parsing OFF File: Too few fields on a vertex line";
-                    continue;
-                }
-                P = glMatrix.vec3.fromValues(parseFloat(fields[0]), parseFloat(fields[1]), parseFloat(fields[2]));
-                color = null;
-                if (fields.length >= 6) {
-                    //There is color information
-                    let color;
-                    if (divideColor) {
-                        color = glMatrix.vec3.fromValues(parseFloat(fields[3])/255.0, parseFloat(fields[4])/255.0, parseFloat(fields[5])/255.0);
-                    }
-                    else {
-                        color = glMatrix.vec3.fromValues(parseFloat(fields[3]), parseFloat(fields[4]), parseFloat(fields[5]));
-                    }
-                }
-                this.addVertex(P, color);
-                vertex++;
-            }
-            //Reading faces
-            else if (face < nFaces) {
-                if (fields.length == 0) {
-                    continue;
-                }
-                //Assume the vertices are specified in CCW order
-                let NVertices = parseInt(fields[0]);
-                if (fields.length < NVertices+1) {
-                    throw "Error parsing OFF File: Not enough vertex indices specified for a face of length " + NVertices;
-                }
-                let verts = Array(NVertices);
-                for (let i = 0; i < NVertices; i++) {
-                    verts[i] = this.vertices[parseInt(fields[i+1])];
-                }
-                this.addFace(verts);
-                face++;
-            }
-        }
-        for (let i = 0; i < this.vertices.length; i++) {
-            if (!(this.vertices[i].color === null)) {
-                if (this.vertices[i].color[0] > 1) {
-                    //Rescale colors
-                    for (let k = 0; k < this.vertices.length; k++) {
-                        glMatrix.vec3.scale(this.vertices[i].color, this.vertices[i].color, 1.0/255.0);
-                    }
-                    break;
-                }
-            }
-        }
-        console.log("Succesfully loaded OFF File with " + this.vertices.length + " vertices, " + this.edges.length + " edges, and " + this.faces.length + " faces");
+    mesh.loadFileFromLines = function() {
+        throw "Calling loadFileFromLines() from base class, which is not implemented";
     }
-    
     
     /////////////////////////////////////////////////////////////
     ////                     RENDERING                      /////
     /////////////////////////////////////////////////////////////    
+
+    mesh.getTriangleIndices = function() {
+        throw "Calling getTriangleIndices() from base class, which is not implemented";
+    }
+
+    mesh.getEdgeIndices = function() {
+        throw "Calling getEdgeIndices() from base class, which is not implemented";
+    }
     
     /**
      * Copy over vertex and triangle information to the GPU via
      * a WebGL handle
      * @param {WebGL handle} gl A handle to WebGL
      */
-    this.updateBuffers = function(gl) {
+    mesh.updateBuffers = function(gl) {
         //Check to see if buffers need to be initialized
-        if (this.vertexBuffer === null) {
-            this.vertexBuffer = gl.createBuffer();
+        if (mesh.vertexBuffer === null) {
+            mesh.vertexBuffer = gl.createBuffer();
         }
-        if (this.normalBuffer === null) {
-            this.normalBuffer = gl.createBuffer();
+        if (mesh.normalBuffer === null) {
+            mesh.normalBuffer = gl.createBuffer();
         }
-        if (this.vnormal1Buffer === null) {
-            this.vnormal1Buffer = gl.createBuffer();
+        if (mesh.vnormal1Buffer === null) {
+            mesh.vnormal1Buffer = gl.createBuffer();
         }
-        if (this.vnormal2Buffer === null) {
-            this.vnormal2Buffer = gl.createBuffer();
+        if (mesh.vnormal2Buffer === null) {
+            mesh.vnormal2Buffer = gl.createBuffer();
         }
-        if (this.indexBuffer === null) {
-            this.indexBuffer = gl.createBuffer();
+        if (mesh.indexBuffer === null) {
+            mesh.indexBuffer = gl.createBuffer();
         }
-        if (this.edgeIndexBuffer === null) {
-            this.edgeIndexBuffer = gl.createBuffer();
+        if (mesh.edgeIndexBuffer === null) {
+            mesh.edgeIndexBuffer = gl.createBuffer();
         }
-        if (this.colorBuffer === null) {
-            this.colorBuffer = gl.createBuffer();
+        if (mesh.colorBuffer === null) {
+            mesh.colorBuffer = gl.createBuffer();
         }
-        //Vertex Buffer
-        this.bbox = new AABox3D(0, 0, 0, 0, 0, 0);
-        if (this.vertices.length > 0) {
-            P0 = this.vertices[0].pos;
-            this.bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
+        // Update vertex IDs
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            mesh.vertices[i].ID = i;
         }
-        let V = new Float32Array(this.vertices.length*3);
-        for (let i = 0; i < this.vertices.length; i++) {
-            V[i*3] = this.vertices[i].pos[0];
-            V[i*3+1] = this.vertices[i].pos[1];
-            V[i*3+2] = this.vertices[i].pos[2];
-            this.bbox.addPoint(this.vertices[i].pos);
+        // Vertex Buffer
+        mesh.bbox = new AABox3D(0, 0, 0, 0, 0, 0);
+        if (mesh.vertices.length > 0) {
+            P0 = mesh.vertices[0].pos;
+            mesh.bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+        let V = new Float32Array(mesh.vertices.length*3);
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            V[i*3] = mesh.vertices[i].pos[0];
+            V[i*3+1] = mesh.vertices[i].pos[1];
+            V[i*3+2] = mesh.vertices[i].pos[2];
+            mesh.bbox.addPoint(mesh.vertices[i].pos);
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, V, gl.STATIC_DRAW);
-        this.vertexBuffer.itemSize = 3;
-        this.vertexBuffer.numItems = this.vertices.length;
+        mesh.vertexBuffer.itemSize = 3;
+        mesh.vertexBuffer.numItems = mesh.vertices.length;
         
         //Normal buffers
-        let N = new Float32Array(this.vertices.length*3);
-        let N1 = new Float32Array(this.vertices.length*6);
-        let N2 = new Float32Array(this.vertices.length*6);
-        for (let i = 0; i < this.vertices.length; i++) {
-            let n = this.vertices[i].getNormal();
+        let N = new Float32Array(mesh.vertices.length*3);
+        let N1 = new Float32Array(mesh.vertices.length*6);
+        let N2 = new Float32Array(mesh.vertices.length*6);
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            let n = mesh.vertices[i].getNormal();
             for (let k = 0; k < 3; k++) {
                 N[i*3+k] = n[k];
-                N1[i*6+k] = this.vertices[i].pos[k];
-                N1[i*6+3+k] = this.vertices[i].pos[k];
+                N1[i*6+k] = mesh.vertices[i].pos[k];
+                N1[i*6+3+k] = mesh.vertices[i].pos[k];
                 N2[i*6+k] = 0;
                 N2[i*6+3+k] = n[k];
             }
             
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, N, gl.STATIC_DRAW);
-        this.normalBuffer.itemSize = 3;
-        this.normalBuffer.numItems = this.vertices.length;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
+        mesh.normalBuffer.itemSize = 3;
+        mesh.normalBuffer.numItems = mesh.vertices.length;
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vnormal1Buffer);
         gl.bufferData(gl.ARRAY_BUFFER, N1, gl.STATIC_DRAW);
-        this.vnormal1Buffer.itemSize = 3;
-        this.vnormal1Buffer.numItems = this.vertices.length*2;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal2Buffer);
+        mesh.vnormal1Buffer.itemSize = 3;
+        mesh.vnormal1Buffer.numItems = mesh.vertices.length*2;
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vnormal2Buffer);
         gl.bufferData(gl.ARRAY_BUFFER, N2, gl.STATIC_DRAW);
-        this.vnormal2Buffer.itemSize = 3;
-        this.vnormal2Buffer.numItems = this.vertices.length*2;
+        mesh.vnormal2Buffer.itemSize = 3;
+        mesh.vnormal2Buffer.numItems = mesh.vertices.length*2;
         
         //Color buffer
-        let C = new Float32Array(this.vertices.length*3);
-        for (let i = 0; i < this.vertices.length; i++) {
-            if (!(this.vertices[i].color === null)) {
-                C[i*3] = this.vertices[i].color[0];
-                C[i*3+1] = this.vertices[i].color[1];
-                C[i*3+2] = this.vertices[i].color[2];
+        let C = new Float32Array(mesh.vertices.length*3);
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            if (!(mesh.vertices[i].color === null)) {
+                C[i*3] = mesh.vertices[i].color[0];
+                C[i*3+1] = mesh.vertices[i].color[1];
+                C[i*3+2] = mesh.vertices[i].color[2];
             }
             else {
                 //Default color is greenish gray
@@ -811,47 +354,25 @@ function PolyMesh() {
                 C[i*3+2] = 0.5;
             }    
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.colorBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, C, gl.STATIC_DRAW);
-        this.colorBuffer.itemSize = 3;
-        this.colorBuffer.numItems = this.vertices.length;
+        mesh.colorBuffer.itemSize = 3;
+        mesh.colorBuffer.numItems = mesh.vertices.length;
         
         //Index Buffer
         //First figure out how many triangles need to be used
-        let NumTris = 0;
-        for (let i = 0; i < this.faces.length; i++) {
-            NumTris += this.faces[i].edges.length - 2;
-        }
-        let I = new Uint16Array(NumTris*3);
-        let i = 0;
-        let faceIdx = 0;
-        //Now copy over the triangle indices
-        while (i < NumTris) {
-            let verts = this.faces[faceIdx].getVertices();
-            for (let t = 0; t < verts.length - 2; t++) {
-                I[i*3] = verts[0].ID;
-                I[i*3+1] = verts[t+1].ID;
-                I[i*3+2] = verts[t+2].ID;
-                i++;
-            }
-            faceIdx++;
-        }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, I, gl.STATIC_DRAW);
-        this.indexBuffer.itemSize = 1;
-        this.indexBuffer.numItems = 3*NumTris;
+        let ITris = mesh.getTriangleIndices();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ITris, gl.STATIC_DRAW);
+        mesh.indexBuffer.itemSize = 1;
+        mesh.indexBuffer.numItems = ITris.length;
 
         //Edge index buffer
-        let NumEdges = this.edges.length;
-        let IEdges = new Uint16Array(NumEdges*3);
-        for (let i = 0; i < NumEdges; i++) {
-            IEdges[i*2] = this.edges[i].v1.ID;
-            IEdges[i*2+1] = this.edges[i].v2.ID;
-        }
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
+        let IEdges = mesh.getEdgeIndices();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.edgeIndexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, IEdges, gl.STATIC_DRAW);
-        this.edgeIndexBuffer.itemSize = 1;
-        this.edgeIndexBuffer.numItems = 2*NumEdges;
+        mesh.edgeIndexBuffer.itemSize = 1;
+        mesh.edgeIndexBuffer.numItems = IEdges.length;
     }
     
     /** Bind all buffers according to what the shader accepts.
@@ -865,21 +386,21 @@ function PolyMesh() {
      * @param {glMatrix.mat4} tMatrix Transformation to apply to the mesh before viewing
      * 
      * */
-    this.sendBuffersToGPU = function(glcanvas, sProg, pMatrix, mvMatrix, tMatrix) {
+    mesh.sendBuffersToGPU = function(glcanvas, sProg, pMatrix, mvMatrix, tMatrix) {
         let gl = glcanvas.gl;
         if ('vPosAttrib' in sProg) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
+            gl.vertexAttribPointer(sProg.vPosAttrib, mesh.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
         //Normal buffer (only relevant if lighting)
         if ('vNormalAttrib' in sProg) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-            gl.vertexAttribPointer(sProg.vNormalAttrib, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+            gl.vertexAttribPointer(sProg.vNormalAttrib, mesh.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
         // Color buffers for per-vertex colors
         if ('vColorAttrib' in sProg) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-            gl.vertexAttribPointer(sProg.vColorAttrib, this.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.colorBuffer);
+            gl.vertexAttribPointer(sProg.vColorAttrib, mesh.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
         }
 
         // Material properties
@@ -978,7 +499,7 @@ function PolyMesh() {
      *                                to this mesh before viewing
      * @param {array} color An array of RGB, or blue by default
      */
-    this.drawEdges = function(glcanvas, tMatrix, color) {
+    mesh.drawEdges = function(glcanvas, tMatrix, color) {
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
@@ -991,10 +512,10 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        mesh.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
-        gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.edgeIndexBuffer);
+        gl.drawElements(gl.LINES, mesh.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
 
     /**
@@ -1005,8 +526,8 @@ function PolyMesh() {
      *                                to this mesh before viewing
      * @param {array} color An array of RGB, or red by default
      */
-    this.drawPoints = function(glcanvas, tMatrix, color) {
-        if (this.drawer === null) {
+    mesh.drawPoints = function(glcanvas, tMatrix, color) {
+        if (mesh.drawer === null) {
             console.log("Warning: Trying to draw mesh points, but simple drawer is null");
             return;
         }
@@ -1019,9 +540,9 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        mesh.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
-        gl.drawArrays(gl.POINTS, 0, this.vertexBuffer.numItems);
+        gl.drawArrays(gl.POINTS, 0, mesh.vertexBuffer.numItems);
     }
 
 
@@ -1034,7 +555,7 @@ function PolyMesh() {
      * @param {float} scale The length of the normal, as a proportion of 
      *                      the bounding box diagonal
      */
-    this.drawNormals = function(glcanvas, tMatrix, color, scale) {
+    mesh.drawNormals = function(glcanvas, tMatrix, color, scale) {
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
@@ -1042,7 +563,7 @@ function PolyMesh() {
             color = glMatrix.vec3.fromValues(0.0, 1.0, 1.0);
         }
         if (scale === undefined) {
-            scale = 0.05*this.bbox.getDiagLength();
+            scale = 0.05*mesh.bbox.getDiagLength();
         }
         let gl = glcanvas.gl;
         let sProg = glcanvas.shaders.normalShader;
@@ -1050,15 +571,15 @@ function PolyMesh() {
         let pMatrix = glcanvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        mesh.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
-        gl.vertexAttribPointer(sProg.n1PosAttrib, this.vnormal1Buffer.itemSize, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal2Buffer);
-        gl.vertexAttribPointer(sProg.n2PosAttrib, this.vnormal2Buffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vnormal1Buffer);
+        gl.vertexAttribPointer(sProg.n1PosAttrib, mesh.vnormal1Buffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vnormal2Buffer);
+        gl.vertexAttribPointer(sProg.n2PosAttrib, mesh.vnormal2Buffer.itemSize, gl.FLOAT, false, 0, 0);
         gl.uniform1f(sProg.uRUniform, scale);
 
-        gl.drawArrays(gl.LINES, 0, this.vnormal1Buffer.numItems);
+        gl.drawArrays(gl.LINES, 0, mesh.vnormal1Buffer.numItems);
     }
 
 
@@ -1084,18 +605,18 @@ function PolyMesh() {
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply to this mesh before viewing.
      *                       If unspecified, it's assumed to be the identity
      */
-    this.render = function(glcanvas, tMatrix) {
-        if (this.vertices.length == 0) {
+    mesh.render = function(glcanvas, tMatrix) {
+        if (mesh.vertices.length == 0) {
             return;
         }
         if (!('gl' in glcanvas)) {
             throw "Unable to find gl object in the gl canvas when rendering a mesh";
         }
         let gl = glcanvas.gl;
-        if (this.needsDisplayUpdate) {
-            this.updateBuffers(gl);
+        if (mesh.needsDisplayUpdate) {
+            mesh.updateBuffers(gl);
         }
-        if (this.vertexBuffer === null) {
+        if (mesh.vertexBuffer === null) {
             throw "Trying to render when buffers have not been initialized";
         }
         if (!('shaders' in glcanvas)) {
@@ -1130,179 +651,24 @@ function PolyMesh() {
         gl.useProgram(sProg);
         
         // Step 2: Bind all buffers
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        mesh.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
         
         // Step 3: Render the mesh
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         
         //Step 4: Draw lines and points for vertices, edges, and normals if requested
         if (glcanvas.drawNormals) {
-            this.drawNormals(glcanvas, tMatrix);
+            mesh.drawNormals(glcanvas, tMatrix);
         }
         if (glcanvas.drawEdges) {
-            this.drawEdges(glcanvas, tMatrix);
+            mesh.drawEdges(glcanvas, tMatrix);
         }
         if (glcanvas.drawPoints) {
-            this.drawPoints(glcanvas, tMatrix);
+            mesh.drawPoints(glcanvas, tMatrix);
         }
         //By the time rendering is done, there should not be a need to update
         //the display unless this flag is changed again externally
-        this.needsDisplayUpdate = false;
+        mesh.needsDisplayUpdate = false;
     }
-}
-
-
-/////////////////////////////////////////////////////////////
-////                  SPECIAL MESHES                    /////
-/////////////////////////////////////////////////////////////
-
-/**
- * Return a mesh with a unit icosahedron
- */
-function getIcosahedronMesh() {
-    let mesh = new PolyMesh();
-    let phi = (1+Math.sqrt(5))/2;
-    //Use the unit cube to help construct the icosahedron
-    //Front cube face vertices
-    let FL = mesh.addVertex(glMatrix.vec3.fromValues(-0.5, 0, phi/2));
-    let FR = mesh.addVertex(glMatrix.vec3.fromValues(0.5, 0, phi/2));
-    //Back cube face vertices
-    BL = mesh.addVertex(glMatrix.vec3.fromValues(-0.5, 0, -phi/2));
-    BR = mesh.addVertex(glMatrix.vec3.fromValues(0.5, 0, -phi/2));
-    //Top cube face vertices
-    TF = mesh.addVertex(glMatrix.vec3.fromValues(0, phi/2, 0.5));
-    TB = mesh.addVertex(glMatrix.vec3.fromValues(0, phi/2, -0.5));
-    //Bottom cube face vertices
-    BF = mesh.addVertex(glMatrix.vec3.fromValues(0, -phi/2, 0.5));
-    BB = mesh.addVertex(glMatrix.vec3.fromValues(0, -phi/2, -0.5));
-    //Left cube face vertices
-    LT = mesh.addVertex(glMatrix.vec3.fromValues(-phi/2, 0.5, 0));
-    LB = mesh.addVertex(glMatrix.vec3.fromValues(-phi/2, -0.5, 0));
-    //Right cube face vertices
-    RT = mesh.addVertex(glMatrix.vec3.fromValues(phi/2, 0.5, 0));
-    RB = mesh.addVertex(glMatrix.vec3.fromValues(phi/2, -0.5, 0));
-    
-    //Add the icosahedron faces associated with each cube face
-    //Front cube face faces
-    mesh.addFace([TF, FL, FR]);
-    mesh.addFace([BF, FR, FL]);
-    //Back cube face faces
-    mesh.addFace([TB, BR, BL]);
-    mesh.addFace([BB, BL, BR]);
-    //Top cube face faces
-    mesh.addFace([TB, TF, RT]);
-    mesh.addFace([TF, TB, LT]);
-    //Bottom cube face faces
-    mesh.addFace([BF, BB, RB]);
-    mesh.addFace([BB, BF, LB]);
-    //Left cube face faces
-    mesh.addFace([LB, LT, BL]);
-    mesh.addFace([LT, LB, FL]);
-    //Right cube face faces
-    mesh.addFace([RT, RB, BR]);
-    mesh.addFace([RB, RT, FR]);
-    
-    //Add the icosahedron faces associated with each cube vertex
-    //Front of cube
-    mesh.addFace([FL, TF, LT]); //Top left corner
-    mesh.addFace([BF, LB, FL]); //Bottom left corner
-    mesh.addFace([FR, RT, TF]); //Top right corner
-    mesh.addFace([BF, RB, FR]); //Bottom right corner
-    //Back of cube
-    mesh.addFace([LT, TB, BL]); //Top left corner
-    mesh.addFace([BL, LB, BB]); //Bottom left corner
-    mesh.addFace([RT, BR, TB]); //Top right corner
-    mesh.addFace([BB, RB, BR]); //Bottom right corner
-    return mesh;
-}
-
-/**
- * Return a mesh representing a vertically aligned cylinder
- * @param {glMatrix.vec3} center Vector at the center of the cylinder
- * @param {number} R Radius of the cylinder 
- * @param {number} H Height of the cylinder
- * @param {int} res Resolution around the circle of the cylinder
- * @param {array} color Color of the cylinder
- */
-function getCylinderMesh(center, R, H, res, color) {
-    cylinder = new PolyMesh();
-    let vertexArr = [];
-    let vals = [0, 0, 0];
-    if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
-    }
-    // Make the main cylinder part
-    for (let i = 0; i < res; i++) {
-        vertexArr.push([]);
-        for (let j = 0; j < 2; j++) {
-            vals[0] = R*Math.cos(i*2*3.141/res);
-            vals[2] = R*Math.sin(i*2*3.141/res);
-            vals[1] = H/2*(2*j-1)
-            let v = glMatrix.vec3.fromValues(vals[0] + center[0], vals[1] + center[1], vals[2] + center[2]);
-            vertexArr[i].push(cylinder.addVertex(v, color));
-        }
-    }
-    let topc = glMatrix.vec3.fromValues(center[0], center[1]+H/2, center[1]);
-    topc = cylinder.addVertex(topc, color);
-    let botc = glMatrix.vec3.fromValues(center[0], center[1]-H/2, center[1]);
-    botc = cylinder.addVertex(botc, color);
-    // Make the faces for the open cylinder
-    let i2;
-    for (let i1 = 0; i1 < res; i1++) {
-        i2 = (i1+1) % res;
-        cylinder.addFace([vertexArr[i2][1], vertexArr[i2][0], vertexArr[i1][0]]);
-        cylinder.addFace([vertexArr[i1][1], vertexArr[i2][1], vertexArr[i1][0]]);
-    }
-    // Make the faces for the top and bottom
-    for (let i1 = 0; i1 < res; i1++) {
-        i2 = (i1+1) % res;
-        // Top
-        cylinder.addFace([topc, vertexArr[i2][1], vertexArr[i1][1]]);
-        // Bottom
-        cylinder.addFace([vertexArr[i2][0], vertexArr[i1][0], botc]);
-    }
-    return cylinder;
-}
-
-
-/**
- * Return a mesh representing a vertically aligned cone
- * @param {glMatrix.vec3} center Vector at the center of the cylinder
- * @param {number} R Radius of the cone
- * @param {number} H Height of the cone
- * @param {int} res Resolution around the circle of the cone
- * @param {array} color Color of the cylinder
- */
-function getConeMesh(center, R, H, res, color) {
-    cone = new PolyMesh();
-    let vertexArr = [];
-    let vals = [0, 0, 0];
-    if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
-    }
-    // Make the base of the cone
-    for (let i = 0; i < res; i++) {
-        vals[0] = R*Math.cos(i*2*3.141/res);
-        vals[2] = R*Math.sin(i*2*3.141/res);
-        vals[1] = 0
-        let v = glMatrix.vec3.fromValues(vals[0] + center[0], vals[1] + center[1], vals[2] + center[2]);
-        vertexArr.push(cone.addVertex(v, color));
-    }
-    let topc = glMatrix.vec3.fromValues(center[0], center[1]+H, center[1]);
-    topc = cone.addVertex(topc, color);
-    let botc = glMatrix.vec3.fromValues(center[0], center[1], center[1]);
-    botc = cone.addVertex(botc, color);
-    // Make the faces for the open cone
-    let i2;
-    for (let i1 = 0; i1 < res; i1++) {
-        i2 = (i1+1) % res;
-        cone.addFace([topc, vertexArr[i2], vertexArr[i1]]);
-    }
-    // Make the faces for the bottom
-    for (let i1 = 0; i1 < res; i1++) {
-        i2 = (i1+1) % res;
-        cone.addFace([vertexArr[i1], vertexArr[i2], botc]);
-    }
-    return cone;
 }

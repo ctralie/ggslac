@@ -68,12 +68,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     console.log("ERROR: filename not specified for mesh: " + shape);
                     continue;
                 }
-                shape.mesh = new PolyMesh();
+                shape.mesh = new BasicMesh();
                 let lines = BlockLoader.loadTxt(shape.filename);
                 shape.mesh.loadFileFromLines(lines.split("\n"));
             }
             else if (shape.type == "polygon") {
-                shape.mesh = new PolyMesh();
+                shape.mesh = new BasicMesh();
                 shape.type = "mesh";
                 let face = [];
                 for (i = 0; i < shape.vertices.length; i++) {
@@ -84,7 +84,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
             else if (shape.type == "sphere") {
                 if (!('sphere' in glcanvas.specialMeshes)) {
-                    let sphereMesh = new PolyMesh();
+                    let sphereMesh = new BasicMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "sphere1026.off")
                     sphereMesh.loadFileFromLines(lines.split("\n"));
                     glcanvas.specialMeshes.sphere = sphereMesh;
@@ -115,7 +115,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             }
             else if (shape.type == "box") {
                 if (!('box' in glcanvas.specialMeshes)) {
-                    let boxMesh = new PolyMesh();
+                    let boxMesh = new BasicMesh();
                     let lines = BlockLoader.loadTxt(meshesrelpath + "box2402.off");
                     boxMesh.loadFileFromLines(lines.split("\n"));
                     glcanvas.specialMeshes.box = boxMesh;
