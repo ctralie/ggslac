@@ -528,49 +528,49 @@ function BasicMesh() {
     this.consistentlyOrientFacesRec = function(face) {
         face.oriented = true; // By the time we get to
         // this face, it has been oriented properly
-        vs1 = face.getVertices();
+        let vs1 = face.getVertices();
         for (let i = 0; i < face.edges.length; i++) {
             let edge = face.edges[i];
             let otherFace = edge.faceAcross(face);
-            if (!(otherFace === null)) {
-                if (!(otherFace.oriented)) {
-                    // Vertices of edge should be in opposite order
-                    // between the two faces
-                    vs2 = otherFace.getVertices();
-                    v1 = edge.v1;
-                    v2 = edge.v2;
-                    let orient1 = false;
-                    let orient2 = false;
-                    for (let k = 0; k < vs1.length; k++) {
-                        if (v1 == vs1[k] && v2 == vs1[(k+1)%vs1.length]) {
-                            orient1 = true;
-                            break;
-                        }
-                        else if (v2 == vs1[k] && v1 == vs1[(k+1)%vs1.length]) {
-                            orient2 = true;
-                            break;
-                        }
-                    }
-                    for (let k = 0; k < vs2.length; k++) {
-                        if (v1 == vs2[k] && v2 == vs2[(k+1)%vs2.length]) {
-                            orient1 = true;
-                            break;
-                        }
-                        else if (v2 == vs2[k] && v1 == vs2[(k+1)%vs2.length]) {
-                            orient2 = true;
-                            break;
-                        }
-                    }
-                    if (orient1 == false || orient2 == false) {
-                        if (orient1 == false && orient2 == false) {
-                            throw "Could not find an orientation in either face " + face.ID + ", " + otherFace.ID;
-                        }
-                        // Need to flip orientation of otherFace
-                        otherFace.edges.reverse();
-                    }
-                    this.consistentlyOrientFacesRec(otherFace);
+            if (otherFace === null) {
+                continue;
+            }
+            if (otherFace.oriented) {
+                continue;
+            }
+            let vs2 = otherFace.getVertices();
+
+            // Vertices of edge should be in opposite order
+            // between the two faces
+            let orient1 = false;
+            let orient2 = false;
+            for (let k = 0; k < vs1.length; k++) {
+                if (edge.v1 == vs1[k] && edge.v2 == vs1[(k+1)%vs1.length]) {
+                    orient1 = true;
+                    break;
+                }
+                else if (edge.v2 == vs1[k] && edge.v1 == vs1[(k+1)%vs1.length]) {
+                    orient2 = true;
+                    break;
                 }
             }
+            for (let k = 0; k < vs2.length; k++) {
+                if (edge.v1 == vs2[k] && edge.v2 == vs2[(k+1)%vs2.length]) {
+                    orient1 = true;
+                    break;
+                }
+                else if (edge.v2 == vs2[k] && edge.v1 == vs2[(k+1)%vs2.length]) {
+                    orient2 = true;
+                    break;
+                }
+            }
+            if (orient1 == false || orient2 == false) {
+                if (orient1 == false && orient2 == false) {
+                    throw "Could not find an orientation in either face " + face.ID + ", " + otherFace.ID;
+                }
+                otherFace.edges.reverse();
+            }
+            this.consistentlyOrientFacesRec(otherFace);
         }
     }
 
@@ -581,14 +581,26 @@ function BasicMesh() {
      * throughout each connected component
      */
     this.consistentlyOrientFaces = function() {
-        this.faces.forEach(function(face){
-            face.oriented = false;
-        });
         for (let i = 0; i < this.faces.length; i++) {
-            if (!(this.faces.oriented)) {
+            this.faces[i].oriented = false;
+        }
+        for (let i = 0; i < this.faces.length; i++) {
+            if (!(this.faces[i].oriented)) {
                 this.consistentlyOrientFacesRec(this.faces[i]);
             }
         }
+        this.consistentlyOrientFacesRec(this.faces[0]);
+        this.needsDisplayUpdate = true;
+    }
+
+    /**
+     * Reverse the orientation of all faces
+     */
+    this.reverseOrientation = function() {
+        this.faces.forEach(function(face) {
+            face.flipOrientation();
+        });
+        this.needsDisplayUpdate = true;
     }
 
     /**
@@ -616,6 +628,9 @@ function BasicMesh() {
     /////////////////////////////////////////////////////////////
     this.loadFileFromLines = function(lines) {
         let res = loadFileFromLines(lines);
+        this.vertices.length = 0;
+        this.edges.length = 0;
+        this.faces.length = 0;
         for (let i = 0; i < res['vertices'].length; i++) {
             this.addVertex(res['vertices'][i], res['colors'][i]);
         }
@@ -626,7 +641,12 @@ function BasicMesh() {
             }
             this.addFace(face);
         }
+        for (let i = 0; i < this.faces.length; i++) {
+            this.faces[i].ID = i;
+        }
         //this.consistentlyOrientFaces();
+
+        console.log("Loaded simple mesh with " + this.vertices.length + " vertices, " + this.edges.length + " edges, and " + this.faces.length + " faces");
         this.needsDisplayUpdate = true;
     }
 }
