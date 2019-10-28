@@ -824,7 +824,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
         function(s) {
             let evt = meshOpts.add(glcanvas, s);
-            evt.onChange(function(value) {
+            evt.onChange(function() {
                 glcanvas.updateMeshDrawings();
                 requestAnimFrame(glcanvas.repaint);
             });

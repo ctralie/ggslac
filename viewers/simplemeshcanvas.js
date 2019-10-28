@@ -20,8 +20,6 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
         //NOTE: glcanvas has all options we need except
         //for "shaderToUse"
         glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
-        glcanvas.drawNormals = false;
-        glcanvas.drawEdges = false;
         glcanvas.light1 = {pos:glcanvas.camera.pos, color:[1, 1, 1]};
         glcanvas.mesh.render(glcanvas);
     }
@@ -29,6 +27,22 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
     glcanvas.centerCamera = function() {
         this.camera.centerOnMesh(this.mesh);
     }
+
+    glcanvas.gui = new dat.GUI();
+    const gui = glcanvas.gui;
+    // Mesh display options menu
+    glcanvas.drawEdges = false;
+    glcanvas.drawNormals = false;
+    glcanvas.drawVertices = false;
+    let meshOpts = gui.addFolder('Mesh Display Options');
+    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+        function(s) {
+            let evt = meshOpts.add(glcanvas, s);
+            evt.onChange(function() {
+                requestAnimFrame(glcanvas.repaint);
+            });
+        }
+    );
 
     requestAnimationFrame(glcanvas.repaint);
 }

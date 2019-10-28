@@ -98,6 +98,23 @@ function MeshFace(ID) {
         }
         return ret;
     }
+
+    /**
+     * Walk around the face edges and compile a list of all
+     * adjacent faces
+     * 
+     * @returns {list of MeshFace} Faces adjacent to this face
+     */
+    this.getFaceNeighbors = function() {
+        let ret = [];
+        for (let i = 0; i < this.edges.length; i++) {
+            let f = this.edges[i].faceAcross(this);
+            if (!(f === null)) {
+                ret.push(f);
+            }
+        }
+        return ret;
+    }
     
     /**
      * Return a cloned array of mesh vertices
@@ -506,6 +523,75 @@ function BasicMesh() {
     }
 
     /**
+     * Recursive helper function for the function below
+     */
+    this.consistentlyOrientFacesRec = function(face) {
+        face.oriented = true; // By the time we get to
+        // this face, it has been oriented properly
+        vs1 = face.getVertices();
+        for (let i = 0; i < face.edges.length; i++) {
+            let edge = face.edges[i];
+            let otherFace = edge.faceAcross(face);
+            if (!(otherFace === null)) {
+                if (!(otherFace.oriented)) {
+                    // Vertices of edge should be in opposite order
+                    // between the two faces
+                    vs2 = otherFace.getVertices();
+                    v1 = edge.v1;
+                    v2 = edge.v2;
+                    let orient1 = false;
+                    let orient2 = false;
+                    for (let k = 0; k < vs1.length; k++) {
+                        if (v1 == vs1[k] && v2 == vs1[(k+1)%vs1.length]) {
+                            orient1 = true;
+                            break;
+                        }
+                        else if (v2 == vs1[k] && v1 == vs1[(k+1)%vs1.length]) {
+                            orient2 = true;
+                            break;
+                        }
+                    }
+                    for (let k = 0; k < vs2.length; k++) {
+                        if (v1 == vs2[k] && v2 == vs2[(k+1)%vs2.length]) {
+                            orient1 = true;
+                            break;
+                        }
+                        else if (v2 == vs2[k] && v1 == vs2[(k+1)%vs2.length]) {
+                            orient2 = true;
+                            break;
+                        }
+                    }
+                    if (orient1 == false || orient2 == false) {
+                        if (orient1 == false && orient2 == false) {
+                            throw "Could not find an orientation in either face " + face.ID + ", " + otherFace.ID;
+                        }
+                        // Need to flip orientation of otherFace
+                        otherFace.edges.reverse();
+                    }
+                    this.consistentlyOrientFacesRec(otherFace);
+                }
+            }
+        }
+    }
+
+    /**
+     * Assuming that each connected component can be consistently oriented,
+     * and that the first face of the connected component in the list
+     * of faces has the correct global orientation, propagate that orientation
+     * throughout each connected component
+     */
+    this.consistentlyOrientFaces = function() {
+        this.faces.forEach(function(face){
+            face.oriented = false;
+        });
+        for (let i = 0; i < this.faces.length; i++) {
+            if (!(this.faces.oriented)) {
+                this.consistentlyOrientFacesRec(this.faces[i]);
+            }
+        }
+    }
+
+    /**
      * Make a clone of this mesh in memory and return it
      * 
      * @returns {BasicMesh} A clone of this mesh
@@ -540,6 +626,7 @@ function BasicMesh() {
             }
             this.addFace(face);
         }
+        //this.consistentlyOrientFaces();
         this.needsDisplayUpdate = true;
     }
 }
