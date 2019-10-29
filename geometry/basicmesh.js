@@ -568,7 +568,7 @@ function BasicMesh() {
                 if (orient1 == false && orient2 == false) {
                     throw "Could not find an orientation in either face " + face.ID + ", " + otherFace.ID;
                 }
-                otherFace.edges.reverse();
+                otherFace.flipOrientation();
             }
             this.consistentlyOrientFacesRec(otherFace);
         }
@@ -599,6 +599,20 @@ function BasicMesh() {
     this.reverseOrientation = function() {
         this.faces.forEach(function(face) {
             face.flipOrientation();
+        });
+        this.needsDisplayUpdate = true;
+    }
+
+    /**
+     * This function randomly flips orientations of faces
+     * to make sure that the consistent orientation function
+     * can recover a consistent orientation
+     */
+    this.randomlyFlipFaceOrientations = function() {
+        this.faces.forEach(function(face) {
+            if (Math.random() < 0.5) {
+                face.flipOrientation();
+            }
         });
         this.needsDisplayUpdate = true;
     }

@@ -43,21 +43,14 @@ function SimpleMeshCanvas(glcanvas, shadersrelpath) {
             });
         }
     );
-    gui.add(glcanvas.mesh, 'consistentlyOrientFaces').onChange(
-        function(){
-            requestAnimFrame(glcanvas.repaint);
-        }
-    );
-    gui.add(glcanvas.mesh, 'reverseOrientation').onChange(
-        function(){
-            requestAnimFrame(glcanvas.repaint);
-        }
-    );
-    gui.add(glcanvas.mesh, 'saveOffFile').onChange(
-        function(){
-            requestAnimFrame(glcanvas.repaint);
-        }
-    );
+
+    let simpleRepaint = function() {
+        requestAnimFrame(glcanvas.repaint);
+    }
+    gui.add(glcanvas.mesh, 'consistentlyOrientFaces').onChange(simpleRepaint);
+    gui.add(glcanvas.mesh, 'reverseOrientation').onChange(simpleRepaint);
+    gui.add(glcanvas.mesh, 'randomlyFlipFaceOrientations').onChange(simpleRepaint);
+    gui.add(glcanvas.mesh, 'saveOffFile').onChange(simpleRepaint);
 
     requestAnimationFrame(glcanvas.repaint);
 }
