@@ -510,6 +510,21 @@ function BasicMesh() {
     }
 
     /**
+     * Subtract the centroid away from all vertices
+     */
+    this.subtractCentroid = function() {
+        let centroid = glMatrix.vec3.create();
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.add(centroid, centroid, this.vertices[i].pos);
+        }
+        glMatrix.vec3.scale(centroid, centroid, 1.0/this.vertices.length);
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.subtract(this.vertices[i].pos, this.vertices[i].pos, centroid);
+        }
+        this.needsDisplayUpdate = true;
+    }
+
+    /**
      * @returns {I} A NEdgesx2 Uint16Array of indices into the vertex array
      */
     this.getEdgeIndices = function() {
