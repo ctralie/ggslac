@@ -220,10 +220,10 @@ function MeshEdge(v1, v2, ID) {
      */
     this.removeFace = function(face) {
         if (this.f1 === face) {
-            self.f1 = null;
+            this.f1 = null;
         }
-        else if(self.f2 === face) {
-            self.f2 = null;
+        else if(this.f2 === face) {
+            this.f2 = null;
         }
         else {
             throw "Cannot remove edge pointer to face that was never part of edge";
@@ -436,12 +436,12 @@ function BasicMesh() {
     this.removeFace = function(face) {
         //Swap the face to remove with the last face (O(1) removal)
         this.faces[face.ID] = this.faces[this.faces.length-1];
-        this.faces[face.ID].ID = face.ID //Update ID of swapped face
+        this.faces[face.ID].ID = face.ID; //Update ID of swapped face
         face.ID = -1;
         this.faces.pop();
         //Remove pointers from all of the face's edges
-        for (let i = 0; i < faces.edges.length; i++) {
-            edge.removeFace(faces[i]);
+        for (let i = 0; i < face.edges.length; i++) {
+            face.edges[i].removeFace(face);
         }
     }
     
@@ -507,6 +507,21 @@ function BasicMesh() {
             faceIdx++;
         }
         return I;
+    }
+
+    /**
+     * Subtract the centroid away from all vertices
+     */
+    this.subtractCentroid = function() {
+        let centroid = glMatrix.vec3.create();
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.add(centroid, centroid, this.vertices[i].pos);
+        }
+        glMatrix.vec3.scale(centroid, centroid, 1.0/this.vertices.length);
+        for (let i = 0; i < this.vertices.length; i++) {
+            glMatrix.vec3.subtract(this.vertices[i].pos, this.vertices[i].pos, centroid);
+        }
+        this.needsDisplayUpdate = true;
     }
 
     /**
@@ -630,6 +645,22 @@ function BasicMesh() {
             newMesh.addFace(vertices);
         }
         return newMesh;
+    }
+
+    /**
+     * Delete all faces, edges, and vertices, in that order
+     */
+    this.clear = function() {
+        while(this.faces.length > 0) {
+            this.removeFace(this.faces[this.faces.length-1]);
+        }
+        while (this.edges.length > 0) {
+            this.removeEdge(this.edges[this.edges.length-1]);
+        }
+        while (this.vertices.length > 0) {
+            this.removeVertex(this.vertices[this.vertices.length-1]);
+        }
+        this.needsDisplayUpdate = true;
     }
 
     /////////////////////////////////////////////////////////////
