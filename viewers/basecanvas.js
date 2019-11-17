@@ -59,13 +59,17 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.releaseClick = function(evt) {
         evt.preventDefault();
         this.dragging = false;
-        requestAnimFrame(this.repaint);
+        if (glcanvas.repaintOnInteract) {
+            requestAnimFrame(this.repaint);
+        }
         return false;
     } 
 
     glcanvas.mouseOut = function(evt) {
         this.dragging = false;
-        requestAnimFrame(this.repaint);
+        if (glcanvas.repaintOnInteract) {
+            requestAnimFrame(this.repaint);
+        }
         return false;
     }
     
@@ -86,7 +90,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
         let mousePos = this.getMousePos(evt);
         this.lastX = mousePos.X;
         this.lastY = mousePos.Y;
-        requestAnimFrame(this.repaint);
+        if (glcanvas.repaintOnInteract) {
+            requestAnimFrame(this.repaint);
+        }
         return false;
     } 
 
@@ -113,7 +119,9 @@ function BaseCanvas(glcanvas, shadersrelpath) {
                 this.camera.orbitLeftRight(dX);
                 this.camera.orbitUpDown(-dY);
             }
-            requestAnimFrame(this.repaint);
+            if (glcanvas.repaintOnInteract) {
+                requestAnimFrame(this.repaint);
+            }
         }
         else if (this.dragging && this.camera.type == "fps") {
             //Rotate camera by mouse dragging
@@ -128,7 +136,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
                     }
                 }
             }
-            if (noKeysPressing) {
+            if (noKeysPressing && glcanvas.repaintOnInteract) {
                 requestAnimFrame(glcanvas.repaint);
             }
         }
@@ -184,7 +192,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
             }
         }
         glcanvas.lastTime = (new Date()).getTime();
-        if (newKeyDown) {
+        if (newKeyDown && glcanvas.repaintOnInteract) {
             requestAnimFrame(glcanvas.repaint);
         }
     }
@@ -281,4 +289,5 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     glcanvas.gl.enable(glcanvas.gl.DEPTH_TEST);
     glcanvas.active = true;
+    glcanvas.repaintOnInteract = true;
 }

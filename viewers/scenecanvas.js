@@ -779,7 +779,9 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             glcanvas.camera.translate(0, glcanvas.moveud, 0, glcanvas.walkspeed*dt);
             glcanvas.camera.translate(glcanvas.movelr, 0, 0, glcanvas.walkspeed*dt);
             glcanvas.camera.position = vecToStr(glcanvas.camera.pos);
-            requestAnimFrame(glcanvas.repaint);
+            if (glcanvas.repaintOnInteract) {
+                requestAnimFrame(glcanvas.repaint);
+            }
         }
     }
 
