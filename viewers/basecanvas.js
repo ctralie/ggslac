@@ -24,10 +24,8 @@ function BaseCanvas(glcanvas, shadersrelpath) {
     glcanvas.moveud = 0;//Moving up/down
     
     //Lighting info
+    glcanvas.lights = [{'pos':[0, 0, 0], 'color':[1, 1, 1], 'atten':[1, 0, 0]}];
     glcanvas.ambientColor = glMatrix.vec3.fromValues(0.1, 0.1, 0.1);
-    glcanvas.light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
-    glcanvas.light2Pos = glMatrix.vec3.fromValues(0, 0, -1);
-    glcanvas.lightColor = glMatrix.vec3.fromValues(0.9, 0.9, 0.9);
     
     //User choices
     glcanvas.drawNormals = false;

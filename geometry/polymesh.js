@@ -463,32 +463,14 @@ function PolyMesh(mesh) {
         }
 
         // Lighting
-        if ('light1PosUniform' in sProg) {
-            let light1Pos = glMatrix.vec3.fromValues(0, 0, 0);
-            if ('light1' in glcanvas) {
-                if ('pos' in glcanvas.light1) {
-                    light1Pos = glcanvas.light1.pos;
-                }
+        if ('u_lights' in sProg && 'u_numLights' in sProg) {
+            let numLights = Math.min(MAX_LIGHTS, glcanvas.lights.length);
+            gl.uniform1i(sProg.u_numLights, numLights);
+            for (let i = 0; i < numLights; i++) {
+                gl.uniform3fv(sProg.u_lights[i].pos, glcanvas.lights[i].pos);
+                gl.uniform3fv(sProg.u_lights[i].color, glcanvas.lights[i].color);
+                gl.uniform3fv(sProg.u_lights[i].atten, glcanvas.lights[i].atten);
             }
-            gl.uniform3fv(sProg.light1PosUniform, light1Pos);
-        }
-        if ('light1ColorUniform' in sProg) {
-            let light1Color = glMatrix.vec3.fromValues(1, 0, 0);
-            if ('light1' in glcanvas) {
-                if ('color' in glcanvas.light1) {
-                    light1Color = glcanvas.light1.color;
-                }
-            }
-            gl.uniform3fv(sProg.light1ColorUniform, light1Color);
-        }
-        if ('light1AttenUniform' in sProg) {
-            let light1Atten = glMatrix.vec3.fromValues(1, 0, 0);
-            if ('light1' in glcanvas) {
-                if ('atten' in glcanvas.light1) {
-                    light1Atten = glcanvas.light1.atten;
-                }
-            }
-            gl.uniform3fv(sProg.light1AttenUniform, light1Atten);
         }
     }
 
@@ -594,10 +576,7 @@ function PolyMesh(mesh) {
                                     Optional Fields
                                     * shaderToUse (GLSL shader handle)
                                     * ambientColor (vec3), 
-                                    * light1Pos (vec3),
-                                    * light2Pos (vec3),
-                                    * light1Color (vec3),
-                                    * light2Color (vec3),
+                                    * lights (list)
                                     * drawNormals (boolean), 
                                     * drawEdges (boolean),
                                     * drawPoints (boolean)

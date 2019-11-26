@@ -4,6 +4,8 @@ Files that have been assumed to have been also loaded
 
 */
 
+const MAX_LIGHTS = 10;
+
 /**
  * A function that compiles a particular shader
  * @param {*} gl WebGL handle
@@ -88,13 +90,21 @@ function initStandardShaders(gl, relpath) {
     gouraudLambertian.tMatrixUniform = gl.getUniformLocation(gouraudLambertian, "tMatrix");
     gouraudLambertian.nMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uNMatrix");
     gouraudLambertian.ambientColorUniform = gl.getUniformLocation(gouraudLambertian, "uAmbientColor");
-    gouraudLambertian.light1PosUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Pos");
-    gouraudLambertian.light1ColorUniform = gl.getUniformLocation(gouraudLambertian, "uLight1Color");
     gouraudLambertian.uKaUniform = gl.getUniformLocation(gouraudLambertian, "uKa");
     gouraudLambertian.uKdUniform = gl.getUniformLocation(gouraudLambertian, "uKd");
     gouraudLambertian.uKsUniform = gl.getUniformLocation(gouraudLambertian, "uKs");
     gouraudLambertian.uShininessUniform = gl.getUniformLocation(gouraudLambertian, "uShininess");
-
+    gouraudLambertian.uEyeUniform = gl.getUniformLocation(gouraudLambertian, "uEye");
+    gouraudLambertian.u_lights = [];
+    gouraudLambertian.u_numLights = gl.getUniformLocation(gouraudLambertian, "numLights");
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+        let light = {
+            pos: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].pos"),
+            color: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].color"),
+            atten: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].atten")
+        };
+        gouraudLambertian.u_lights.push(light);
+    }
 
     /** blinnPhong: Per-vertex lambertian shader  */
     let blinnPhong = getShaderProgram(gl, relpath + "blinnPhong");
@@ -109,14 +119,21 @@ function initStandardShaders(gl, relpath) {
     blinnPhong.tMatrixUniform = gl.getUniformLocation(blinnPhong, "tMatrix");
     blinnPhong.nMatrixUniform = gl.getUniformLocation(blinnPhong, "uNMatrix");
     blinnPhong.ambientColorUniform = gl.getUniformLocation(blinnPhong, "uAmbientColor");
-    blinnPhong.light1PosUniform = gl.getUniformLocation(blinnPhong, "uLight1Pos");
-    blinnPhong.light1ColorUniform = gl.getUniformLocation(blinnPhong, "uLight1Color");
-    blinnPhong.light1AttenUniform = gl.getUniformLocation(blinnPhong, "uLight1Atten");
     blinnPhong.uKaUniform = gl.getUniformLocation(blinnPhong, "uKa");
     blinnPhong.uKdUniform = gl.getUniformLocation(blinnPhong, "uKd");
     blinnPhong.uKsUniform = gl.getUniformLocation(blinnPhong, "uKs");
     blinnPhong.uShininessUniform = gl.getUniformLocation(blinnPhong, "uShininess");
     blinnPhong.uEyeUniform = gl.getUniformLocation(blinnPhong, "uEye");
+    blinnPhong.u_lights = [];
+    blinnPhong.u_numLights = gl.getUniformLocation(blinnPhong, "numLights");
+    for (let i = 0; i < MAX_LIGHTS; i++) {
+        let light = {
+            pos: gl.getUniformLocation(blinnPhong, "lights["+i+"].pos"),
+            color: gl.getUniformLocation(blinnPhong, "lights["+i+"].color"),
+            atten: gl.getUniformLocation(blinnPhong, "lights["+i+"].atten")
+        };
+        blinnPhong.u_lights.push(light);
+    }
 
     /** depth: A shader that shades by depth */
     let depth = getShaderProgram(gl, relpath + "depth");

@@ -423,10 +423,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
             )
         });
-        if (scene.lights.length > 0) {
-            // Add the first light to mesh drawing parameters
-            glcanvas.light1 = scene.lights[0];
-        }
+        glcanvas.lights = scene.lights;
     }
 
     /**
