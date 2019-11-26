@@ -77,33 +77,33 @@ function getShaderProgram(gl, prefix) {
  * @returns{obj} An object with fields containing standard shaders
  */
 function initStandardShaders(gl, relpath) {
-    /** gouraudLambertian: Per-vertex lambertian shader  */
-    let gouraudLambertian = getShaderProgram(gl, relpath + "gouraudLambertian");
-    gouraudLambertian.vPosAttrib = gl.getAttribLocation(gouraudLambertian, "vPos");
-    gl.enableVertexAttribArray(gouraudLambertian.vPosAttrib);
-    gouraudLambertian.vNormalAttrib = gl.getAttribLocation(gouraudLambertian, "vNormal");
-    gl.enableVertexAttribArray(gouraudLambertian.normalAttrib);
-    gouraudLambertian.vColorAttrib = gl.getAttribLocation(gouraudLambertian, "vColor");
-    gl.enableVertexAttribArray(gouraudLambertian.vColorAttrib);
-    gouraudLambertian.pMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uPMatrix");
-    gouraudLambertian.mvMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uMVMatrix");
-    gouraudLambertian.tMatrixUniform = gl.getUniformLocation(gouraudLambertian, "tMatrix");
-    gouraudLambertian.nMatrixUniform = gl.getUniformLocation(gouraudLambertian, "uNMatrix");
-    gouraudLambertian.ambientColorUniform = gl.getUniformLocation(gouraudLambertian, "uAmbientColor");
-    gouraudLambertian.uKaUniform = gl.getUniformLocation(gouraudLambertian, "uKa");
-    gouraudLambertian.uKdUniform = gl.getUniformLocation(gouraudLambertian, "uKd");
-    gouraudLambertian.uKsUniform = gl.getUniformLocation(gouraudLambertian, "uKs");
-    gouraudLambertian.uShininessUniform = gl.getUniformLocation(gouraudLambertian, "uShininess");
-    gouraudLambertian.uEyeUniform = gl.getUniformLocation(gouraudLambertian, "uEye");
-    gouraudLambertian.u_lights = [];
-    gouraudLambertian.u_numLights = gl.getUniformLocation(gouraudLambertian, "numLights");
+    /** gouraud: Per-vertex lambertian shader  */
+    let gouraud = getShaderProgram(gl, relpath + "gouraud");
+    gouraud.vPosAttrib = gl.getAttribLocation(gouraud, "vPos");
+    gl.enableVertexAttribArray(gouraud.vPosAttrib);
+    gouraud.vNormalAttrib = gl.getAttribLocation(gouraud, "vNormal");
+    gl.enableVertexAttribArray(gouraud.normalAttrib);
+    gouraud.vColorAttrib = gl.getAttribLocation(gouraud, "vColor");
+    gl.enableVertexAttribArray(gouraud.vColorAttrib);
+    gouraud.pMatrixUniform = gl.getUniformLocation(gouraud, "uPMatrix");
+    gouraud.mvMatrixUniform = gl.getUniformLocation(gouraud, "uMVMatrix");
+    gouraud.tMatrixUniform = gl.getUniformLocation(gouraud, "tMatrix");
+    gouraud.nMatrixUniform = gl.getUniformLocation(gouraud, "uNMatrix");
+    gouraud.ambientColorUniform = gl.getUniformLocation(gouraud, "uAmbientColor");
+    gouraud.uKaUniform = gl.getUniformLocation(gouraud, "uKa");
+    gouraud.uKdUniform = gl.getUniformLocation(gouraud, "uKd");
+    gouraud.uKsUniform = gl.getUniformLocation(gouraud, "uKs");
+    gouraud.uShininessUniform = gl.getUniformLocation(gouraud, "uShininess");
+    gouraud.uEyeUniform = gl.getUniformLocation(gouraud, "uEye");
+    gouraud.u_lights = [];
+    gouraud.u_numLights = gl.getUniformLocation(gouraud, "numLights");
     for (let i = 0; i < MAX_LIGHTS; i++) {
         let light = {
-            pos: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].pos"),
-            color: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].color"),
-            atten: gl.getUniformLocation(gouraudLambertian, "lights["+i+"].atten")
+            pos: gl.getUniformLocation(gouraud, "lights["+i+"].pos"),
+            color: gl.getUniformLocation(gouraud, "lights["+i+"].color"),
+            atten: gl.getUniformLocation(gouraud, "lights["+i+"].atten")
         };
-        gouraudLambertian.u_lights.push(light);
+        gouraud.u_lights.push(light);
     }
 
     /** blinnPhong: Per-vertex lambertian shader  */
@@ -199,7 +199,7 @@ function initStandardShaders(gl, relpath) {
     
     return { 
             blinnPhong:blinnPhong,
-            gouraudLambertian:gouraudLambertian,
+            gouraud:gouraud,
             depth:depth,
             normal:normal,
             flat:flat,
