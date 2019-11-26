@@ -240,6 +240,12 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             if (!('material' in shape)) {
                 shape.material = 'default';
             }
+
+            // Have the option to hide this object from display, which
+            // is false if not specified
+            if (!('hidden' in shape)) {
+                shape.hidden = false;
+            }
             shape.material = glcanvas.scene.materials[shape.material];
         }
         
@@ -651,7 +657,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         glMatrix.mat4.mul(nextTransform, transform, node.transform);
         node.shapes.forEach(function(shape) {
             if ('mesh' in shape) {
-                if (!(shape.mesh === null)) {
+                if (!(shape.mesh === null) && !shape.hidden) {
                     if ('material' in shape) {
                         glcanvas.material = shape.material;
                     }
