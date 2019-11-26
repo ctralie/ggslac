@@ -756,6 +756,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
             )
         }
+        glcanvas.lights = glcanvas.scene.lights; // For mesh rendering
         if (glcanvas.showLights) {
             glcanvas.scene.lights.forEach(
                 function(light) {
@@ -764,7 +765,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     }
                 }
             );
-            glcanvas.lights = glcanvas.scene.lights; // For mesh rendering
         }
         
         // Redraw if walking
