@@ -423,7 +423,6 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                 }
             )
         });
-        glcanvas.lights = scene.lights;
     }
 
     /**
@@ -765,6 +764,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     }
                 }
             );
+            glcanvas.lights = glcanvas.scene.lights; // For mesh rendering
         }
         
         // Redraw if walking
