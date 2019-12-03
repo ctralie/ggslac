@@ -477,6 +477,16 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
                     requestAnimFrame(glcanvas.repaint);
                 }
             );
+            menu.add(c.camera, 'near', 0.001, 100000).onChange(
+                function() {
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
+            menu.add(c.camera, 'far', 0.001, 100000).onChange(
+                function() {
+                    requestAnimFrame(glcanvas.repaint);
+                }
+            );
             // Setup mechanism to move camera around with keyboard/mouse
             if (i == 0) {
                 c.viewFrom = true;
