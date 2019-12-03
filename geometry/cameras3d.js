@@ -159,6 +159,14 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         //mesh not loaded yet
             R = 1;
         }
+        if (R > this.far) {
+            this.far = R*1.5;
+            this.near = this.far/10000;
+        }
+        else if (R < this.near/10) {
+            this.near = R/10;
+            this.far = this.near*10000;
+        }
         let away = glMatrix.vec3.create();
         glMatrix.vec3.cross(away, this.right, this.up);
         glMatrix.vec3.scaleAndAdd(this.pos, this.center, away, R);
@@ -206,7 +214,14 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         glMatrix.vec3.subtract(dR, this.pos, this.center);
         glMatrix.vec3.scaleAndAdd(this.pos, this.center, dR, Math.pow(4, rate));
         let R = glMatrix.vec3.length(dR);
-        this.far = Math.max(this.far, 2*R);
+        if (2*R > this.far) {
+            this.far = 2*R;
+            this.near = this.far/10000;
+        }
+        else if (R/10 < this.near) {
+            this.near = R/10;
+            this.far = this.near*10000;
+        }
     }
     
     this.translate = function(pdx, pdy) {
