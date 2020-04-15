@@ -82,7 +82,7 @@ function initStandardShaders(gl, relpath) {
     gouraud.vPosAttrib = gl.getAttribLocation(gouraud, "vPos");
     gl.enableVertexAttribArray(gouraud.vPosAttrib);
     gouraud.vNormalAttrib = gl.getAttribLocation(gouraud, "vNormal");
-    gl.enableVertexAttribArray(gouraud.normalAttrib);
+    gl.enableVertexAttribArray(gouraud.vNormalAttrib);
     gouraud.vColorAttrib = gl.getAttribLocation(gouraud, "vColor");
     gl.enableVertexAttribArray(gouraud.vColorAttrib);
     gouraud.pMatrixUniform = gl.getUniformLocation(gouraud, "uPMatrix");
@@ -111,7 +111,7 @@ function initStandardShaders(gl, relpath) {
     blinnPhong.vPosAttrib = gl.getAttribLocation(blinnPhong, "vPos");
     gl.enableVertexAttribArray(blinnPhong.vPosAttrib);
     blinnPhong.vNormalAttrib = gl.getAttribLocation(blinnPhong, "vNormal");
-    gl.enableVertexAttribArray(blinnPhong.normalAttrib);
+    gl.enableVertexAttribArray(blinnPhong.vNormalAttrib);
     blinnPhong.vColorAttrib = gl.getAttribLocation(blinnPhong, "vColor");
     gl.enableVertexAttribArray(blinnPhong.vColorAttrib);
     blinnPhong.pMatrixUniform = gl.getUniformLocation(blinnPhong, "uPMatrix");
@@ -145,16 +145,39 @@ function initStandardShaders(gl, relpath) {
     depth.uNearUniform = gl.getUniformLocation(depth, "uNear");
     depth.uFarUniform = gl.getUniformLocation(depth, "uFar");
 
+    /** depth: A shader that packs a float depth into two bytes in the R/G channels */
+    let depth16 = getShaderProgram(gl, relpath + "depth16");
+    depth16.vPosAttrib = gl.getAttribLocation(depth16, "vPos");
+    gl.enableVertexAttribArray(depth16.vPosAttrib);
+    depth16.pMatrixUniform = gl.getUniformLocation(depth16, "uPMatrix");
+    depth16.mvMatrixUniform = gl.getUniformLocation(depth16, "uMVMatrix");
+    depth16.tMatrixUniform = gl.getUniformLocation(depth16, "tMatrix");
+    depth16.uNearUniform = gl.getUniformLocation(depth16, "uNear");
+    depth16.uFarUniform = gl.getUniformLocation(depth16, "uFar");
+
     /** normal: A shader to color points by their normals */
     let normal = getShaderProgram(gl, relpath + "normalView");
     normal.vPosAttrib = gl.getAttribLocation(normal, "vPos");
     gl.enableVertexAttribArray(normal.vPosAttrib);
     normal.vNormalAttrib = gl.getAttribLocation(normal, "vNormal");
-    gl.enableVertexAttribArray(normal.normalAttrib);
+    gl.enableVertexAttribArray(normal.vNormalAttrib);
     normal.pMatrixUniform = gl.getUniformLocation(normal, "uPMatrix");
     normal.mvMatrixUniform = gl.getUniformLocation(normal, "uMVMatrix");
     normal.tMatrixUniform = gl.getUniformLocation(normal, "tMatrix");
     normal.nMatrixUniform = gl.getUniformLocation(normal, "uNMatrix");
+    normal.nMVMatrixUniform = gl.getUniformLocation(normal, "uNMVMatrix");
+
+    /** normal local: A shader to color points by their normals in local coordinates */
+    let normalLocal = getShaderProgram(gl, relpath + "normalViewLocal");
+    normalLocal.vPosAttrib = gl.getAttribLocation(normalLocal, "vPos");
+    gl.enableVertexAttribArray(normalLocal.vPosAttrib);
+    normalLocal.vNormalAttrib = gl.getAttribLocation(normalLocal, "vNormal");
+    gl.enableVertexAttribArray(normalLocal.vNormalAttrib);
+    normalLocal.pMatrixUniform = gl.getUniformLocation(normalLocal, "uPMatrix");
+    normalLocal.mvMatrixUniform = gl.getUniformLocation(normalLocal, "uMVMatrix");
+    normalLocal.tMatrixUniform = gl.getUniformLocation(normalLocal, "tMatrix");
+    normalLocal.nMatrixUniform = gl.getUniformLocation(normalLocal, "uNMatrix");
+    normalLocal.nMVMatrixUniform = gl.getUniformLocation(normalLocal, "uNMVMatrix");
 
     /** flat: A shader that draws a constant color for all faces*/
     let flat = getShaderProgram(gl, relpath + "flat");
@@ -201,7 +224,9 @@ function initStandardShaders(gl, relpath) {
             blinnPhong:blinnPhong,
             gouraud:gouraud,
             depth:depth,
+            depth16:depth16,
             normal:normal,
+            normalLocal:normalLocal,
             flat:flat,
             pointShader:pointShader,
             pointColorShader:pointColorShader,

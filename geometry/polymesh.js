@@ -455,11 +455,18 @@ function PolyMesh(mesh) {
 
         // Normal matrix
         if ('nMatrixUniform' in sProg) {
-            //Compute normal transformation matrix from world modelview matrix
+            //Compute normal transformation matrix from world transformation matrix
             //(transpose of inverse of upper 3x3 part)
-            nMatrix = glMatrix.mat3.create();
+            let nMatrix = glMatrix.mat3.create();
             glMatrix.mat3.normalFromMat4(nMatrix, tMatrix);
             gl.uniformMatrix3fv(sProg.nMatrixUniform, false, nMatrix);
+        }
+
+        // Modelview Normal matrix
+        if ('nMVMatrixUniform' in sProg) {
+            let nMatrix = glMatrix.mat3.create();
+            glMatrix.mat3.normalFromMat4(nMatrix, mvMatrix);
+            gl.uniformMatrix3fv(sProg.nMVMatrixUniform, false, nMatrix);
         }
 
         // Lighting

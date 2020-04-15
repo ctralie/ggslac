@@ -64,13 +64,19 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             shape.ms = glMatrix.mat4.create();
             shape.mesh = null;
             if (shape.type == "mesh") {
-                if (!('filename' in shape)) {
-                    console.log("ERROR: filename not specified for mesh: " + shape);
+                if (!('filename' in shape) && !('src' in shape)) {
+                    console.log("ERROR: Neither filename nor src specified for mesh: " + shape);
                     continue;
                 }
                 shape.mesh = new BasicMesh();
-                let lines = BlockLoader.loadTxt(shape.filename);
-                shape.mesh.loadFileFromLines(lines.split("\n"));
+                let src = "";
+                if ('src' in shape) {
+                    src = shape.src;
+                }
+                else {
+                    src = BlockLoader.loadTxt(shape.filename);
+                }
+                shape.mesh.loadFileFromLines(src.split("\n"));
             }
             else if (shape.type == "polygon") {
                 shape.mesh = new BasicMesh();
@@ -867,7 +873,7 @@ function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
     // Shaders menu
     glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
     glcanvas.shader = "blinnPhong";
-    gui.add(glcanvas, "shader", ["blinnPhong", "gouraud", "depth", "normal", "flat"]).onChange(function() {
+    gui.add(glcanvas, "shader", ["blinnPhong", "gouraud", "depth", "depth16", "normal", "normalLocal", "flat"]).onChange(function() {
         glcanvas.shaderToUse = glcanvas.shaders[glcanvas.shader];
         requestAnimFrame(glcanvas.repaint);
     });

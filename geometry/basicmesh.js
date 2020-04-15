@@ -209,7 +209,7 @@ function MeshEdge(v1, v2, ID) {
             this.f2 = face;
         }
         else {
-            throw "Cannot add face to edge; already 2 there";
+            //throw "Cannot add face to edge; already 2 there";
         }
     }
     
