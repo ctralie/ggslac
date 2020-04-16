@@ -183,6 +183,10 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
      */
     this.orbitUpDown = function(ud) {
         let thetaud = 2.0*this.fovy*ud/this.pixHeight;
+        this.orbitUpDownTheta(thetaud);
+    }
+
+    this.orbitUpDownTheta = function(thetaud) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
@@ -199,6 +203,10 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
      */
     this.orbitLeftRight = function(lr) {
         let thetalr = -2.0*this.fovx*lr/this.pixWidth;
+        this.orbitLeftRightTheta(thetalr);
+    }
+
+    this.orbitLeftRightTheta = function(thetalr) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);
@@ -263,6 +271,10 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     //Rotate the up direction around the right direction
     this.rotateUpDown = function(ud) {
         let thetaud = 2.0*this.fovy*ud/this.pixHeight;
+        this.rotateUpDownTheta(thetaud);
+    }
+
+    this.rotateUpDownTheta = function(thetaud) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
@@ -273,6 +285,10 @@ function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     //but project onto the XY plane
     this.rotateLeftRight = function(lr) {
         let thetalr = 2.0*this.fovx*lr/this.pixWidth;
+        this.rotateLeftRightTheta(thetalr);
+    }
+
+    this.rotateLeftRightTheta = function(thetalr) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);

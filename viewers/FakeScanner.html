@@ -19,6 +19,7 @@
 <script src="../utils/blockloader.js"></script>
 <script src="./basecanvas.js"></script>
 <script src="./scenecanvas.js"></script>
+<script src="./fakescannercanvas.js"></script>
 
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -30,7 +31,7 @@
     </table>
 
 <table><tr><td>
-<canvas id="GLCanvas1" style="border: none;" width="640" height="480"></canvas>
+<canvas id="GLCanvas1" style="border: none;" width="300" height="300"></canvas>
 
 </td>
 <td>
@@ -39,33 +40,13 @@
 
 
 </td></tr>
-<tr>
-    <td>
-        <table cellpadding>
-            <tr>
-                <td>
-                    <h3>Controls</h3>
-                    <ul>
-                        <li><b>Mouse</b>: Click and drag to look around</li>
-                        <li><b>W:</b> Forward</li>
-                        <li><b>S:</b> Backwards</li>
-                        <li><b>A:</b> Left</li>
-                        <li><b>D:</b> Right</li>
-                        <li><b>E:</b> Up</li>
-                        <li><b>C:</b> Down</li>
-                    </ul>
-                </td>
-            </tr>
-        </table>
-    </td>
-</tr>
 </table>
 
 
 <script>
     let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    SceneCanvas(glcanvas, "../shaders/", "../meshes/");
+    FakeScannerCanvas(glcanvas, "../shaders/", "../meshes/");
 
     var meshInput = document.getElementById('meshInput');
     var result = document.getElementById('text');
@@ -73,37 +54,7 @@
     meshInput.addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
-            let scene = {
-                "name":"testscene",
-                "cameras":[
-                    {
-                    "pos": [0.00, 0.00, 0.00],
-                    "rot": [0.00, 1.00, 0.00, 0.00],
-                    "fovy": 1.0
-                    }
-                ],
-                "lights":[
-                    {
-                        "pos":[0, 2, 0],
-                        "color":[1, 1, 1]
-                    }
-                ],
-                "children":[
-                    {
-                        "shapes":[
-                            {
-                            "type":"mesh",
-                            "src":e.target.result
-                            }
-                        ]
-                    }
-                ]
-            };
-            glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-            console.log(glcanvas.camera);
-            glcanvas.drawEdges = false;
-            glcanvas.updateMeshDrawings();
-            requestAnimFrame(glcanvas.repaint);
+            glcanvas.loadMeshToScan(e.target.result);
         }
         reader.readAsText(meshInput.files[0]);
     });
