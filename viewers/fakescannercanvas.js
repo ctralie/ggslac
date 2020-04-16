@@ -43,7 +43,7 @@ function FakeScannerCanvas(glcanvas, shadersrelpath, meshesrelpath) {
         let step = 2*Math.PI/glcanvas.nscans;
         glcanvas.theta = 0.0;
         while (glcanvas.theta < 2*Math.PI) {
-            glcanvas.camera.orbitLeftRightTheta(glcanvas.step);
+            glcanvas.camera.orbitLeftRightTheta(step);
             glcanvas.theta += step;
             // Step 1: Render normals
             glcanvas.shaderToUse = glcanvas.shaders.normalLocal;
