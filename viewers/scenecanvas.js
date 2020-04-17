@@ -16,8 +16,8 @@ function colorFloatFromHex(s) {
 }
 
 //A function that adds lots of fields to glcanvas for rendering the scene graph
-function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath) {
-    BaseCanvas(glcanvas, shadersrelpath);
+function SceneCanvas(glcanvas, shadersrelpath, meshesrelpath, antialias) {
+    BaseCanvas(glcanvas, shadersrelpath, antialias);
     glcanvas.scene = null;
     glcanvas.specialMeshes = {};
     // Initialize the icosahedron for the camera beacons

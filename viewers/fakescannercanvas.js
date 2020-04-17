@@ -24,7 +24,7 @@ function download(content, fileName, contentType) {
  *                                relative to where the constructor is being called
  */
 function FakeScannerCanvas(glcanvas, shadersrelpath, meshesrelpath) {
-    SceneCanvas(glcanvas, shadersrelpath, meshesrelpath);
+    SceneCanvas(glcanvas, shadersrelpath, meshesrelpath, false);
     
     let offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = glcanvas.width;

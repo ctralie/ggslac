@@ -6,8 +6,11 @@
  * @param {string} shadersrelpath Path to the folder that contains the shaders,
  *                                relative to where the constructor is being called
  */
-function BaseCanvas(glcanvas, shadersrelpath) {
+function BaseCanvas(glcanvas, shadersrelpath, antialias) {
     glcanvas.gl = null;
+    if (antialias === undefined) {
+        antialias = true;
+    }
 
     // Mouse variables
     glcanvas.lastX = 0;
@@ -269,7 +272,7 @@ function BaseCanvas(glcanvas, shadersrelpath) {
 
     try {
         //this.gl = WebGLDebugUtils.makeDebugContext(this.glcanvas.getContext("experimental-webgl"));
-        glcanvas.gl = glcanvas.getContext("webgl");
+        glcanvas.gl = glcanvas.getContext("webgl", {"antialias":antialias});
         glcanvas.gl.viewportWidth = glcanvas.width;
         glcanvas.gl.viewportHeight = glcanvas.height;
     } catch (e) {
