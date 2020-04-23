@@ -59,9 +59,7 @@ function FakeScannerCanvas(glcanvas, shadersrelpath, meshesrelpath) {
             allDepth.push(Array.from(imageData.data));
             // Step 3: Add camera information
             let c = glcanvas.camera;
-            let pos = glMatrix.vec3.create();
-            glMatrix.vec3.subtract(pos, c.pos, c.center);
-            pos = [pos[0], pos[1], pos[2]];
+            let pos = [c.pos[0], c.pos[1], c.pos[2]];
             let up = [c.up[0], c.up[1], c.up[2]];
             let right = [c.right[0], c.right[1], c.right[2]];
             cameras.push({"pos":pos, "up":up, "right":right})
