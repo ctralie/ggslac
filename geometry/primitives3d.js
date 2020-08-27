@@ -185,23 +185,36 @@ GeomUtils.getPolygonArea = getPolygonArea;
 ///////////   PRIMITIVE OBJECTS   ///////////
 /////////////////////////////////////////////
 
-/**
- * An object for representing a 3D plane
- * 
- * @param {glMatrix.vec3} P0 A point on the plane
- * @param {glMatrix.vec3} N The plane normal
- */
-function Plane3D(P0, N) {
-    // Also store A, B, C, D for implicit plane equation
-    this.P0 = glMatrix.vec3.clone(P0);
-    this.N = glMatrix.vec3.clone(N);
-    glMatrix.vec3.normalize(this.N, this.N);
-    
-    this.resetEquation = function() {
+class Plane3D {
+
+    /**
+     * An object for representing a 3D plane
+     * 
+     * @param {glMatrix.vec3} P0 A point on the plane
+     * @param {glMatrix.vec3} N The plane normal
+     */
+    constructor(P0, N) {
+        this.P0 = glMatrix.vec3.clone(P0);
+        this.N = glMatrix.vec3.clone(N);
+        glMatrix.vec3.normalize(this.N, this.N);
+        this.resetEquation();
+    }
+
+    /**
+     * Update the plane equation from the current point/normal
+     */
+    resetEquation() {
         this.D = -glMatrix.vec3.dot(this.P0, this.N);
     }
 
-    this.initFromEquation = function(A, B, C, D) {
+    /**
+     * Initialize the plane from the implicit equation Ax + By + Cz + D = 0
+     * @param {float} A 
+     * @param {float} B 
+     * @param {float} C 
+     * @param {float} D 
+     */
+    initFromEquation(A, B, C, D) {
         this.N = glMatrix.vec3.fromValues(A, B, C);
         this.P0 = glMatrix.vec3.clone(this.N);
         this.P0 = glMatrix.vec3.scale(this.P0, this.P0, -D/glMatrix.vec3.sqrLen(this.N));
@@ -209,22 +222,28 @@ function Plane3D(P0, N) {
         this.resetEquation();
     }
 
-    this.distFromPlane = function(P) {
+    /**
+     * Compute the distance of the plane to a particular point
+     * @param {glMatrix.vec3} P 
+     */
+    distFromPlane(P) {
         return glMatrix.vec3.dot(this.N) + this.D;
     }
-    
-    this.resetEquation();
 }
 
-/**
- * An object for representing a 3D Line
- * 
- * @param {glMatrix.vec3} P0 Initial point on line
- * @param {glMatrix.vec3} V Direction of line
- */
-function Line3D(P0, V) {
-    this.P0 = glMatrix.vec3.clone(P0);
-    this.V = glMatrix.vec3.clone(V);
+
+class Line3D {
+
+    /**
+     * An object for representing a 3D Line
+     * 
+     * @param {glMatrix.vec3} P0 Initial point on line
+     * @param {glMatrix.vec3} V Direction of line
+     */
+    constructor(P0, V) {
+        this.P0 = glMatrix.vec3.clone(P0);
+        this.V = glMatrix.vec3.clone(V);
+    }
 
     /**
      * Determine the intersection of this line with a plane
@@ -234,7 +253,7 @@ function Line3D(P0, V) {
      * @returns{{t, P}}, distance and point of intersection, or 
      * null if there is no intersection
      */
-    this.intersectPlane = function(plane) {
+    intersectPlane(plane) {
         const P0 = plane.P0
         const N = plane.N
         const P = this.P0;
@@ -263,7 +282,7 @@ function Line3D(P0, V) {
     * @returns{"t", "P"} Time and point of intersection, or null
     * if there isn't an intersection
     */
-    this.intersectOtherLineRet_t = function(other) {
+    intersectOtherLineRet_t(other) {
         let P0 = this.P0;
         let V0 = this.V;
         let P1 = other.P0;
@@ -296,7 +315,7 @@ function Line3D(P0, V) {
     * @returns{glMatrix.vec3} Point of intersection, or null
     * if they don't intersect
     */
-    this.intersectOtherLine = function(other) {
+    intersectOtherLine(other) {
         let ret = this.intersectOtherLineRet_t(other);
         if (!(ret === null)) {
             return ret.P;
@@ -305,39 +324,71 @@ function Line3D(P0, V) {
     }
 }        
 
-//Axis-aligned 3D box
-function AABox3D(xmin, xmax, ymin, ymax, zmin, zmax) {
-    this.xmin = xmin;
-    this.xmax = xmax;
-    this.ymin = ymin;
-    this.ymax = ymax;
-    this.zmin = zmin;
-    this.zmax = zmax;
-    
-    this.XLen = function() {
+/**
+ * An axis-aligned 3D box
+ */
+class AABox3D {
+    /**
+     * 
+     * @param {float} xmin 
+     * @param {float} xmax 
+     * @param {float} ymin 
+     * @param {float} ymax 
+     * @param {float} zmin 
+     * @param {float} zmax 
+     */
+    constructor(xmin, xmax, ymin, ymax, zmin, zmax) {
+        this.xmin = xmin;
+        this.xmax = xmax;
+        this.ymin = ymin;
+        this.ymax = ymax;
+        this.zmin = zmin;
+        this.zmax = zmax;
+    }
+
+    /**
+     * Get the x length
+     */
+    XLen() {
         return this.xmax - this.xmin;
     }
     
-    this.YLen = function() {
+    /**
+     * Get the y length
+     */
+    YLen() {
         return this.ymax - this.ymin;
     }
     
-    this.ZLen = function() {
+    /**
+     * Get the z length
+     */
+    ZLen() {
         return this.zmax - this.zmin;
     }
     
-    this.getDiagLength = function() {
+    /**
+     * Get the length along the 3D diagonal
+     */
+    getDiagLength() {
         dX = this.XLen()/2;
         dY = this.YLen()/2;
         dZ = this.ZLen()/2;
         return Math.sqrt(dX*dX + dY*dY + dZ*dZ);
     }
     
-    this.getCenter = function() {
+    /**
+     * Return the centroid of the bbox
+     */
+    getCenter() {
         return glMatrix.vec3.fromValues((this.xmax+this.xmin)/2.0, (this.ymax+this.ymin)/2.0, (this.zmax+this.zmin)/2.0);
     }
     
-    this.addPoint = function(P) {
+    /**
+     * Expand the bounding box so it incorporates a particular point
+     * @param {glMatrix.vec3} P The point to incorporate
+     */
+    addPoint(P) {
         if (P[0] < this.xmin) { this.xmin = P[0]; }
         if (P[0] > this.xmax) { this.xmax = P[0]; }
         if (P[1] < this.ymin) { this.ymin = P[1]; }
@@ -346,13 +397,20 @@ function AABox3D(xmin, xmax, ymin, ymax, zmin, zmax) {
         if (P[2] > this.zmax) { this.zmax = P[2]; }
     }
     
-    this.Union = function(otherBBox) {
+    /**
+     * Take the union with another bounding box
+     * @param {AABox3D} otherBBox The bounding box to incorporate into this one
+     */
+    Union(otherBBox) {
         this.xmax = Math.max(this.xmax, otherBBox.xmax);
         this.ymax = Math.max(this.ymax, otherBBox.ymax);
         this.zmax = Math.max(this.zmax, otherBBox.zmax);
     }
     
-    this.getStr = function() {
+    /**
+     * Return a string representation of the coordinates (for debugging)
+     */
+    getStr() {
         let s = "[" + this.xmin + ", " + this.xmax + "]";
         s += " x " + "[" + this.ymin + ", " + this.ymax + "]";
         s += " x " + "[" + this.zmin + ", " + this.zmax + "]";

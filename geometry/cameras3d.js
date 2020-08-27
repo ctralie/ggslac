@@ -36,66 +36,71 @@ function vecToStr(v, k) {
 
 /**
  * Superclass for 3D cameras
- * @param {int} pixWidth Width of viewing window
- * @param {int} pixHeight Height of viewing window
- * @param {float} fovx Field of view in x direction
- * @param {float} fovy Field of view in y direction
- * @param {float} near Distance to near viewing plane
- * @param {float} far Distance to far viewing plane
  */
-function Camera3D(camera, pixWidth, pixHeight, fovx, fovy, near, far) {
-    camera.pixWidth = pixWidth;
-    camera.pixHeight = pixHeight;
-    if (fovx === undefined) {
-        fovx = DEFAULT_FOVY;
+class Camera3D {
+    
+    /**
+    * @param {int} pixWidth Width of viewing window
+    * @param {int} pixHeight Height of viewing window
+    * @param {float} fovx Field of view in x direction
+    * @param {float} fovy Field of view in y direction
+    * @param {float} near Distance to near viewing plane
+    * @param {float} far Distance to far viewing plane
+    */
+    constructor(pixWidth, pixHeight, fovx, fovy, near, far) {
+        this.pixWidth = pixWidth;
+        this.pixHeight = pixHeight;
+        if (fovx === undefined) {
+            fovx = DEFAULT_FOVY;
+        }
+        this.fovx = fovx;
+        if (fovy === undefined) {
+            fovy = DEFAULT_FOVY;
+        }
+        this.fovy = fovy;
+        if (near === undefined) {
+            near = DEFAULT_NEAR;
+        }
+        this.near = near;
+        if (far === undefined) {
+            far = DEFAULT_FAR;
+        }
+        this.far = far;
     }
-    camera.fovx = fovx;
-    if (fovy === undefined) {
-        fovy = DEFAULT_FOVY;
-    }
-    camera.fovy = fovy;
-    if (near === undefined) {
-        near = DEFAULT_NEAR;
-    }
-    camera.near = near;
-    if (far === undefined) {
-        far = DEFAULT_FAR;
-    }
-    camera.far = far;
 
     /**
      * Return the perspective matrix
      */
-    camera.getPMatrix = function() {
+    getPMatrix() {
         let pMatrix = glMatrix.mat4.create();
-        let fovx2 = camera.fovx * 90/Math.PI;
-        let fovy2 = camera.fovy * 90/Math.PI;
+        let fovx2 = this.fovx * 90/Math.PI;
+        let fovy2 = this.fovy * 90/Math.PI;
         let fov = {upDegrees:fovy2, downDegrees:fovy2, 
                    leftDegrees:fovx2, rightDegrees:fovx2};
-        glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, camera.near, camera.far);
+        glMatrix.mat4.perspectiveFromFieldOfView(pMatrix, fov, this.near, this.far);
         return pMatrix;
     }
 
     /**
      * Return the ModelView matrix
      */
-    camera.getMVMatrix = function() {
+    getMVMatrix() {
         //To keep right handed, make z vector -towards
         let T = glMatrix.vec3.create();
-        glMatrix.vec3.cross(T, camera.right, camera.up);
+        glMatrix.vec3.cross(T, this.right, this.up);
         let rotMat = glMatrix.mat4.create();
         for (let i = 0; i < 3; i++) {
-            rotMat[i*4] = camera.right[i];
-            rotMat[i*4+1] = camera.up[i];
+            rotMat[i*4] = this.right[i];
+            rotMat[i*4+1] = this.up[i];
             rotMat[i*4+2] = T[i];
         }
         //glMatrix.mat4.transpose(rotMat, rotMat);
         let transMat = glMatrix.mat4.create();
-        glMatrix.vec3.scale(camera.pos, camera.pos, -1.0);
-        glMatrix.mat4.translate(transMat, transMat, camera.pos);
+        glMatrix.vec3.scale(this.pos, this.pos, -1.0);
+        glMatrix.mat4.translate(transMat, transMat, this.pos);
         let mvMatrix = glMatrix.mat4.create();
         glMatrix.mat4.mul(mvMatrix, rotMat, transMat);
-        glMatrix.vec3.scale(camera.pos, camera.pos, -1.0); //Have to move pos back
+        glMatrix.vec3.scale(this.pos, this.pos, -1.0); //Have to move pos back
         return mvMatrix;
     }
 
@@ -104,11 +109,11 @@ function Camera3D(camera, pixWidth, pixHeight, fovx, fovy, near, far) {
      * 
      * @param {glMatrix.quat} q The quaternion
      */
-    camera.setRotFromQuat = function(q) {
+    setRotFromQuat(q) {
         let m = glMatrix.mat3.create();
         glMatrix.mat3.fromQuat(m, q);
-        camera.right = glMatrix.vec3.fromValues(m[0], m[3], m[6]);
-        camera.up = glMatrix.vec3.fromValues(m[1], m[4], m[7]);
+        this.right = glMatrix.vec3.fromValues(m[0], m[3], m[6]);
+        this.up = glMatrix.vec3.fromValues(m[1], m[4], m[7]);
     }
 
     /** 
@@ -116,13 +121,13 @@ function Camera3D(camera, pixWidth, pixHeight, fovx, fovy, near, far) {
      * 
      * @returns {glMatrix.quat} The quaternion
      */
-    camera.getQuatFromRot = function() {
+    getQuatFromRot() {
         let T = glMatrix.vec3.create();
-        glMatrix.vec3.cross(T, camera.right, camera.up);
+        glMatrix.vec3.cross(T, this.right, this.up);
         let rotMat = glMatrix.mat3.create();
         for (let i = 0; i < 3; i++) {
-            rotMat[i*3] = camera.right[i];
-            rotMat[i*3+1] = camera.up[i];
+            rotMat[i*3] = this.right[i];
+            rotMat[i*3+1] = this.up[i];
             rotMat[i*3+2] = T[i];
         }
         let q = glMatrix.quat.create();
@@ -131,22 +136,40 @@ function Camera3D(camera, pixWidth, pixHeight, fovx, fovy, near, far) {
     }
 }
 
-function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
+class MousePolarCamera extends Camera3D {
     //Coordinate system is defined as in OpenGL as a right
     //handed system with +z out of the screen, +x to the right,
     //and +y up
     //phi is CCW down from +y, theta is CCW away from +z
-    Camera3D(this, pixWidth, pixHeight, fovx, fovy, near, far);
-    this.type = "polar";
-    this.pos = glMatrix.vec3.create();
-    this.center = glMatrix.vec3.create();
-    this.resetRightUp = function() {
-        this.up = glMatrix.vec3.fromValues(0, 1, 0);
-        this.right = glMatrix.vec3.fromValues(1, 0, 0);
-    }
-    this.resetRightUp();
 
-    this.centerOnBBox = function(bbox, right, up) {
+    /**
+    * @param {int} pixWidth Width of viewing window
+    * @param {int} pixHeight Height of viewing window
+    * @param {float} fovx Field of view in x direction
+    * @param {float} fovy Field of view in y direction
+    * @param {float} near Distance to near viewing plane
+    * @param {float} far Distance to far viewing plane
+     */
+    constructor(pixWidth, pixHeight, fovx, fovy, near, far) {
+        super(pixWidth, pixHeight, fovx, fovy, near, far);
+        this.type = "polar";
+        this.pos = glMatrix.vec3.create();
+        this.center = glMatrix.vec3.create();
+        this.resetRightUp = function() {
+            this.up = glMatrix.vec3.fromValues(0, 1, 0);
+            this.right = glMatrix.vec3.fromValues(1, 0, 0);
+        }
+        this.resetRightUp();
+    }
+
+    /**
+     * Center the camera on the outside of a bounding box
+     * looking in
+     * @param {AABox3D} bbox The bounding box
+     * @param {glMatrix.vec3} right Right direction of camera orientation
+     * @param {glMatrix.vec3} up Up direction of camera orientation
+     */
+    centerOnBBox(bbox, right, up) {
         if (!(right === undefined)) {
             this.right = right;
         }
@@ -172,21 +195,31 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         glMatrix.vec3.scaleAndAdd(this.pos, this.center, away, R);
     }
 
-    this.centerOnMesh = function(mesh, right, up) {
+    /**
+     * Center the camera on a mesh, looking in
+     * @param {PolyMesh} mesh 
+     * @param {glMatrix.vec3} right Right direction of camera orientation
+     * @param {glMatrix.vec3} up Up direction of camera orientation
+     */
+    centerOnMesh(mesh, right, up) {
         let bbox = mesh.getBBox();
         this.centerOnBBox(bbox, right, up);
     }
 
     /**
      * Rotate up vector about right vector
-     * @param {int} ud Up/down motion of the mouse
+     * @param {int} ud Up/down motion of the mouse, in pixels
      */
-    this.orbitUpDown = function(ud) {
+    orbitUpDown(ud) {
         let thetaud = 2.0*this.fovy*ud/this.pixHeight;
         this.orbitUpDownTheta(thetaud);
     }
 
-    this.orbitUpDownTheta = function(thetaud) {
+    /**
+     * Rotate up vector about right vector by a particular angle
+     * @param {float} thetaud Angle by which to rotate, in radians
+     */
+    orbitUpDownTheta(thetaud) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
@@ -199,14 +232,18 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
     /**
      * Rotate right vector about the up vector, and
      * rotate vector from pos to the center about the up vector
-     * @param {int} lr Left/right motion of the mouse
+     * @param {int} lr Left/right motion of the mouse, in pixels
      */
-    this.orbitLeftRight = function(lr) {
+    orbitLeftRight(lr) {
         let thetalr = -2.0*this.fovx*lr/this.pixWidth;
         this.orbitLeftRightTheta(thetalr);
     }
 
-    this.orbitLeftRightTheta = function(thetalr) {
+    /**
+     * Rotate right vector about the up vector by a particular angle
+     * @param {float} thetaud Angle by which to rotate, in radians
+     */
+    orbitLeftRightTheta (thetalr) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);
@@ -216,7 +253,11 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         glMatrix.vec3.add(this.pos, this.center, dR);
     }
     
-    this.zoom = function(rate) {
+    /**
+     * Move the camera towards its center
+     * @param {float} rate How quickly to move the camera in, in units of pixels
+     */
+    zoom = function(rate) {
         rate = rate / this.pixHeight;
         let dR = glMatrix.vec3.create();
         glMatrix.vec3.subtract(dR, this.pos, this.center);
@@ -232,7 +273,12 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         }
     }
     
-    this.translate = function(pdx, pdy) {
+    /**
+     * Translate the camera
+     * @param {float} pdx Mouse motion rightward, in pixels 
+     * @param {float} pdy Mouse motion upward, in pixels
+     */
+    translate = function(pdx, pdy) {
         let dR = glMatrix.vec3.create();
         glMatrix.vec3.sub(dR, this.center, this.pos);
         let length = glMatrix.vec3.length(dR)*Math.tan(this.fovx/2);
@@ -245,50 +291,87 @@ function MousePolarCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
         glMatrix.vec3.scaleAndAdd(this.pos, this.pos, this.up, -dy);
     }
     
-    this.getPos = function() {
+    /**
+     * Get the absolute position of the camera
+     * @returns {glMatrix.vec3} The position of the camera
+     */
+    getPos() {
         return pos;
     }
 }
 
 
 //For use with WASD + mouse bindings
-function FPSCamera(pixWidth, pixHeight, fovx, fovy, near, far) {
-    Camera3D(this, pixWidth, pixHeight, fovx, fovy, near, far);
-    this.type = "fps";
-    this.right = glMatrix.vec3.fromValues(1, 0, 0);
-    this.up = glMatrix.vec3.fromValues(0, 1, 0);
-    this.pos = glMatrix.vec3.fromValues(0, 0, 0);
-    this.rotation = vecToStr(this.getQuatFromRot());
+class FPSCamera {
+    /**
+    * @param {int} pixWidth Width of viewing window
+    * @param {int} pixHeight Height of viewing window
+    * @param {float} fovx Field of view in x direction
+    * @param {float} fovy Field of view in y direction
+    * @param {float} near Distance to near viewing plane
+    * @param {float} far Distance to far viewing plane
+     */
+    constructor(pixWidth, pixHeight, fovx, fovy, near, far) {
+        super(pixWidth, pixHeight, fovx, fovy, near, far);
+        this.type = "fps";
+        this.right = glMatrix.vec3.fromValues(1, 0, 0);
+        this.up = glMatrix.vec3.fromValues(0, 1, 0);
+        this.pos = glMatrix.vec3.fromValues(0, 0, 0);
+        this.rotation = vecToStr(this.getQuatFromRot());
+    }
     
-    this.translate = function(dx, dy, dz, speed) {
+    /**
+     * Translate the camera in 3D
+     * @param {float} dx Change in x
+     * @param {float} dy Change in y
+     * @param {float} dz Change in z
+     * @param {float} speed Factor by which to translate
+     */
+    translate(dx, dy, dz, speed) {
         let T = glMatrix.vec3.create();
         glMatrix.vec3.cross(T, this.up, this.right);//Cross in opposite order so moving forward
         glMatrix.vec3.scaleAndAdd(this.pos, this.pos, this.right, dx*speed);
         glMatrix.vec3.scaleAndAdd(this.pos, this.pos, this.up, dy*speed);
         glMatrix.vec3.scaleAndAdd(this.pos, this.pos, T, dz*speed);
     }
-    
-    //Rotate the up direction around the right direction
-    this.rotateUpDown = function(ud) {
+
+    /**
+     * Rotate the up direction around the right direction
+     * @param {float} ud Up down motion, in pixels 
+     */
+    rotateUpDown = function(ud) {
         let thetaud = 2.0*this.fovy*ud/this.pixHeight;
         this.rotateUpDownTheta(thetaud);
     }
 
-    this.rotateUpDownTheta = function(thetaud) {
+    /**
+     * Rotate the up direction around the right direction, by a particular angle
+     * @param {float} thetaud Up down motion, in radians
+     */
+    rotateUpDownTheta(thetaud) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.right, thetaud);
         glMatrix.vec3.transformQuat(this.up, this.up, q);
         this.rotation = vecToStr(this.getQuatFromRot());
     }
     
-    //Rotate the right direction around the up direction
-    //but project onto the XY plane
-    this.rotateLeftRight = function(lr) {
+
+    /**
+     * Rotate the right direction around the up direction
+     * but project onto the XY plane
+     * @param {float} lr Left/right motion of the mouse, in pixels
+     */
+    rotateLeftRight(lr) {
         let thetalr = 2.0*this.fovx*lr/this.pixWidth;
         this.rotateLeftRightTheta(thetalr);
     }
 
-    this.rotateLeftRightTheta = function(thetalr) {
+    /**
+     * Rotate the right direction around the up direction, by a particular angle,
+     * but project onto the XY plane
+     * @param {float} thetalr Left/right motion of the mouse, in radians
+     */
+    rotateLeftRightTheta (thetalr) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);
