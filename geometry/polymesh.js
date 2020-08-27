@@ -8,13 +8,6 @@ cameras3d.js
 
 */
 
-const DEFAULT_AMBIENT = glMatrix.vec3.fromValues(0.05, 0.05, 0.05);
-const DEFAULT_DIFFUSE = glMatrix.vec3.fromValues(0.5, 0.55, 0.5);
-const DEFAULT_SPECULAR = glMatrix.vec3.create();
-const DEFAULT_TRANSMISSION = glMatrix.vec3.create();
-const DEFAULT_SHININESS = 50;
-const DEFAULT_REFRACTION_RATIO = 1;
-
 /**
  * Load in an .off file from an array of lines
  * 
@@ -402,7 +395,7 @@ class PolyMesh {
 
         // Material properties
         if ('uKaUniform' in sProg) {
-            let ka = DEFAULT_AMBIENT;
+            let ka = PolyMesh.AMBIENT;
             if ('ka' in canvas.material) {
                 ka = canvas.material.ka;
             }
@@ -420,14 +413,14 @@ class PolyMesh {
             gl.uniform3fv(sProg.uKdUniform, kd);
         }
         if ('uKsUniform' in sProg) {
-            let ks = DEFAULT_SPECULAR;
+            let ks = PolyMesh.SPECULAR;
             if ('ks' in canvas.material) {
                 ks = canvas.material.ks;
             }
             gl.uniform3fv(sProg.uKsUniform, ks);
         }
         if ('uShininessUniform' in sProg) {
-            let shininess = DEFAULT_SHININESS;
+            let shininess = PolyMesh.SHININESS;
             if ('shininess' in canvas.material) {
                 shininess = canvas.material.shininess;
             }
@@ -619,8 +612,8 @@ class PolyMesh {
         }
         if (!('material' in canvas)) {
             // Diffuse slight greenish gray is default material;
-            canvas.material = {ka:DEFAULT_AMBIENT, 
-                                 kd:DEFAULT_DIFFUSE};
+            canvas.material = {ka:PolyMesh.AMBIENT, 
+                                 kd:PolyMesh.DIFFUSE};
         }
 
         let mvMatrix = canvas.camera.getMVMatrix();
@@ -698,3 +691,10 @@ class PolyMesh {
         }
     }
 }
+// Default values for rendering
+PolyMesh.DEFAULT_AMBIENT = glMatrix.vec3.fromValues(0.05, 0.05, 0.05);
+PolyMesh.DEFAULT_DIFFUSE = glMatrix.vec3.fromValues(0.5, 0.55, 0.5);
+PolyMesh.DEFAULT_SPECULAR = glMatrix.vec3.create();
+PolyMesh.DEFAULT_TRANSMISSION = glMatrix.vec3.create();
+PolyMesh.DEFAULT_SHININESS = 50;
+PolyMesh.DEFAULT_REFRACTION_RATIO = 1;

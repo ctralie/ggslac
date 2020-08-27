@@ -800,7 +800,7 @@ function getCylinderMesh(center, R, H, res, color) {
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
+        color = PolyMesh.DEFAULT_DIFFUSE;
     }
     // Make the main cylinder part
     for (let i = 0; i < res; i++) {
@@ -849,7 +849,7 @@ function getConeMesh(center, R, H, res, color) {
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
+        color = PolyMesh.DEFAULT_DIFFUSE;
     }
     // Make the base of the cone
     for (let i = 0; i < res; i++) {

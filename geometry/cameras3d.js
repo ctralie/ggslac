@@ -1,16 +1,7 @@
-//Need to jointly include primitives3D.js
 /*
 Files that have been assumed to have been also loaded
 primitives3d.js
 */
-
-
-// Default values, assuming 4:3 aspect ratio
-DEFAULT_FOVX = 1.4
-DEFAULT_FOVY = 1.05
-DEFAULT_NEAR = 0.01
-DEFAULT_FAR = 1000
-
 
 function splitVecStr(s) {
     ret = [];
@@ -37,8 +28,7 @@ function vecToStr(v, k) {
 /**
  * Superclass for 3D cameras
  */
-class Camera3D {
-    
+class Camera3D {    
     /**
     * @param {int} pixWidth Width of viewing window
     * @param {int} pixHeight Height of viewing window
@@ -48,22 +38,23 @@ class Camera3D {
     * @param {float} far Distance to far viewing plane
     */
     constructor(pixWidth, pixHeight, fovx, fovy, near, far) {
+        this.type = "default";
         this.pixWidth = pixWidth;
         this.pixHeight = pixHeight;
         if (fovx === undefined) {
-            fovx = DEFAULT_FOVY;
+            fovx = Camera3D.DEFAULT_FOVY;
         }
         this.fovx = fovx;
         if (fovy === undefined) {
-            fovy = DEFAULT_FOVY;
+            fovy = Camera3D.DEFAULT_FOVY;
         }
         this.fovy = fovy;
         if (near === undefined) {
-            near = DEFAULT_NEAR;
+            near = Camera3D.DEFAULT_NEAR;
         }
         this.near = near;
         if (far === undefined) {
-            far = DEFAULT_FAR;
+            far = Camera3D.DEFAULT_FAR;
         }
         this.far = far;
     }
@@ -135,6 +126,11 @@ class Camera3D {
         return q;
     }
 }
+// Default values, assuming 4:3 aspect ratio
+Camera3D.DEFAULT_FOVX = 1.4;
+Camera3D.DEFAULT_FOVY = 1.05;
+Camera3D.DEFAULT_NEAR = 0.01;
+Camera3D.DEFAULT_FAR = 1000;
 
 class MousePolarCamera extends Camera3D {
     //Coordinate system is defined as in OpenGL as a right

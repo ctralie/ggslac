@@ -11,6 +11,8 @@ class BaseCanvas {
      */
     constructor(glcanvas, shadersrelpath, antialias) {
         this.glcanvas = glcanvas;
+        this.clientWidth = glcanvas.clientWidth;
+        this.clientHeight = glcanvas.clientHeight;
         if (antialias === undefined) {
             antialias = true;
         }
@@ -60,8 +62,8 @@ class BaseCanvas {
 
         //Keyboard listener
         this.keysDown = {87:false, 83:false, 65:false, 68:false, 67:false, 69:false};
-        document.addEventListener('keydown', this.keyDown, true);
-        document.addEventListener('keyup', this.keyUp, true);
+        document.addEventListener('keydown', this.keyDown.bind(this), true);
+        document.addEventListener('keyup', this.keyUp.bind(this), true);
 
     }
     
@@ -317,7 +319,7 @@ class BaseCanvas {
      * React to a key being released
      * @param {keyboard callback} evt 
      */
-    keyUp = function(evt) {
+    keyUp(evt) {
         if (!this.active) {
             return;
         }
