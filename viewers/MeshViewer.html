@@ -32,7 +32,7 @@
 <script>
     var glcanvas = document.getElementById("MainGLCanvas");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    SimpleMeshCanvas(glcanvas, "../shaders/");
+    let canvas = new SimpleMeshCanvas(glcanvas, "../shaders/");
 
     var meshInput = document.getElementById('meshInput');
     var result = document.getElementById('text');
@@ -41,9 +41,9 @@
         let reader = new FileReader();
         reader.onload = function(e) {
             let lines = e.target.result.split("\n");
-            glcanvas.mesh.loadFileFromLines(lines);
-            glcanvas.centerCamera();
-            requestAnimationFrame(glcanvas.repaint);
+            canvas.mesh.loadFileFromLines(lines);
+            canvas.centerCamera();
+            requestAnimationFrame(canvas.repaint.bind(canvas));
         }
         reader.readAsText(meshInput.files[0]);
     });

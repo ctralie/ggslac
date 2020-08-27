@@ -243,7 +243,7 @@ class MousePolarCamera extends Camera3D {
      * Rotate right vector about the up vector by a particular angle
      * @param {float} thetaud Angle by which to rotate, in radians
      */
-    orbitLeftRightTheta (thetalr) {
+    orbitLeftRightTheta(thetalr) {
         let q = glMatrix.quat.create();
         glMatrix.quat.setAxisAngle(q, this.up, thetalr);
         glMatrix.vec3.transformQuat(this.right, this.right, q);

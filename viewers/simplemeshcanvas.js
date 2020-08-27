@@ -4,53 +4,65 @@
  * @param {string} shadersrelpath Path to the folder that contains the shaders,
  *                                relative to where the constructor is being called
  */
-function SimpleMeshCanvas(glcanvas, shadersrelpath) {
-    BaseCanvas(glcanvas, shadersrelpath);
-    glcanvas.mesh = new BasicMesh();
-    glcanvas.camera = new MousePolarCamera(glcanvas.width, glcanvas.height);
+class SimpleMeshCanvas extends BaseCanvas {
 
+    /**
+     * @param {DOM Element} glcanvas Handle to HTML where the glcanvas resides
+     * @param {string} shadersrelpath Path to the folder that contains the shaders,
+     *                                relative to where the constructor is being called
+     * @param {antialias} boolean Whether antialiasing is enabled (true by default)
+     */
+    constructor(glcanvas, shadersrelpath, antialias) {
+        super(glcanvas, shadersrelpath, antialias);
+        this.mesh = new BasicMesh();
+        this.camera = new MousePolarCamera(glcanvas.width, glcanvas.height);
+        
+        this.gui = new dat.GUI();
+        const gui = this.gui;
+        // Mesh display options menu
+        this.drawEdges = false;
+        this.drawNormals = false;
+        this.drawVertices = false;
+        let meshOpts = gui.addFolder('Mesh Display Options');
+        let that = this;
+        ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+            function(s) {
+                let evt = meshOpts.add(that, s);
+                evt.onChange(function() {
+                    requestAnimFrame(that.repaint.bind(that));
+                });
+            }
+        );
+    
+        let simpleRepaint = function() {
+            requestAnimFrame(that.repaint.bind(that));
+        }
+        gui.add(this.mesh, 'consistentlyOrientFaces').onChange(simpleRepaint);
+        gui.add(this.mesh, 'reverseOrientation').onChange(simpleRepaint);
+        gui.add(this.mesh, 'randomlyFlipFaceOrientations').onChange(simpleRepaint);
+        gui.add(this.mesh, 'saveOffFile').onChange(simpleRepaint);
+    
+        requestAnimationFrame(this.repaint.bind(this));
+    }
 
-    /////////////////////////////////////////////////////
-    //Step 1: Setup repaint function
-    /////////////////////////////////////////////////////    
-    glcanvas.repaint = function() {
-        glcanvas.gl.viewport(0, 0, glcanvas.gl.viewportWidth, glcanvas.gl.viewportHeight);
-        glcanvas.gl.clear(glcanvas.gl.COLOR_BUFFER_BIT | glcanvas.gl.DEPTH_BUFFER_BIT);
+    /**
+     * Redraw the mesh
+     */
+    repaint() {
+        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         //NOTE: glcanvas has all options we need except
         //for "shaderToUse"
-        glcanvas.shaderToUse = glcanvas.shaders.blinnPhong;
-        glcanvas.lights = [{pos:glcanvas.camera.pos, color:[1, 1, 1], atten:[1, 0, 0]}];
-        glcanvas.mesh.render(glcanvas);
+        this.shaderToUse = this.shaders.blinnPhong;
+        this.lights = [{pos:this.camera.pos, color:[1, 1, 1], atten:[1, 0, 0]}];
+        this.mesh.render(this);
     }
 
-    glcanvas.centerCamera = function() {
+    /**
+     * Re-center the camera on the mesh
+     */
+    centerCamera() {
         this.camera.centerOnMesh(this.mesh);
     }
-
-    glcanvas.gui = new dat.GUI();
-    const gui = glcanvas.gui;
-    // Mesh display options menu
-    glcanvas.drawEdges = false;
-    glcanvas.drawNormals = false;
-    glcanvas.drawVertices = false;
-    let meshOpts = gui.addFolder('Mesh Display Options');
-    ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
-        function(s) {
-            let evt = meshOpts.add(glcanvas, s);
-            evt.onChange(function() {
-                requestAnimFrame(glcanvas.repaint);
-            });
-        }
-    );
-
-    let simpleRepaint = function() {
-        requestAnimFrame(glcanvas.repaint);
-    }
-    gui.add(glcanvas.mesh, 'consistentlyOrientFaces').onChange(simpleRepaint);
-    gui.add(glcanvas.mesh, 'reverseOrientation').onChange(simpleRepaint);
-    gui.add(glcanvas.mesh, 'randomlyFlipFaceOrientations').onChange(simpleRepaint);
-    gui.add(glcanvas.mesh, 'saveOffFile').onChange(simpleRepaint);
-
-    requestAnimationFrame(glcanvas.repaint);
 }

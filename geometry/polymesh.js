@@ -376,15 +376,15 @@ class PolyMesh {
      * This includes vertex positions, normals, colors, lighting,
      * and triangle index buffers
      * 
-     * @param {object} glcanvas glcanvas object (see render() doc for more info)
+     * @param {object} canvas canvas object (see render() doc for more info)
      * @param {object} sProg A shader program to use
      * @param {glMatrix.mat4} pMatrix The projection matrix
      * @param {glMatrix.mat4} mvMatrix The modelview matrix 
      * @param {glMatrix.mat4} tMatrix Transformation to apply to the mesh before viewing
      * 
      * */
-    sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix) {
-        let gl = glcanvas.gl;
+    sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix) {
+        let gl = canvas.gl;
         if ('vPosAttrib' in sProg) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.vertexAttribPointer(sProg.vPosAttrib, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -403,8 +403,8 @@ class PolyMesh {
         // Material properties
         if ('uKaUniform' in sProg) {
             let ka = DEFAULT_AMBIENT;
-            if ('ka' in glcanvas.material) {
-                ka = glcanvas.material.ka;
+            if ('ka' in canvas.material) {
+                ka = canvas.material.ka;
             }
             gl.uniform3fv(sProg.uKaUniform, ka);
         }
@@ -414,35 +414,35 @@ class PolyMesh {
             // instead rely on the per-vertex color buffer
             // But if the mesh material specifies a diffuse color, then use that instead
             let kd = glMatrix.vec3.fromValues(2.0, 2.0, 2.0);
-            if ('kd' in glcanvas.material) {
-                kd = glcanvas.material.kd;
+            if ('kd' in canvas.material) {
+                kd = canvas.material.kd;
             }
             gl.uniform3fv(sProg.uKdUniform, kd);
         }
         if ('uKsUniform' in sProg) {
             let ks = DEFAULT_SPECULAR;
-            if ('ks' in glcanvas.material) {
-                ks = glcanvas.material.ks;
+            if ('ks' in canvas.material) {
+                ks = canvas.material.ks;
             }
             gl.uniform3fv(sProg.uKsUniform, ks);
         }
         if ('uShininessUniform' in sProg) {
             let shininess = DEFAULT_SHININESS;
-            if ('shininess' in glcanvas.material) {
-                shininess = glcanvas.material.shininess;
+            if ('shininess' in canvas.material) {
+                shininess = canvas.material.shininess;
             }
             gl.uniform1f(sProg.uShininessUniform, shininess);
         }
 
         // Camera information
         if ('uEyeUniform' in sProg) {
-            gl.uniform3fv(sProg.uEyeUniform, glcanvas.camera.pos);
+            gl.uniform3fv(sProg.uEyeUniform, canvas.camera.pos);
         }
         if ('uNearUniform' in sProg) {
-            gl.uniform1f(sProg.uNearUniform, glcanvas.camera.near);
+            gl.uniform1f(sProg.uNearUniform, canvas.camera.near);
         }
         if ('uFarUniform' in sProg) {
-            gl.uniform1f(sProg.uFarUniform, glcanvas.camera.far);
+            gl.uniform1f(sProg.uFarUniform, canvas.camera.far);
         }
 
         // Projection and transformation matrices
@@ -468,37 +468,37 @@ class PolyMesh {
 
         // Lighting
         if ('u_lights' in sProg && 'u_numLights' in sProg) {
-            let numLights = Math.min(MAX_LIGHTS, glcanvas.lights.length);
+            let numLights = Math.min(MAX_LIGHTS, canvas.lights.length);
             gl.uniform1i(sProg.u_numLights, numLights);
             for (let i = 0; i < numLights; i++) {
-                gl.uniform3fv(sProg.u_lights[i].pos, glcanvas.lights[i].pos);
-                gl.uniform3fv(sProg.u_lights[i].color, glcanvas.lights[i].color);
-                gl.uniform3fv(sProg.u_lights[i].atten, glcanvas.lights[i].atten);
+                gl.uniform3fv(sProg.u_lights[i].pos, canvas.lights[i].pos);
+                gl.uniform3fv(sProg.u_lights[i].color, canvas.lights[i].color);
+                gl.uniform3fv(sProg.u_lights[i].atten, canvas.lights[i].atten);
             }
         }
     }
 
     /**
      * Draw the mesh edges as a bunch of line segments
-     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {object} canvas Object holding info on WebGL/canvas state
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
      *                                to this mesh before viewing
      * @param {array} color An array of RGB, or blue by default
      */
-    drawEdges(glcanvas, tMatrix, color) {
+    drawEdges(canvas, tMatrix, color) {
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
         if (color === undefined) {
             color = glMatrix.vec3.fromValues(1.0, 1.0, 1.0);
         }
-        let gl = glcanvas.gl;
-        let sProg = glcanvas.shaders.pointShader;
-        let mvMatrix = glcanvas.camera.getMVMatrix();
-        let pMatrix = glcanvas.camera.getPMatrix();
+        let gl = canvas.gl;
+        let sProg = canvas.shaders.pointShader;
+        let mvMatrix = canvas.camera.getMVMatrix();
+        let pMatrix = canvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
         gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
@@ -507,12 +507,12 @@ class PolyMesh {
     /**
      * Draw the surface points as a scatter plot
      * 
-     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {object} canvas Object holding info on WebGL/canvas state
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
      *                                to this mesh before viewing
      * @param {array} color An array of RGB, or red by default
      */
-    drawPoints(glcanvas, tMatrix, color) {
+    drawPoints(canvas, tMatrix, color) {
         if (this.drawer === null) {
             console.log("Warning: Trying to draw mesh points, but simple drawer is null");
             return;
@@ -520,13 +520,13 @@ class PolyMesh {
         if (color === undefined) {
             color = [1.0, 0.0, 0.0];
         }
-        let gl = glcanvas.gl;
-        let sProg = glcanvas.shaders.pointShader;
-        let mvMatrix = glcanvas.camera.getMVMatrix();
-        let pMatrix = glcanvas.camera.getPMatrix();
+        let gl = canvas.gl;
+        let sProg = canvas.shaders.pointShader;
+        let mvMatrix = canvas.camera.getMVMatrix();
+        let pMatrix = canvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
         gl.drawArrays(gl.POINTS, 0, this.vertexBuffer.numItems);
     }
@@ -534,14 +534,14 @@ class PolyMesh {
 
     /**
      * Draw the surface normals as a bunch of blue line segments
-     * @param {object} glcanvas Object holding info on WebGL/canvas state
+     * @param {object} canvas Object holding info on WebGL/canvas state
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
      *                                to this mesh before viewing
      * @param {array} color An array of RGB, or blue by default
      * @param {float} scale The length of the normal, as a proportion of 
      *                      the bounding box diagonal
      */
-    drawNormals(glcanvas, tMatrix, color, scale) {
+    drawNormals(canvas, tMatrix, color, scale) {
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
@@ -551,13 +551,13 @@ class PolyMesh {
         if (scale === undefined) {
             scale = 0.05*this.bbox.getDiagLength();
         }
-        let gl = glcanvas.gl;
-        let sProg = glcanvas.shaders.normalShader;
-        let mvMatrix = glcanvas.camera.getMVMatrix();
-        let pMatrix = glcanvas.camera.getPMatrix();
+        let gl = canvas.gl;
+        let sProg = canvas.shaders.normalShader;
+        let mvMatrix = canvas.camera.getMVMatrix();
+        let pMatrix = canvas.camera.getPMatrix();
 
         gl.useProgram(sProg);
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vnormal1Buffer);
         gl.vertexAttribPointer(sProg.n1PosAttrib, this.vnormal1Buffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -571,7 +571,7 @@ class PolyMesh {
 
     /**
      Render the mesh using some pre-specified shaders
-     * @param {object} glcanvas An object holding information about WebGL state and viewing configuration.
+     * @param {object} canvas An object holding information about WebGL state and viewing configuration.
                                 Required Fields    
                                     * gl (WebGL handle)
                                     * shaders (object containing WebGL shader handles)
@@ -588,67 +588,67 @@ class PolyMesh {
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply to this mesh before viewing.
      *                       If unspecified, it's assumed to be the identity
      */
-    render(glcanvas, tMatrix) {
+    render(canvas, tMatrix) {
         if (this.vertices.length == 0) {
             return;
         }
-        if (!('gl' in glcanvas)) {
+        if (!('gl' in canvas)) {
             throw "Unable to find gl object in the gl canvas when rendering a mesh";
         }
-        let gl = glcanvas.gl;
+        let gl = canvas.gl;
         if (this.needsDisplayUpdate) {
             this.updateBuffers(gl);
         }
         if (this.vertexBuffer === null) {
             throw "Trying to render when buffers have not been initialized";
         }
-        if (!('shaders' in glcanvas)) {
-            throw "Must initialize shaders and store them as a 'shaders' field in glcanvas before rendering a mesh"
+        if (!('shaders' in canvas)) {
+            throw "Must initialize shaders and store them as a 'shaders' field in canvas before rendering a mesh"
         }
-        if (!('camera' in glcanvas)) {
-            throw "Expecting a camera object to be in the glcanvas when rendering a mesh";
+        if (!('camera' in canvas)) {
+            throw "Expecting a camera object to be in the canvas when rendering a mesh";
         }
-        if (!('getMVMatrix' in glcanvas.camera)) {
-            throw "Expecting getMVMatrix() function in glcanvas.camera when rendering a mesh";
+        if (!('getMVMatrix' in canvas.camera)) {
+            throw "Expecting getMVMatrix() function in canvas.camera when rendering a mesh";
         }
-        if (!('getPMatrix' in glcanvas.camera)) {
-            throw "Expecting getPMatrix() function in glcanvas.camera when rendering a mesh";
+        if (!('getPMatrix' in canvas.camera)) {
+            throw "Expecting getPMatrix() function in canvas.camera when rendering a mesh";
         }
         if (tMatrix === undefined) {
             tMatrix = glMatrix.mat4.create();
         }
-        if (!('material' in glcanvas)) {
+        if (!('material' in canvas)) {
             // Diffuse slight greenish gray is default material;
-            glcanvas.material = {ka:DEFAULT_AMBIENT, 
+            canvas.material = {ka:DEFAULT_AMBIENT, 
                                  kd:DEFAULT_DIFFUSE};
         }
 
-        let mvMatrix = glcanvas.camera.getMVMatrix();
-        let pMatrix = glcanvas.camera.getPMatrix();
+        let mvMatrix = canvas.camera.getMVMatrix();
+        let pMatrix = canvas.camera.getPMatrix();
         
         //Step 1: Figure out which shader to use
-        let sProg = glcanvas.shaders.blinnPhong;
-        if ('shaderToUse' in glcanvas) {
-            sProg = glcanvas.shaderToUse;
+        let sProg = canvas.shaders.blinnPhong;
+        if ('shaderToUse' in canvas) {
+            sProg = canvas.shaderToUse;
         }
         gl.useProgram(sProg);
         
         // Step 2: Bind all buffers
-        this.sendBuffersToGPU(glcanvas, sProg, pMatrix, mvMatrix, tMatrix);
+        this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
         
         // Step 3: Render the mesh
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         
         //Step 4: Draw lines and points for vertices, edges, and normals if requested
-        if (glcanvas.drawNormals) {
-            this.drawNormals(glcanvas, tMatrix);
+        if (canvas.drawNormals) {
+            this.drawNormals(canvas, tMatrix);
         }
-        if (glcanvas.drawEdges) {
-            this.drawEdges(glcanvas, tMatrix);
+        if (canvas.drawEdges) {
+            this.drawEdges(canvas, tMatrix);
         }
-        if (glcanvas.drawPoints) {
-            this.drawPoints(glcanvas, tMatrix);
+        if (canvas.drawPoints) {
+            this.drawPoints(canvas, tMatrix);
         }
         //By the time rendering is done, there should not be a need to update
         //the display unless this flag is changed again externally
