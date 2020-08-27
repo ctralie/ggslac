@@ -150,7 +150,7 @@ class PolyMesh {
         this.indexBuffer = null;
         this.edgeIndexBuffer = null;
         this.colorBuffer = null;
-        this.bbox = AABox3D(0, 0, 0, 0, 0, 0);
+        this.bbox = new AABox3D(0, 0, 0, 0, 0, 0);
     }
 
 
@@ -207,7 +207,7 @@ class PolyMesh {
      */
     getBBox() {
         if (this.vertices.length == 0) {
-            return AABox3D(0, 0, 0, 0, 0, 0);
+            return new AABox3D(0, 0, 0, 0, 0, 0);
         }
         let P0 = this.vertices[0].pos;
         let bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
@@ -227,7 +227,7 @@ class PolyMesh {
      */
     getBBoxTransformed(tMatrix) {
         if (this.vertices.length == 0) {
-            return AABox3D(0, 0, 0, 0, 0, 0);
+            return new AABox3D(0, 0, 0, 0, 0, 0);
         }
         let p = glMatrix.vec3.create();
         glMatrix.vec3.transformMat3(p, this.vertices[0].pos, tMatrix);
@@ -293,7 +293,7 @@ class PolyMesh {
         // Vertex Buffer
         this.bbox = new AABox3D(0, 0, 0, 0, 0, 0);
         if (this.vertices.length > 0) {
-            P0 = this.vertices[0].pos;
+            let P0 = this.vertices[0].pos;
             this.bbox = new AABox3D(P0[0], P0[0], P0[1], P0[1], P0[2], P0[2]);
         }
         let V = new Float32Array(this.vertices.length*3);

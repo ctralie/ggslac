@@ -302,7 +302,7 @@ class MousePolarCamera extends Camera3D {
 
 
 //For use with WASD + mouse bindings
-class FPSCamera {
+class FPSCamera extends Camera3D {
     /**
     * @param {int} pixWidth Width of viewing window
     * @param {int} pixHeight Height of viewing window

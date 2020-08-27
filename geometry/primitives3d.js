@@ -371,9 +371,9 @@ class AABox3D {
      * Get the length along the 3D diagonal
      */
     getDiagLength() {
-        dX = this.XLen()/2;
-        dY = this.YLen()/2;
-        dZ = this.ZLen()/2;
+        let dX = this.XLen()/2;
+        let dY = this.YLen()/2;
+        let dZ = this.ZLen()/2;
         return Math.sqrt(dX*dX + dY*dY + dZ*dZ);
     }
     

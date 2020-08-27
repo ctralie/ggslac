@@ -382,7 +382,7 @@ class BasicMesh extends PolyMesh {
      * @returns {MeshVertex} The new vertex object
      */
     addVertex(P, color) {
-        vertex = new MeshVertex(P, this.vertices.length);
+        let vertex = new MeshVertex(P, this.vertices.length);
         vertex.color = (typeof color !== 'undefined' ? color : null);
         this.vertices.push(vertex);
         return vertex;
@@ -399,7 +399,7 @@ class BasicMesh extends PolyMesh {
      * @returns {MeshEdge} The edge that was added
     */
     addEdge(v1, v2) {
-        edge = new MeshEdge(v1, v2, this.edges.length);
+        let edge = new MeshEdge(v1, v2, this.edges.length);
         this.edges.push(edge);
         v1.edges.push(edge);
         v2.edges.push(edge);
@@ -655,7 +655,7 @@ class BasicMesh extends PolyMesh {
      * @returns {BasicMesh} A clone of this mesh
      */
     Clone() {
-        newMesh = new BasicMesh();
+        let newMesh = new BasicMesh();
         for (let i = 0; i < this.vertices.length; i++) {
             newMesh.addVertex(this.vertices[i].pos, this.vertices[i].color);
         }
@@ -796,7 +796,7 @@ function getIcosahedronMesh() {
  * @param {array} color Color of the cylinder
  */
 function getCylinderMesh(center, R, H, res, color) {
-    cylinder = new BasicMesh();
+    let cylinder = new BasicMesh();
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
@@ -845,7 +845,7 @@ function getCylinderMesh(center, R, H, res, color) {
  * @param {array} color Color of the cylinder
  */
 function getConeMesh(center, R, H, res, color) {
-    cone = new BasicMesh();
+    let cone = new BasicMesh();
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
