@@ -64,7 +64,7 @@
 <script>
     let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    SceneCanvas(glcanvas, "../shaders/", "../meshes/");
+    let canvas = new SceneCanvas(glcanvas, "../shaders/", "../meshes/");
 
     let sceneInput = document.getElementById('sceneInput');
     sceneInput.addEventListener('change', function(e) {
@@ -78,8 +78,8 @@
                 alert("Error parsing scene file.  Check your JSON syntax");
                 throw(error);
             }
-            glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-            glcanvas.updateMeshDrawings();
+            canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+            canvas.updateMeshDrawings();
         }
         reader.readAsText(sceneInput.files[0]);
     });
@@ -87,10 +87,10 @@
 
     // Load the sample scene as a default
     scene = BlockLoader.loadJSON("../scenes/sample-scene.json");
-    glcanvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-    glcanvas.drawEdges = false;
-    glcanvas.updateMeshDrawings();
-    requestAnimFrame(glcanvas.repaint);
+    canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+    canvas.drawEdges = false;
+    canvas.updateMeshDrawings();
+    requestAnimFrame(canvas.repaint.bind(canvas));
     
     
 </script>

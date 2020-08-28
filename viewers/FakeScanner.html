@@ -31,7 +31,7 @@
     </table>
 
 <table><tr><td>
-<canvas id="GLCanvas1" style="border: none;" width="300" height="300"></canvas>
+<canvas id="GLCanvas" style="border: none;" width="300" height="300"></canvas>
 
 </td>
 <td>
@@ -44,17 +44,17 @@
 
 
 <script>
-    let glcanvas = document.getElementById("GLCanvas1");
+    let glcanvas = document.getElementById("GLCanvas");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    FakeScannerCanvas(glcanvas, "../shaders/", "../meshes/");
+    let scanner = new FakeScannerCanvas(glcanvas, "../shaders/", "../meshes/");
 
-    var meshInput = document.getElementById('meshInput');
-    var result = document.getElementById('text');
+    let meshInput = document.getElementById('meshInput');
+    let result = document.getElementById('text');
     
     meshInput.addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
-            glcanvas.loadMeshToScan(e.target.result);
+            scanner.loadMeshToScan(e.target.result);
         }
         reader.readAsText(meshInput.files[0]);
     });

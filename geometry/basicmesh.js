@@ -1,16 +1,26 @@
 /**
- * A basic, overly redundant mesh class which makes
- * vertices, faces, and edges all first class members
+ * Purpose: A basic, overly redundant mesh class which makes
+ * vertices, faces, and edges all first class members.  This
+ * is used to initialize fancier structures like the half-edge
+ * mesh without totally giving them away to students, so they
+ * can be left as exercises
  */
 
 
-function MeshVertex(P, ID) {
-    this.pos = glMatrix.vec3.clone(P); //Type glMatrix.vec3
-    this.texCoords = [0.0, 0.0];
-    this.ID = ID;
-    this.edges = [];
-    this.component = -1;//Which connected component it's in
-    this.color = null;
+class MeshVertex {
+    /**
+     * @param {glMatrix.vec3} P Coordinates of the point associated to this vertex
+     * @param {int} ID The index in the list of all vertices
+     */
+    constructor(P, ID){ 
+        this.pos = glMatrix.vec3.clone(P); //Type glMatrix.vec3
+        this.texCoords = [0.0, 0.0];
+        this.ID = ID;
+        this.edges = [];
+        this.component = -1;//Which connected component it's in
+        this.color = null;
+    }
+
     
     /**
      * Return a list of vertices attached to this neighbor
@@ -19,7 +29,7 @@ function MeshVertex(P, ID) {
      * 
      * @returns {list of MeshVertex} A list of attached vertices
      */
-    this.getVertexNeighbors = function() {
+    getVertexNeighbors() {
         let ret = Array(this.edges.length);
         for (let i = 0; i < this.edges.length; i++) {
             ret[i] = this.edges[i].vertexAcross(this);
@@ -34,7 +44,7 @@ function MeshVertex(P, ID) {
      * @returns {list of MeshFace} A list of attached faces
      *
      */
-    this.getAttachedFaces = function() {
+    getAttachedFaces() {
         let ret = new Set();
         for (let i = 0; i < this.edges.length; i++) {
             let f1 = this.edges[i].f1;
@@ -52,8 +62,10 @@ function MeshVertex(P, ID) {
     /**
      * Get an estimate of the vertex normal by taking a weighted
      * average of normals of attached faces    
+     * 
+     * @returns {glMatrix.vec3} The normal
      */
-    this.getNormal = function() {
+    getNormal() {
         faces = this.getAttachedFaces();
         let normal = glMatrix.vec3.fromValues(0, 0, 0);
         let w;
@@ -65,21 +77,27 @@ function MeshVertex(P, ID) {
             glMatrix.vec3.add(normal, normal, N);
         }
         glMatrix.vec3.normalize(normal, normal);
-        //console.log(glMatrix.vec3.sqrLen(normal));
         return normal;
     }
 }
 
-function MeshFace(ID) {
-    this.ID = ID;
-    this.edges = []; //Store edges in CCW order
-    this.startV = 0; //Vertex object that starts it off
+class MeshFace {
+    /**
+     * 
+     * @param {int} ID The index in the array of faces
+     */
+    constructor(ID) {
+        this.ID = ID;
+        this.edges = []; //Store edges in CCW order
+        this.startV = 0; //Vertex object that starts it off
+    }
+
     
     /**
      * Reverse the specification of the edges to make the normal
      * point in the opposite direction
      */
-    this.flipOrientation = function() {
+    flipOrientation() {
         this.edges.reverse();
         this.normal = null;
     }
@@ -89,7 +107,7 @@ function MeshFace(ID) {
      * 
      * @returns {list of MeshVertex} Vertices on this face
      */
-    this.getVertices = function() {
+    getVertices() {
         let ret = Array(this.edges.length);
         let v = this.startV;
         for (let i = 0; i < this.edges.length; i++) {
@@ -105,7 +123,7 @@ function MeshFace(ID) {
      * 
      * @returns {list of MeshFace} Faces adjacent to this face
      */
-    this.getFaceNeighbors = function() {
+    getFaceNeighbors() {
         let ret = [];
         for (let i = 0; i < this.edges.length; i++) {
             let f = this.edges[i].faceAcross(this);
@@ -121,7 +139,7 @@ function MeshFace(ID) {
      * 
      * @returns {list of MeshVertex} Cloned list
      */
-    this.getVerticesPos = function() {
+    getVerticesPos() {
         let ret = Array(this.edges.length);
         let v = this.startV;
         for (let i = 0; i < this.edges.length; i++) {
@@ -136,7 +154,7 @@ function MeshFace(ID) {
      * 
      * @returns {number} Area
      */
-    this.getArea = function() {
+    getArea() {
         let verts = this.getVertices();
         for (var i = 0; i < verts.length; i++) {
             verts[i] = verts[i].pos;
@@ -149,7 +167,7 @@ function MeshFace(ID) {
      * 
      * @returns {glMatrix.vec3} Normal, or null if the points are all collinear
      */
-    this.getNormal = function() {
+    getNormal() {
         return GeomUtils.getFaceNormal(this.getVerticesPos());
     }
     
@@ -158,23 +176,25 @@ function MeshFace(ID) {
      * 
      * @returns {Plane3D} Plane spanned by this face
      */
-    this.getPlane = function() {
+    getPlane() {
         return new Plane3D(this.startV.pos, this.getNormal());
     }
 }
 
-/**
- * 
- * @param {*} v1 
- * @param {*} v2 
- * @param {*} ID 
- */
-function MeshEdge(v1, v2, ID) {
-    this.ID = ID;
-    this.v1 = v1;
-    this.v2 = v2;
-    this.f1 = null;
-    this.f2 = null;
+class MeshEdge {
+    /**
+     * 
+     * @param {MeshVertex} v1 First vertex on this edge
+     * @param {MeshVertex} v2 Second vertex on this edge
+     * @param {int} ID Index of this edge in the list of edges
+     */
+    constructor(v1, v2, ID) {
+        this.ID = ID;
+        this.v1 = v1;
+        this.v2 = v2;
+        this.f1 = null;
+        this.f2 = null;
+    }
     
     /**
      * Return the vertex across the edge from this given
@@ -185,7 +205,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @returns {MeshVertex} Vertex across edge
      */
-    this.vertexAcross = function(startV) {
+    vertexAcross(startV) {
         if (startV === this.v1) {
             return this.v2;
         }
@@ -201,7 +221,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @param {MeshFace} face face to add
      */
-    this.addFace = function(face) {
+    addFace(face) {
         if (this.f1 === null) {
             this.f1 = face;
         }
@@ -218,7 +238,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @param {MeshFace} face face to remove
      */
-    this.removeFace = function(face) {
+    removeFace(face) {
         if (this.f1 === face) {
             this.f1 = null;
         }
@@ -238,7 +258,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @returns {MeshFace} Face across
      */
-    this.faceAcross = function(startF) {
+    faceAcross(startF) {
         if (startF === this.f1) {
             return this.f2;
         }
@@ -254,7 +274,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @returns {glMatrix.vec3} Centroid
      */
-    this.getCenter = function() {
+    getCenter() {
         let ret = glMatrix.vec3.create();
         glMatrix.vec3.lerp(ret, this.v1.pos, this.v2.pos, 0.5);
         return ret;
@@ -265,7 +285,7 @@ function MeshEdge(v1, v2, ID) {
      * 
      * @returns {int} 0, 1, or 2 faces attached
      */
-    this.numAttachedFaces = function() {
+    numAttachedFaces() {
         let ret = 0;
         if (!(this.f1 === null)) {
             ret++;
@@ -280,8 +300,10 @@ function MeshEdge(v1, v2, ID) {
 
 
 
-function BasicMesh() {
-    PolyMesh(this); // Initialize common functions/variables
+class BasicMesh extends PolyMesh {
+    constructor() {
+        super(); //Initialize common functions/variables
+    }
 
     /**
      * A static function to return the face that two edges
@@ -292,7 +314,7 @@ function BasicMesh() {
      * @returns {MeshFace} The face they have in common, or null
      * if they don't have anything in common
      */
-    this.getFaceInCommon = function(e1, e2) {
+    getFaceInCommon(e1, e2) {
         let e2faces = [];
         if (!(e2.f1 === null)) {
             e2faces.push(e2.f1);
@@ -318,7 +340,7 @@ function BasicMesh() {
      * @returns {MeshVertex} Vertex shared by the two
      * edges, or null if they don't intersect
      */
-    this.getVertexInCommon = function(e1, e2) {
+    getVertexInCommon(e1, e2) {
         let v = [e1.v1, e1.v2, e2.v1, e2.v2];
         for (let i = 0; i < 4; i++) {
             for(let j = i + 1; j < 4; j++) {
@@ -339,7 +361,7 @@ function BasicMesh() {
      * @returns {MeshEdge} The edge that they both have in common, or
      * null if they don't share an edge
      */
-    this.getEdgeInCommon = function(v1, v2) {
+    getEdgeInCommon(v1, v2) {
         for (let i = 0; i < v1.edges.length; i++) {
             if (v1.edges[i].vertexAcross(v1) === v2) {
                 return v1.edges[i];
@@ -359,8 +381,8 @@ function BasicMesh() {
      * 
      * @returns {MeshVertex} The new vertex object
      */
-    this.addVertex = function(P, color) {
-        vertex = new MeshVertex(P, this.vertices.length);
+    addVertex(P, color) {
+        let vertex = new MeshVertex(P, this.vertices.length);
         vertex.color = (typeof color !== 'undefined' ? color : null);
         this.vertices.push(vertex);
         return vertex;
@@ -376,8 +398,8 @@ function BasicMesh() {
      * 
      * @returns {MeshEdge} The edge that was added
     */
-    this.addEdge = function(v1, v2) {
-        edge = new MeshEdge(v1, v2, this.edges.length);
+    addEdge(v1, v2) {
+        let edge = new MeshEdge(v1, v2, this.edges.length);
         this.edges.push(edge);
         v1.edges.push(edge);
         v2.edges.push(edge);
@@ -394,7 +416,7 @@ function BasicMesh() {
      * 
      * @returns {MeshFace} New face object that's created
      */
-    this.addFace = function(meshVerts) {
+    addFace(meshVerts) {
         let vertsPos = Array(meshVerts.length);
         for (let i = 0; i < vertsPos.length; i++) {
             vertsPos[i] = meshVerts[i].pos;
@@ -433,7 +455,7 @@ function BasicMesh() {
      * 
      * @param {MeshFace} face
      */
-    this.removeFace = function(face) {
+    removeFace(face) {
         //Swap the face to remove with the last face (O(1) removal)
         this.faces[face.ID] = this.faces[this.faces.length-1];
         this.faces[face.ID].ID = face.ID; //Update ID of swapped face
@@ -455,7 +477,7 @@ function BasicMesh() {
      * 
      * @param {MeshEdge} edge Edge to remove
      */
-    this.removeEdge = function(edge) {
+    removeEdge(edge) {
         //Swap the edge to remove with the last edge
         this.edges[edge.ID] = this.edges[this.edges.length-1];
         this.edges[edge.ID].ID = edge.ID; //Update ID of swapped face
@@ -477,7 +499,7 @@ function BasicMesh() {
      * 
      * @param {MeshVertex} Vertex to remove
      */
-    this.removeVertex = function(vertex) {
+    removeVertex(vertex) {
         this.vertices[vertex.ID] = this.vertices[this.vertices.length-1];
         this.vertices[vertex.ID].ID = vertex.ID;
         vertex.ID = -1;
@@ -487,7 +509,7 @@ function BasicMesh() {
     /**
      * @returns {I} A NumTrisx3 Uint16Array of indices into the vertex array
      */
-    this.getTriangleIndices = function() {
+    getTriangleIndices() {
         let NumTris = 0;
         for (let i = 0; i < this.faces.length; i++) {
             NumTris += this.faces[i].edges.length - 2;
@@ -512,7 +534,7 @@ function BasicMesh() {
     /**
      * Subtract the centroid away from all vertices
      */
-    this.subtractCentroid = function() {
+    subtractCentroid() {
         let centroid = glMatrix.vec3.create();
         for (let i = 0; i < this.vertices.length; i++) {
             glMatrix.vec3.add(centroid, centroid, this.vertices[i].pos);
@@ -527,7 +549,7 @@ function BasicMesh() {
     /**
      * @returns {I} A NEdgesx2 Uint16Array of indices into the vertex array
      */
-    this.getEdgeIndices = function() {
+    getEdgeIndices() {
         let NumEdges = this.edges.length;
         let I = new Uint16Array(NumEdges*2);
         for (let i = 0; i < NumEdges; i++) {
@@ -543,7 +565,7 @@ function BasicMesh() {
      * of faces has the correct global orientation, propagate that orientation
      * throughout each connected component
      */
-    this.consistentlyOrientFaces = function() {
+    consistentlyOrientFaces() {
         for (let i = 0; i < this.faces.length; i++) {
             this.faces[i].oriented = false;
         }
@@ -606,7 +628,7 @@ function BasicMesh() {
     /**
      * Reverse the orientation of all faces
      */
-    this.reverseOrientation = function() {
+    reverseOrientation() {
         this.faces.forEach(function(face) {
             face.flipOrientation();
         });
@@ -618,7 +640,7 @@ function BasicMesh() {
      * to make sure that the consistent orientation function
      * can recover a consistent orientation
      */
-    this.randomlyFlipFaceOrientations = function() {
+    randomlyFlipFaceOrientations() {
         this.faces.forEach(function(face) {
             if (Math.random() < 0.5) {
                 face.flipOrientation();
@@ -632,8 +654,8 @@ function BasicMesh() {
      * 
      * @returns {BasicMesh} A clone of this mesh
      */
-    this.Clone = function() {
-        newMesh = new BasicMesh();
+    Clone() {
+        let newMesh = new BasicMesh();
         for (let i = 0; i < this.vertices.length; i++) {
             newMesh.addVertex(this.vertices[i].pos, this.vertices[i].color);
         }
@@ -650,7 +672,7 @@ function BasicMesh() {
     /**
      * Delete all faces, edges, and vertices, in that order
      */
-    this.clear = function() {
+    clear() {
         while(this.faces.length > 0) {
             this.removeFace(this.faces[this.faces.length-1]);
         }
@@ -666,7 +688,13 @@ function BasicMesh() {
     /////////////////////////////////////////////////////////////
     ////                INPUT/OUTPUT METHODS                /////
     /////////////////////////////////////////////////////////////
-    this.loadFileFromLines = function(lines) {
+
+    /**
+     * Initialize a mesh from a set of formatted lines
+     * 
+     * @param {array of string} lines The lines in the file
+     */
+    loadFileFromLines(lines) {
         let res = loadFileFromLines(lines);
         this.vertices.length = 0;
         this.edges.length = 0;
@@ -690,8 +718,6 @@ function BasicMesh() {
         this.needsDisplayUpdate = true;
     }
 }
-
-
 
 
 
@@ -770,11 +796,11 @@ function getIcosahedronMesh() {
  * @param {array} color Color of the cylinder
  */
 function getCylinderMesh(center, R, H, res, color) {
-    cylinder = new BasicMesh();
+    let cylinder = new BasicMesh();
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
+        color = PolyMesh.DEFAULT_DIFFUSE;
     }
     // Make the main cylinder part
     for (let i = 0; i < res; i++) {
@@ -819,11 +845,11 @@ function getCylinderMesh(center, R, H, res, color) {
  * @param {array} color Color of the cylinder
  */
 function getConeMesh(center, R, H, res, color) {
-    cone = new BasicMesh();
+    let cone = new BasicMesh();
     let vertexArr = [];
     let vals = [0, 0, 0];
     if (color === undefined) {
-        color = DEFAULT_DIFFUSE;
+        color = PolyMesh.DEFAULT_DIFFUSE;
     }
     // Make the base of the cone
     for (let i = 0; i < res; i++) {

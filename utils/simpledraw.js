@@ -1,25 +1,37 @@
-
-function SimpleDrawer(gl, shaders) {
-    this.gl = gl;
-    this.shader = shaders.pointColorShader;
+/**
+ * A class to wrap around webgl to draw points and lines
+ */
+class SimpleDrawer {
+    /**
+     * 
+     * @param {webgl handle} gl 
+     * @param {object} shaders An object with compiled shaders.  Must include pointColorShader
+     */
+    constructor(gl, shaders) {
+        this.gl = gl;
+        this.shader = shaders.pointColorShader;
+            
+        //Internally store a vertex buffer for all of the different lines/vertices, as
+        //well as a color buffer
+        this.linesVBO = null;//Positions
+        this.linesPoints = [];
+        this.linesCVBO = null;//Colors
+        this.linesColors = [];
         
-    //Internally store a vertex buffer for all of the different lines/vertices, as
-    //well as a color buffer
-    this.linesVBO = null;//Positions
-    this.linesPoints = [];
-    this.linesCVBO = null;//Colors
-    this.linesColors = [];
+        this.pointsVBO = null;
+        this.points = [];
+        this.pointsCVBO = null;
+        this.pointsColors = [];
+        
+        this.pSize = 3.0;
+        
+        this.needsDisplayUpdate = false;
+    }
     
-    this.pointsVBO = null;
-    this.points = [];
-    this.pointsCVBO = null;
-    this.pointsColors = [];
-    
-    this.pSize = 3.0;
-    
-    this.needsDisplayUpdate = false;
-    
-    this.reset = function() {
+    /**
+     * Clear all of the points and lines that may have been added
+     */
+    reset() {
         this.linesPoints = [];
         this.linesColors = [];
         this.points = [];
@@ -27,8 +39,11 @@ function SimpleDrawer(gl, shaders) {
         this.needsDisplayUpdate = true;
     }
     
-    this.updateBuffers = function() {
-        var gl = this.gl;
+    /**
+     * Copy the points and lines arrays over to WebGL buffers
+     */
+    updateBuffers() {
+        let gl = this.gl;
         
         //UPDATE LINES
         if (this.linesVBO === null) {
@@ -38,8 +53,8 @@ function SimpleDrawer(gl, shaders) {
             this.linesCVBO = gl.createBuffer();
         }
         //Bind the array data into the buffers
-        var V = new Float32Array(this.linesPoints.length);
-        for (var i = 0; i < this.linesPoints.length; i++) {
+        let V = new Float32Array(this.linesPoints.length);
+        for (let i = 0; i < this.linesPoints.length; i++) {
             V[i] = this.linesPoints[i];
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.linesVBO);
@@ -48,7 +63,7 @@ function SimpleDrawer(gl, shaders) {
         this.linesVBO.numItems = this.linesPoints.length/3;
         
         V = new Float32Array(this.linesColors.length);
-        for (var i = 0; i < this.linesColors.length; i++) {
+        for (let i = 0; i < this.linesColors.length; i++) {
             V[i] = this.linesColors[i];
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.linesCVBO);
@@ -64,8 +79,8 @@ function SimpleDrawer(gl, shaders) {
             this.pointsCVBO = gl.createBuffer();
         }
         //Bind the array data into the buffers
-        var V = new Float32Array(this.points.length);
-        for (var i = 0; i < this.points.length; i++) {
+        V = new Float32Array(this.points.length);
+        for (let i = 0; i < this.points.length; i++) {
             V[i] = this.points[i];
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointsVBO);
@@ -74,7 +89,7 @@ function SimpleDrawer(gl, shaders) {
         this.pointsVBO.numItems = this.points.length/3;
         
         V = new Float32Array(this.pointsColors.length);
-        for (var i = 0; i < this.pointsColors.length; i++) {
+        for (let i = 0; i < this.pointsColors.length; i++) {
             V[i] = this.pointsColors[i];
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointsCVBO);
@@ -85,34 +100,43 @@ function SimpleDrawer(gl, shaders) {
     
 
     /** 
-     * Add the line to the vertex buffer to be drawn with the point [X, Y, Z]
-     * and the color [R, G, B]
+     * Add the line to the vertex buffer to be drawn between P1 and P2
+     * with the color C
      * 
      * @param {glMatrix.vec3} P1 3D array of XYZ locations for first point
      * @param {glMatrix.vec3} P2 3D array of XYZ locations for second point
      * @param {glMatrix.vec3} C 3D array of RGB colors in the range [0, 1]
      */
-    this.drawLine = function(P1, P2, C) {
-        for (var i = 0; i < 3; i++) {
+    drawLine(P1, P2, C) {
+        for (let i = 0; i < 3; i++) {
             this.linesPoints.push(P1[i]);
             this.linesColors.push(C[i]);
         }
-        for (var i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             this.linesPoints.push(P2[i]);
             this.linesColors.push(C[i]);
         }
         this.needsDisplayUpdate = true;
     }
     
-    this.drawPoint = function(P, C) {
-        for (var i = 0; i < 3; i++) {
+    /**
+     * Add a point to the vertex buffer to be draw at the location P with the color C
+     * @param {glMatrix.vec3} P 3D array of XYZ locations for first point
+     * @param {glMatrix.vec3} C 3D array of RGB colors in the range [0, 1]
+     */
+    drawPoint(P, C) {
+        for (let i = 0; i < 3; i++) {
             this.points.push(P[i]);
             this.pointsColors.push(C[i]);
         }
         this.needsDisplayUpdate = true;
     }
     
-    this.setPointSize = function(pSize) {
+    /**
+     * Set the size of the points to be drawn
+     * @param {int} pSize Size of points
+     */
+    setPointSize(pSize) {
         this.pSize = pSize;
     }
     
@@ -123,7 +147,7 @@ function SimpleDrawer(gl, shaders) {
      * @param {glMatrix.mat4} tMatrix The transformation matrix to apply 
      *                                to the lines/points before viewing
      */
-    this.repaint = function(camera, tMatrix) {
+    repaint(camera, tMatrix) {
         let pMatrix = camera.getPMatrix();
         let mvMatrix = camera.getMVMatrix();
         if (tMatrix === undefined) {
@@ -133,7 +157,7 @@ function SimpleDrawer(gl, shaders) {
             this.updateBuffers();
             this.needsDisplayUpdate = false;
         }
-        var gl = this.gl;
+        let gl = this.gl;
         if (this.linesPoints.length > 0) {
             gl.useProgram(this.shader);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.linesVBO);
