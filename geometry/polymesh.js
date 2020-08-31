@@ -395,7 +395,7 @@ class PolyMesh {
 
         // Material properties
         if ('uKaUniform' in sProg) {
-            let ka = PolyMesh.AMBIENT;
+            let ka = PolyMesh.DEFAULT_AMBIENT;
             if ('ka' in canvas.material) {
                 ka = canvas.material.ka;
             }
@@ -413,14 +413,14 @@ class PolyMesh {
             gl.uniform3fv(sProg.uKdUniform, kd);
         }
         if ('uKsUniform' in sProg) {
-            let ks = PolyMesh.SPECULAR;
+            let ks = PolyMesh.DEFAULT_SPECULAR;
             if ('ks' in canvas.material) {
                 ks = canvas.material.ks;
             }
             gl.uniform3fv(sProg.uKsUniform, ks);
         }
         if ('uShininessUniform' in sProg) {
-            let shininess = PolyMesh.SHININESS;
+            let shininess = PolyMesh.DEFAULT_SHININESS;
             if ('shininess' in canvas.material) {
                 shininess = canvas.material.shininess;
             }
@@ -612,8 +612,9 @@ class PolyMesh {
         }
         if (!('material' in canvas)) {
             // Diffuse slight greenish gray is default material;
-            canvas.material = {ka:PolyMesh.AMBIENT, 
-                                 kd:PolyMesh.DIFFUSE};
+            canvas.material = {ka:PolyMesh.DEFAULT_AMBIENT, 
+                                 kd:PolyMesh.DEFAULT_DIFFUSE,
+                                ks:PolyMesh.DEFAULT_SPECULAR};
         }
 
         let mvMatrix = canvas.camera.getMVMatrix();

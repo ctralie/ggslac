@@ -55,13 +55,16 @@ class SimpleMeshCanvas extends BaseCanvas {
 
         //NOTE: Before this, the canvas has all options we need except
         //for "shaderToUse"
+        let canvas = this;
         if (!('shader' in this.shaders.blinnPhong)) {
-            // The promise hasn't resolved yet, so try again
-            requestAnimationFrame(this.repaint.bind(this));
+            // Wait until the promise has resolved
+            this.shaders.blinnPhong.then(function(arg) {
+                canvas.shaderToUse = canvas.shaders.blinnPhong.shader;
+                canvas.mesh.render(canvas);
+            });
         }
         else {
             this.shaderToUse = this.shaders.blinnPhong.shader;
-            console.log(this.shaderToUse);
             this.mesh.render(this);
         }
         

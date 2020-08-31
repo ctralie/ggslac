@@ -166,6 +166,7 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
+        console.log("Shaders then");
         shaders.blinnPhong = {'shader':shader, 'description':'Blinn-Phong shader with specular'};
     });
 
