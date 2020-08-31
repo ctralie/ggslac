@@ -51,12 +51,22 @@ class SimpleMeshCanvas extends BaseCanvas {
     repaint() {
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        //NOTE: glcanvas has all options we need except
-        //for "shaderToUse"
-        this.shaderToUse = this.shaders.blinnPhong;
         this.lights = [{pos:this.camera.pos, color:[1, 1, 1], atten:[1, 0, 0]}];
-        this.mesh.render(this);
+
+        //NOTE: Before this, the canvas has all options we need except
+        //for "shaderToUse"
+        if (!('shader' in this.shaders.blinnPhong)) {
+            // The promise hasn't resolved yet, so try again
+            requestAnimationFrame(this.repaint.bind(this));
+        }
+        else {
+            this.shaderToUse = this.shaders.blinnPhong.shader;
+            console.log(this.shaderToUse);
+            this.mesh.render(this);
+        }
+        
+
+        
     }
 
     /**
