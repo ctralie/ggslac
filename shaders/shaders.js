@@ -8,7 +8,7 @@ const MAX_LIGHTS = 10;
 
 /**
  * A function that compiles a particular shader
- * @param {*} gl WebGL handle
+ * @param {object} gl WebGL handle
  * @param {string} shadersrc A string holding the GLSL source code for the shader
  * @param {string} type The type of shader ("fragment" or "vertex") 
  * 
@@ -42,7 +42,7 @@ function getShader(gl, shadersrc, type) {
 
 /**
  * 
- * @param {*} gl WebGL Handle
+ * @param {object} gl WebGL Handle
  * @param {string} prefix File prefix for shader.  It is expected that there
  * will be both a vertex shader named prefix.vert and a fragment
  * shader named prefix.frag

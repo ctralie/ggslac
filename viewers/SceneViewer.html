@@ -8,6 +8,7 @@
 <script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
+<script type="text/javascript" src="../jslibs/jquery-3.5.1.min.js"></script>
 
 <!--Our Scripts!-->
 <script src="../geometry/polymesh.js"></script>
@@ -86,11 +87,13 @@
 
 
     // Load the sample scene as a default
-    scene = BlockLoader.loadJSON("../scenes/sample-scene.json");
-    canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-    canvas.drawEdges = false;
-    canvas.updateMeshDrawings();
-    requestAnimFrame(canvas.repaint.bind(canvas));
+    $.get("../scenes/sample-scene.json", function(scene) {
+        canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+        canvas.drawEdges = false;
+        canvas.updateMeshDrawings();
+        requestAnimFrame(canvas.repaint.bind(canvas));
+    });
+
     
     
 </script>
