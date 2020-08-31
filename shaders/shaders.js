@@ -314,6 +314,7 @@ function initStandardShaders(gl, relpath) {
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
             shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
             shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
             shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Ambient flat color
             shader.uRUniform = gl.getUniformLocation(shader, "uR");
             resolve(shader);
