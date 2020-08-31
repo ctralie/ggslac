@@ -567,7 +567,8 @@ class PolyMesh {
      * @param {object} canvas An object holding information about WebGL state and viewing configuration.
                                 Required Fields    
                                     * gl (WebGL handle)
-                                    * shaders (object containing WebGL shader handles)
+                                    * shaders (object containing WebGL shader handles, 
+                                    *          assuming to have been loaded/compiled)
                                     * camera (Camera object, with getMVMatrix() and getPMatrix())
                 
                                     Optional Fields

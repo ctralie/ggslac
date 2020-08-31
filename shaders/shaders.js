@@ -85,7 +85,9 @@ function getShaderProgramAsync(gl, prefix) {
 
 
 /**
- * A function to load all of the shaders
+ * A function that sets up promises for all of the shaders shaders and returns
+ * them in an object.  Once each promise is resolved, its value in the object
+ * is overwritten by the compiled shader
  * 
  * @param {*} gl WebGL Handle
  * @param{string} relpath Relative path to shaders from the directory
@@ -102,6 +104,7 @@ function initStandardShaders(gl, relpath) {
     /** gouraud: Per-vertex lambertian shader  */
     shaders.gouraud = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "gouraud").then((shader) => {
+            shader.description = 'Per-vertex lambertian shader';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
@@ -131,12 +134,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.gouraud = {'shader':shader, 'description':'Per-vertex lambertian shader'};
+        shader.shaderReady = true;
+        shaders.gouraud = shader;
     });
 
     /** blinnPhong: Blinn Phong shader  */
     shaders.blinnPhong = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "blinnPhong").then((shader) => {
+            shader.description = 'Blinn-Phong shader with specular';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
@@ -166,8 +171,8 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        console.log("Shaders then");
-        shaders.blinnPhong = {'shader':shader, 'description':'Blinn-Phong shader with specular'};
+        shader.shaderReady = true;
+        shaders.blinnPhong = shader;
     });
 
     /** depth: A shader that shades by depth */
@@ -180,15 +185,18 @@ function initStandardShaders(gl, relpath) {
             shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
             shader.uNearUniform = gl.getUniformLocation(shader, "uNear");
             shader.uFarUniform = gl.getUniformLocation(shader, "uFar");
+            shader.description = 'A shader that shades by depth';
             resolve(shader);
         });
     }).then(shader => {
-        shaders.depth = {'shader':shader, 'description':'A shader that shades by depth'};
+        shader.shaderReady = true;
+        shaders.depth = shader;
     });
 
     /** depth16: A shader that packs a float depth into two bytes in the R/G channels */
     shaders.depth16 = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "depth16").then((shader) => {
+            shader.description = 'A shader that packs a float depth into two bytes in the R/G channels';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
@@ -199,12 +207,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.depth16 = {'shader':shader, 'description':'A shader that packs a float depth into two bytes in the R/G channels'};
+        shader.shaderReady = true;
+        shaders.depth16 = shader;
     });
 
     /** normal: A shader to color points by their normals */
     shaders.normal = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "normalView").then((shader) => {
+            shader.description = 'A shader to color points by their normals';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
@@ -217,12 +227,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.normal = {'shader':shader, 'description':'A shader to color points by their normals'};
+        shader.shaderReady = true;
+        shaders.normal = shader;
     });
 
     /** normal local: A shader to color points by their normals in local coordinates */
     shaders.normalLocal = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "normalViewLocal").then((shader) => {
+            shader.description = 'A shader to color points by their normals in local coordinates';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
@@ -235,12 +247,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.normalLocal = {'shader':shader, 'description':'A shader to color points by their normals in local coordinates'};
+        shader.shaderReady = true;
+        shaders.normalLocal = shader;
     });
 
     /** flat: A shader that draws a constant color for all faces*/
     shaders.flat = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "flat").then((shader) => {
+            shader.description = 'A shader that draws a constant color for all faces';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
@@ -250,12 +264,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.flat = {'shader':shader, 'description':'A shader that draws a constant color for all faces'};
+        shader.shaderReady = true;
+        shaders.flat = shader;
     });
     
     /** Point shader: Simple shader for drawing points with flat colors */
     shaders.pointShader = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "point").then((shader) => {
+            shader.description = 'Simple shader for drawing points with flat colors';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
@@ -265,12 +281,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.pointShader = {'shader':shader, 'description':'Simple shader for drawing points with flat colors'};
+        shader.shaderReady = true;
+        shaders.pointShader = shader;
     });
 
     /** Point color shader: Simple shader for drawing points with flat, varying colors */
     shaders.pointColorShader = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "pointcolor").then((shader) => {
+            shader.description = 'Simple shader for drawing points with flat, varying colors';
             shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
@@ -281,12 +299,14 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.pointColorShader = {'shader':shader, 'description':'Simple shader for drawing points with flat, varying colors'};
+        shader.shaderReady = true;
+        shaders.pointColorShader = shader;
     });
 
     /** Normal shader: A shader used to draw normals as line segments */
     shaders.normalShader = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "normal").then((shader) => {
+            shader.description = 'A shader used to draw normals as line segments';
             shader.n1PosAttrib = gl.getAttribLocation(shader, "n1Pos");
             gl.enableVertexAttribArray(shader.n1PosAttrib);
             shader.n2PosAttrib = gl.getAttribLocation(shader, "n2Pos");
@@ -299,7 +319,8 @@ function initStandardShaders(gl, relpath) {
             resolve(shader);
         });
     }).then(shader => {
-        shaders.normalShader = {'shader':shader, 'description':'A shader used to draw normals as line segments'};
+        shader.shaderReady = true;
+        shaders.normalShader = shader;
     });
 
     return shaders;

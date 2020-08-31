@@ -24,18 +24,36 @@ class SimpleMeshCanvas extends BaseCanvas {
         this.drawNormals = false;
         this.drawVertices = false;
         let meshOpts = gui.addFolder('Mesh Display Options');
-        let that = this;
+        let canvas = this;
         ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
             function(s) {
-                let evt = meshOpts.add(that, s);
-                evt.onChange(function() {
-                    requestAnimFrame(that.repaint.bind(that));
-                });
+                let evt = meshOpts.add(canvas, s);
+                function resolveCheckboxes() {
+                    // Make sure canvas normalShader and pointShader have been compiled
+                    // before drawing edges/normals/points
+                    let ready = true;
+                    if (!('shaderReady' in canvas.shaders.normalShader)) {
+                        ready = false;
+                        canvas.shaders.normalShader.then(function() {
+                            resolveCheckboxes();
+                        });
+                    }
+                    if (!('shaderReady' in canvas.shaders.pointShader)) {
+                        ready = false;
+                        canvas.shaders.pointShader.then(function() {
+                            resolveCheckboxes();
+                        });
+                    }
+                    if (ready) {
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    }
+                }
+                evt.onChange(resolveCheckboxes);
             }
         );
     
         let simpleRepaint = function() {
-            requestAnimFrame(that.repaint.bind(that));
+            requestAnimFrame(canvas.repaint.bind(canvas));
         }
         gui.add(this.mesh, 'consistentlyOrientFaces').onChange(simpleRepaint);
         gui.add(this.mesh, 'reverseOrientation').onChange(simpleRepaint);
@@ -56,15 +74,15 @@ class SimpleMeshCanvas extends BaseCanvas {
         //NOTE: Before this, the canvas has all options we need except
         //for "shaderToUse"
         let canvas = this;
-        if (!('shader' in this.shaders.blinnPhong)) {
+        if (!('shaderReady' in this.shaders.blinnPhong)) {
             // Wait until the promise has resolved
             this.shaders.blinnPhong.then(function(arg) {
-                canvas.shaderToUse = canvas.shaders.blinnPhong.shader;
+                canvas.shaderToUse = canvas.shaders.blinnPhong;
                 canvas.mesh.render(canvas);
             });
         }
         else {
-            this.shaderToUse = this.shaders.blinnPhong.shader;
+            this.shaderToUse = this.shaders.blinnPhong;
             this.mesh.render(this);
         }
         
