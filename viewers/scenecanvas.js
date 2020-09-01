@@ -70,6 +70,7 @@ class SceneCanvas extends BaseCanvas {
     setupMenus() {
         this.gui = new dat.GUI();
         const gui = this.gui;
+
         // Mesh display options menu
         this.drawEdges = false;
         let meshOpts = gui.addFolder('Mesh Display Options');
@@ -808,6 +809,15 @@ class SceneCanvas extends BaseCanvas {
         this.scene = scene;
         this.width = pixWidth;
         this.height = pixHeight;
+
+        // Step 0: Put the title in the DOM
+        let title = document.getElementById('scenetitle');
+        if ('name' in scene) {
+            title.innerHTML = "<h3>" + scene.name + "</h3>";
+        }
+        else {
+            title.innerHTML = "<h3>Scene</h3>";
+        }
 
         // Step 1: Setup defaults
         // Setup default light
