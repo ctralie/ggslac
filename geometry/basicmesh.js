@@ -66,7 +66,7 @@ class MeshVertex {
      * @returns {glMatrix.vec3} The normal
      */
     getNormal() {
-        faces = this.getAttachedFaces();
+        let faces = this.getAttachedFaces();
         let normal = glMatrix.vec3.fromValues(0, 0, 0);
         let w;
         let N;
@@ -693,8 +693,12 @@ class BasicMesh extends PolyMesh {
      * Initialize a mesh from a set of formatted lines
      * 
      * @param {array of string} lines The lines in the file
+     * @param {boolean} verbose Whether to print information on the loaded mesh
      */
-    loadFileFromLines(lines) {
+    loadFileFromLines(lines, verbose) {
+        if (verbose === undefined) {
+            verbose = false;
+        }
         let res = loadFileFromLines(lines);
         this.vertices.length = 0;
         this.edges.length = 0;
@@ -713,8 +717,9 @@ class BasicMesh extends PolyMesh {
             this.faces[i].ID = i;
         }
         //this.consistentlyOrientFaces();
-
-        console.log("Loaded simple mesh with " + this.vertices.length + " vertices, " + this.edges.length + " edges, and " + this.faces.length + " faces");
+        if (verbose) {
+            console.log("Loaded simple mesh with " + this.vertices.length + " vertices, " + this.edges.length + " edges, and " + this.faces.length + " faces");
+        }
         this.needsDisplayUpdate = true;
     }
 }

@@ -77,15 +77,14 @@
         },
 
         {
-            "transform":[20, 0, 0, 0,
-                        0, 20, 0, 0,
-                        0, 0, 20, 0,
-                        0, 0, 0, 1],
             "shapes":[
                 {
-                "type":"mesh",
-                "filename":"../meshes/square.off",
-                "material":"green"
+                "type":"polygon",
+                "material":"green",
+                "vertices":[[-10, 0, -10],
+                            [-10, 0, 10],
+                            [10, 0, 10],
+                            [10, 0, -10]]
                 }
             ]
         },
@@ -132,8 +131,55 @@
 
         {
             "transform":[
+                0.5, 0, 0, 9,
+                0, 4, 0, 0,
+                0, 0, 0.5, -9,
+                0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"cylinder",
+                    "radius":1,
+                    "height":1,
+                    "material":"green"
+                }
+            ]   
+        },
+
+        {
+            "transform":[
+                0.5, 0, 0, -9,
+                0, 4, 0, 0,
+                0, 0, 0.5, -9,
+                0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"cone",
+                    "radius":1,
+                    "height":1,
+                    "material":"green"
+                }
+            ]   
+        },
+
+        {
+            "transform":[
                 0.001, 0, 0, 0,
                 0, 0.001, 0, 0,
+                0, 0, 0.001, 0,
+                0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"mesh",
+                    "filename":"../meshes/proftralie.off"
+                }
+
+            ]
+        },
+
+        {
+            "transform":[
+                0.001, 0, 0, 0,
+                0, 0.001, 0, 2,
                 0, 0, 0.001, 0,
                 0, 0, 0, 1],
             "shapes":[

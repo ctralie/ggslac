@@ -5,11 +5,11 @@ class SimpleDrawer {
     /**
      * 
      * @param {webgl handle} gl 
-     * @param {object} shaders An object with compiled shaders.  Must include pointColorShader
+     * @param {object} shaders Compile pointColorShader
      */
-    constructor(gl, shaders) {
+    constructor(gl, shader) {
         this.gl = gl;
-        this.shader = shaders.pointColorShader;
+        this.shader = shader;
             
         //Internally store a vertex buffer for all of the different lines/vertices, as
         //well as a color buffer

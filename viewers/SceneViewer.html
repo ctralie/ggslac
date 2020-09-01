@@ -8,6 +8,7 @@
 <script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
 <script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
+<script type="text/javascript" src="../jslibs/jquery-3.5.1.min.js"></script>
 
 <!--Our Scripts!-->
 <script src="../geometry/polymesh.js"></script>
@@ -16,7 +17,6 @@
 <script src="../geometry/cameras3d.js"></script>
 <script src="../shaders/shaders.js"></script>
 <script src="../utils/simpledraw.js"></script>
-<script src="../utils/blockloader.js"></script>
 <script src="./basecanvas.js"></script>
 <script src="./scenecanvas.js"></script>
 
@@ -64,7 +64,7 @@
 <script>
     let glcanvas = document.getElementById("GLCanvas1");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    let canvas = new SceneCanvas(glcanvas, "../shaders/", "../meshes/");
+    let canvas = new SceneCanvas(glcanvas, "../shaders/", "../meshes/", true, true, true);
 
     let sceneInput = document.getElementById('sceneInput');
     sceneInput.addEventListener('change', function(e) {
@@ -86,11 +86,13 @@
 
 
     // Load the sample scene as a default
-    scene = BlockLoader.loadJSON("../scenes/sample-scene.json");
-    canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-    canvas.drawEdges = false;
-    canvas.updateMeshDrawings();
-    requestAnimFrame(canvas.repaint.bind(canvas));
+    $.get("../scenes/sample-scene.json", function(scene) {
+        canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+        canvas.drawEdges = false;
+        canvas.updateMeshDrawings();
+        requestAnimFrame(canvas.repaint.bind(canvas));
+    });
+
     
     
 </script>

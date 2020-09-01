@@ -1,14 +1,8 @@
-/* 
-Files that have been assumed to have been also loaded
-../utils/blockloader.js
-
-*/
-
 const MAX_LIGHTS = 10;
 
 /**
  * A function that compiles a particular shader
- * @param {*} gl WebGL handle
+ * @param {object} gl WebGL handle
  * @param {string} shadersrc A string holding the GLSL source code for the shader
  * @param {string} type The type of shader ("fragment" or "vertex") 
  * 
@@ -41,199 +35,291 @@ function getShader(gl, shadersrc, type) {
 
 
 /**
+ * Compile a vertex shader and a fragment shader and link them together
  * 
- * @param {*} gl WebGL Handle
- * @param {string} prefix File prefix for shader.  It is expected that there
- * will be both a vertex shader named prefix.vert and a fragment
- * shader named prefix.frag
- * 
- * @returns{shaderprogram} An object holding the shaders linked together
- * and compiled/linked into a program
+ * @param {object} gl WebGL Handle
+ * @param {string} prefix Prefix for naming the shader
+ * @param {string} vertexSrc A string holding the GLSL source code for the vertex shader
+ * @param {string} fragmentSrc A string holding the GLSL source code for the fragment shader
  */
-function getShaderProgram(gl, prefix) {
-    let vertexSrc = BlockLoader.loadTxt(prefix + ".vert");
-    let fragmentSrc = BlockLoader.loadTxt(prefix + ".frag");
+function getShaderProgram(gl, prefix, vertexSrc, fragmentSrc) {
     let vertexShader = getShader(gl, vertexSrc, "vertex");
     let fragmentShader = getShader(gl, fragmentSrc, "fragment");
-
     let shader = gl.createProgram();
     gl.attachShader(shader, vertexShader);
     gl.attachShader(shader, fragmentShader);
     gl.linkProgram(shader);
     if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
-        alert("Could not initialize shader" + prefix);
+        reject(Error("Could not initialize shader" + prefix));
     }
     shader.name = prefix;
     return shader;
 }
 
+/**
+ * Load in and compile a vertex/fragment shader pair asynchronously
+ * 
+ * @param {object} gl WebGL Handle
+ * @param {string} prefix File prefix for shader.  It is expected that there
+ * will be both a vertex shader named prefix.vert and a fragment
+ * shader named prefix.frag
+ * 
+ * @returns{Promise} A promise that resolves to a shader program, where the 
+ * vertex/fragment shaders are compiled/linked together
+ */
+function getShaderProgramAsync(gl, prefix) {
+    return new Promise((resolve, reject) => {
+        $.get(prefix + ".vert", function(vertexSrc) {
+            $.get(prefix + ".frag", function(fragmentSrc) {
+                resolve(getShaderProgram(gl, prefix, vertexSrc, fragmentSrc));
+            });
+        });
+    });
+}
+
 
 /**
+ * A function that sets up promises for all of the shaders shaders and returns
+ * them in an object.  Once each promise is resolved, its value in the object
+ * is overwritten by the compiled shader
  * 
  * @param {*} gl WebGL Handle
  * @param{string} relpath Relative path to shaders from the directory
  * in which this function is called
  * 
  * @returns{obj} An object with fields containing standard shaders
+ *               as promises.  When these promises resolve, they will overwrite
+ *               the fields of this object to be an object 
+ *              {'shader':shader object,
+ *              'description': description of shader}
  */
 function initStandardShaders(gl, relpath) {
+    let shaders = {};
     /** gouraud: Per-vertex lambertian shader  */
-    let gouraud = getShaderProgram(gl, relpath + "gouraud");
-    gouraud.vPosAttrib = gl.getAttribLocation(gouraud, "vPos");
-    gl.enableVertexAttribArray(gouraud.vPosAttrib);
-    gouraud.vNormalAttrib = gl.getAttribLocation(gouraud, "vNormal");
-    gl.enableVertexAttribArray(gouraud.vNormalAttrib);
-    gouraud.vColorAttrib = gl.getAttribLocation(gouraud, "vColor");
-    gl.enableVertexAttribArray(gouraud.vColorAttrib);
-    gouraud.pMatrixUniform = gl.getUniformLocation(gouraud, "uPMatrix");
-    gouraud.mvMatrixUniform = gl.getUniformLocation(gouraud, "uMVMatrix");
-    gouraud.tMatrixUniform = gl.getUniformLocation(gouraud, "tMatrix");
-    gouraud.nMatrixUniform = gl.getUniformLocation(gouraud, "uNMatrix");
-    gouraud.ambientColorUniform = gl.getUniformLocation(gouraud, "uAmbientColor");
-    gouraud.uKaUniform = gl.getUniformLocation(gouraud, "uKa");
-    gouraud.uKdUniform = gl.getUniformLocation(gouraud, "uKd");
-    gouraud.uKsUniform = gl.getUniformLocation(gouraud, "uKs");
-    gouraud.uShininessUniform = gl.getUniformLocation(gouraud, "uShininess");
-    gouraud.uEyeUniform = gl.getUniformLocation(gouraud, "uEye");
-    gouraud.u_lights = [];
-    gouraud.u_numLights = gl.getUniformLocation(gouraud, "numLights");
-    for (let i = 0; i < MAX_LIGHTS; i++) {
-        let light = {
-            pos: gl.getUniformLocation(gouraud, "lights["+i+"].pos"),
-            color: gl.getUniformLocation(gouraud, "lights["+i+"].color"),
-            atten: gl.getUniformLocation(gouraud, "lights["+i+"].atten")
-        };
-        gouraud.u_lights.push(light);
-    }
+    shaders.gouraud = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "gouraud").then((shader) => {
+            shader.description = 'Per-vertex lambertian shader';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
+            gl.enableVertexAttribArray(shader.vNormalAttrib);
+            shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
+            gl.enableVertexAttribArray(shader.vColorAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
+            shader.ambientColorUniform = gl.getUniformLocation(shader, "uAmbientColor");
+            shader.uKaUniform = gl.getUniformLocation(shader, "uKa");
+            shader.uKdUniform = gl.getUniformLocation(shader, "uKd");
+            shader.uKsUniform = gl.getUniformLocation(shader, "uKs");
+            shader.uShininessUniform = gl.getUniformLocation(shader, "uShininess");
+            shader.uEyeUniform = gl.getUniformLocation(shader, "uEye");
+            shader.u_lights = [];
+            shader.u_numLights = gl.getUniformLocation(shader, "numLights");
+            for (let i = 0; i < MAX_LIGHTS; i++) {
+                let light = {
+                    pos: gl.getUniformLocation(shader, "lights["+i+"].pos"),
+                    color: gl.getUniformLocation(shader, "lights["+i+"].color"),
+                    atten: gl.getUniformLocation(shader, "lights["+i+"].atten")
+                };
+                shader.u_lights.push(light);
+            }
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.gouraud = shader;
+    });
 
-    /** blinnPhong: Per-vertex lambertian shader  */
-    let blinnPhong = getShaderProgram(gl, relpath + "blinnPhong");
-    blinnPhong.vPosAttrib = gl.getAttribLocation(blinnPhong, "vPos");
-    gl.enableVertexAttribArray(blinnPhong.vPosAttrib);
-    blinnPhong.vNormalAttrib = gl.getAttribLocation(blinnPhong, "vNormal");
-    gl.enableVertexAttribArray(blinnPhong.vNormalAttrib);
-    blinnPhong.vColorAttrib = gl.getAttribLocation(blinnPhong, "vColor");
-    gl.enableVertexAttribArray(blinnPhong.vColorAttrib);
-    blinnPhong.pMatrixUniform = gl.getUniformLocation(blinnPhong, "uPMatrix");
-    blinnPhong.mvMatrixUniform = gl.getUniformLocation(blinnPhong, "uMVMatrix");
-    blinnPhong.tMatrixUniform = gl.getUniformLocation(blinnPhong, "tMatrix");
-    blinnPhong.nMatrixUniform = gl.getUniformLocation(blinnPhong, "uNMatrix");
-    blinnPhong.ambientColorUniform = gl.getUniformLocation(blinnPhong, "uAmbientColor");
-    blinnPhong.uKaUniform = gl.getUniformLocation(blinnPhong, "uKa");
-    blinnPhong.uKdUniform = gl.getUniformLocation(blinnPhong, "uKd");
-    blinnPhong.uKsUniform = gl.getUniformLocation(blinnPhong, "uKs");
-    blinnPhong.uShininessUniform = gl.getUniformLocation(blinnPhong, "uShininess");
-    blinnPhong.uEyeUniform = gl.getUniformLocation(blinnPhong, "uEye");
-    blinnPhong.u_lights = [];
-    blinnPhong.u_numLights = gl.getUniformLocation(blinnPhong, "numLights");
-    for (let i = 0; i < MAX_LIGHTS; i++) {
-        let light = {
-            pos: gl.getUniformLocation(blinnPhong, "lights["+i+"].pos"),
-            color: gl.getUniformLocation(blinnPhong, "lights["+i+"].color"),
-            atten: gl.getUniformLocation(blinnPhong, "lights["+i+"].atten")
-        };
-        blinnPhong.u_lights.push(light);
-    }
+    /** blinnPhong: Blinn Phong shader  */
+    shaders.blinnPhong = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "blinnPhong").then((shader) => {
+            shader.description = 'Blinn-Phong shader with specular';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
+            gl.enableVertexAttribArray(shader.vNormalAttrib);
+            shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
+            gl.enableVertexAttribArray(shader.vColorAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
+            shader.ambientColorUniform = gl.getUniformLocation(shader, "uAmbientColor");
+            shader.uKaUniform = gl.getUniformLocation(shader, "uKa");
+            shader.uKdUniform = gl.getUniformLocation(shader, "uKd");
+            shader.uKsUniform = gl.getUniformLocation(shader, "uKs");
+            shader.uShininessUniform = gl.getUniformLocation(shader, "uShininess");
+            shader.uEyeUniform = gl.getUniformLocation(shader, "uEye");
+            shader.u_lights = [];
+            shader.u_numLights = gl.getUniformLocation(shader, "numLights");
+            for (let i = 0; i < MAX_LIGHTS; i++) {
+                let light = {
+                    pos: gl.getUniformLocation(shader, "lights["+i+"].pos"),
+                    color: gl.getUniformLocation(shader, "lights["+i+"].color"),
+                    atten: gl.getUniformLocation(shader, "lights["+i+"].atten")
+                };
+                shader.u_lights.push(light);
+            }
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.blinnPhong = shader;
+    });
 
     /** depth: A shader that shades by depth */
-    let depth = getShaderProgram(gl, relpath + "depth");
-    depth.vPosAttrib = gl.getAttribLocation(depth, "vPos");
-    gl.enableVertexAttribArray(depth.vPosAttrib);
-    depth.pMatrixUniform = gl.getUniformLocation(depth, "uPMatrix");
-    depth.mvMatrixUniform = gl.getUniformLocation(depth, "uMVMatrix");
-    depth.tMatrixUniform = gl.getUniformLocation(depth, "tMatrix");
-    depth.uNearUniform = gl.getUniformLocation(depth, "uNear");
-    depth.uFarUniform = gl.getUniformLocation(depth, "uFar");
+    shaders.depth = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "depth").then((shader) => {
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.uNearUniform = gl.getUniformLocation(shader, "uNear");
+            shader.uFarUniform = gl.getUniformLocation(shader, "uFar");
+            shader.description = 'A shader that shades by depth';
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.depth = shader;
+    });
 
-    /** depth: A shader that packs a float depth into two bytes in the R/G channels */
-    let depth16 = getShaderProgram(gl, relpath + "depth16");
-    depth16.vPosAttrib = gl.getAttribLocation(depth16, "vPos");
-    gl.enableVertexAttribArray(depth16.vPosAttrib);
-    depth16.pMatrixUniform = gl.getUniformLocation(depth16, "uPMatrix");
-    depth16.mvMatrixUniform = gl.getUniformLocation(depth16, "uMVMatrix");
-    depth16.tMatrixUniform = gl.getUniformLocation(depth16, "tMatrix");
-    depth16.uNearUniform = gl.getUniformLocation(depth16, "uNear");
-    depth16.uFarUniform = gl.getUniformLocation(depth16, "uFar");
+    /** depth16: A shader that packs a float depth into two bytes in the R/G channels */
+    shaders.depth16 = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "depth16").then((shader) => {
+            shader.description = 'A shader that packs a float depth into two bytes in the R/G channels';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.uNearUniform = gl.getUniformLocation(shader, "uNear");
+            shader.uFarUniform = gl.getUniformLocation(shader, "uFar");
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.depth16 = shader;
+    });
 
     /** normal: A shader to color points by their normals */
-    let normal = getShaderProgram(gl, relpath + "normalView");
-    normal.vPosAttrib = gl.getAttribLocation(normal, "vPos");
-    gl.enableVertexAttribArray(normal.vPosAttrib);
-    normal.vNormalAttrib = gl.getAttribLocation(normal, "vNormal");
-    gl.enableVertexAttribArray(normal.vNormalAttrib);
-    normal.pMatrixUniform = gl.getUniformLocation(normal, "uPMatrix");
-    normal.mvMatrixUniform = gl.getUniformLocation(normal, "uMVMatrix");
-    normal.tMatrixUniform = gl.getUniformLocation(normal, "tMatrix");
-    normal.nMatrixUniform = gl.getUniformLocation(normal, "uNMatrix");
-    normal.nMVMatrixUniform = gl.getUniformLocation(normal, "uNMVMatrix");
+    shaders.normal = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "normalView").then((shader) => {
+            shader.description = 'A shader to color points by their normals';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
+            gl.enableVertexAttribArray(shader.vNormalAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
+            shader.nMVMatrixUniform = gl.getUniformLocation(shader, "uNMVMatrix");
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.normal = shader;
+    });
 
     /** normal local: A shader to color points by their normals in local coordinates */
-    let normalLocal = getShaderProgram(gl, relpath + "normalViewLocal");
-    normalLocal.vPosAttrib = gl.getAttribLocation(normalLocal, "vPos");
-    gl.enableVertexAttribArray(normalLocal.vPosAttrib);
-    normalLocal.vNormalAttrib = gl.getAttribLocation(normalLocal, "vNormal");
-    gl.enableVertexAttribArray(normalLocal.vNormalAttrib);
-    normalLocal.pMatrixUniform = gl.getUniformLocation(normalLocal, "uPMatrix");
-    normalLocal.mvMatrixUniform = gl.getUniformLocation(normalLocal, "uMVMatrix");
-    normalLocal.tMatrixUniform = gl.getUniformLocation(normalLocal, "tMatrix");
-    normalLocal.nMatrixUniform = gl.getUniformLocation(normalLocal, "uNMatrix");
-    normalLocal.nMVMatrixUniform = gl.getUniformLocation(normalLocal, "uNMVMatrix");
+    shaders.normalLocal = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "normalViewLocal").then((shader) => {
+            shader.description = 'A shader to color points by their normals in local coordinates';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vNormalAttrib = gl.getAttribLocation(shader, "vNormal");
+            gl.enableVertexAttribArray(shader.vNormalAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
+            shader.nMVMatrixUniform = gl.getUniformLocation(shader, "uNMVMatrix");
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.normalLocal = shader;
+    });
 
     /** flat: A shader that draws a constant color for all faces*/
-    let flat = getShaderProgram(gl, relpath + "flat");
-    flat.vPosAttrib = gl.getAttribLocation(flat, "vPos");
-    gl.enableVertexAttribArray(flat.vPosAttrib);
-    flat.pMatrixUniform = gl.getUniformLocation(flat, "uPMatrix");
-    flat.mvMatrixUniform = gl.getUniformLocation(flat, "uMVMatrix");
-    flat.tMatrixUniform = gl.getUniformLocation(flat, "tMatrix");
-    flat.uKaUniform = gl.getUniformLocation(flat, "uKa"); // Flat ambient color
+    shaders.flat = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "flat").then((shader) => {
+            shader.description = 'A shader that draws a constant color for all faces';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Flat ambient color
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.flat = shader;
+    });
     
     /** Point shader: Simple shader for drawing points with flat colors */
-    let pointShader = getShaderProgram(gl, relpath + "point");
-    pointShader.vPosAttrib = gl.getAttribLocation(pointShader, "vPos");
-    gl.enableVertexAttribArray(pointShader.vPosAttrib);
-    pointShader.pMatrixUniform = gl.getUniformLocation(pointShader, "uPMatrix");
-    pointShader.mvMatrixUniform = gl.getUniformLocation(pointShader, "uMVMatrix");
-    pointShader.tMatrixUniform = gl.getUniformLocation(pointShader, "uTMatrix");
-    pointShader.uKaUniform = gl.getUniformLocation(pointShader, "uKa"); // Ambient flat color
+    shaders.pointShader = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "point").then((shader) => {
+            shader.description = 'Simple shader for drawing points with flat colors';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
+            shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Ambient flat color
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.pointShader = shader;
+    });
 
     /** Point color shader: Simple shader for drawing points with flat, varying colors */
-    let pointColorShader = getShaderProgram(gl, relpath + "pointcolor");
-    pointColorShader.vPosAttrib = gl.getAttribLocation(pointColorShader, "vPos");
-    gl.enableVertexAttribArray(pointColorShader.vPosAttrib);
-    pointColorShader.vColorAttrib = gl.getAttribLocation(pointColorShader, "vColor");
-    gl.enableVertexAttribArray(pointColorShader.vColorAttrib);
-    pointColorShader.pMatrixUniform = gl.getUniformLocation(pointColorShader, "uPMatrix");
-    pointColorShader.mvMatrixUniform = gl.getUniformLocation(pointColorShader, "uMVMatrix");
-    pointColorShader.tMatrixUniform = gl.getUniformLocation(pointColorShader, "uTMatrix");
+    shaders.pointColorShader = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "pointcolor").then((shader) => {
+            shader.description = 'Simple shader for drawing points with flat, varying colors';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
+            gl.enableVertexAttribArray(shader.vColorAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.pointColorShader = shader;
+    });
 
     /** Normal shader: A shader used to draw normals as line segments */
-    let normalShader = getShaderProgram(gl, relpath + "normal");
-    normalShader.n1PosAttrib = gl.getAttribLocation(normalShader, "n1Pos");
-    gl.enableVertexAttribArray(normalShader.n1PosAttrib);
-    normalShader.n2PosAttrib = gl.getAttribLocation(normalShader, "n2Pos");
-    gl.enableVertexAttribArray(normalShader.n2PosAttrib);
-    normalShader.pMatrixUniform = gl.getUniformLocation(normalShader, "uPMatrix");
-    normalShader.mvMatrixUniform = gl.getUniformLocation(normalShader, "uMVMatrix");
-    normalShader.tMatrixUniform = gl.getUniformLocation(normalShader, "uTMatrix");
-    normalShader.nMatrixUniform = gl.getUniformLocation(normalShader, "uNMatrix");
-    normalShader.uKaUniform = gl.getUniformLocation(normalShader, "uKa"); // Ambient flat color
-    normalShader.uRUniform = gl.getUniformLocation(normalShader, "uR");
-    
-    return { 
-            blinnPhong:blinnPhong,
-            gouraud:gouraud,
-            depth:depth,
-            depth16:depth16,
-            normal:normal,
-            normalLocal:normalLocal,
-            flat:flat,
-            pointShader:pointShader,
-            pointColorShader:pointColorShader,
-            normalShader:normalShader
-           };
-}
+    shaders.normalShader = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "normal").then((shader) => {
+            shader.description = 'A shader used to draw normals as line segments';
+            shader.n1PosAttrib = gl.getAttribLocation(shader, "n1Pos");
+            gl.enableVertexAttribArray(shader.n1PosAttrib);
+            shader.n2PosAttrib = gl.getAttribLocation(shader, "n2Pos");
+            gl.enableVertexAttribArray(shader.n2PosAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
+            shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
+            shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Ambient flat color
+            shader.uRUniform = gl.getUniformLocation(shader, "uR");
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.normalShader = shader;
+    });
 
+    return shaders;
+}
 
 let Shaders = function() {};
 Shaders.initStandardShaders = initStandardShaders;

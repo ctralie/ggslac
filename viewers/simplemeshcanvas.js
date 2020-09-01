@@ -24,18 +24,32 @@ class SimpleMeshCanvas extends BaseCanvas {
         this.drawNormals = false;
         this.drawVertices = false;
         let meshOpts = gui.addFolder('Mesh Display Options');
-        let that = this;
+        let canvas = this;
         ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
             function(s) {
-                let evt = meshOpts.add(that, s);
-                evt.onChange(function() {
-                    requestAnimFrame(that.repaint.bind(that));
-                });
+                let evt = meshOpts.add(canvas, s);
+                function resolveCheckboxes() {
+                    // Make sure canvas normalShader and pointShader have been compiled
+                    // before drawing edges/normals/points
+                    let ready = true;
+                    if (!('shaderReady' in canvas.shaders.normalShader)) {
+                        ready = false;
+                        canvas.shaders.normalShader.then(resolveCheckboxes);
+                    }
+                    if (!('shaderReady' in canvas.shaders.pointShader)) {
+                        ready = false;
+                        canvas.shaders.pointShader.then(resolveCheckboxes);
+                    }
+                    if (ready) {
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    }
+                }
+                evt.onChange(resolveCheckboxes);
             }
         );
     
         let simpleRepaint = function() {
-            requestAnimFrame(that.repaint.bind(that));
+            requestAnimFrame(canvas.repaint.bind(canvas));
         }
         gui.add(this.mesh, 'consistentlyOrientFaces').onChange(simpleRepaint);
         gui.add(this.mesh, 'reverseOrientation').onChange(simpleRepaint);
@@ -51,12 +65,19 @@ class SimpleMeshCanvas extends BaseCanvas {
     repaint() {
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        //NOTE: glcanvas has all options we need except
-        //for "shaderToUse"
-        this.shaderToUse = this.shaders.blinnPhong;
         this.lights = [{pos:this.camera.pos, color:[1, 1, 1], atten:[1, 0, 0]}];
-        this.mesh.render(this);
+
+        //NOTE: Before this, the canvas has all options we need except
+        //for "shaderToUse"
+        let canvas = this;
+        if (!('shaderReady' in this.shaders.blinnPhong)) {
+            // Wait until the promise has resolved, then draw again
+            this.shaders.blinnPhong.then(canvas.repaint.bind(canvas));
+        }
+        else {
+            this.shaderToUse = this.shaders.blinnPhong;
+            this.mesh.render(this);
+        }
     }
 
     /**
