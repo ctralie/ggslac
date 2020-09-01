@@ -13,18 +13,41 @@ function colorFloatFromHex(s) {
 /**
  * A class for rendering a scene graph and maintaining 
  * menus for interactively updating material/light/camera properites
+ * Rule of thumb for asynchronous processing is repaint the scene every time
+ * a shader is loaded and every time a mesh is loaded
  */
 class SceneCanvas extends BaseCanvas {
-    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias) {
+    /**
+     * @param {DOM Element} glcanvas Handle to HTML where the glcanvas resides
+     * @param {string} shadersrelpath Path to the folder that contains the shaders,
+     *                                relative to where the constructor is being called
+     * @param {string} shadersrelpath Path to the folder that contains the standard ,
+     *                                meshes (e.g. sphere, box), relative to where 
+     *                                the constructor is being called
+     * @param {antialias} boolean Whether antialiasing is enabled (true by default)
+     * @param {boolean} cacheRegMeshes If true (default), create a cache of meshes by
+     *                              filename, and reuse them if they've already
+     *                              been loaded to save computation and memory.
+     *                              NOTE: Special meshes are cached by default
+     */
+    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes) {
         super(glcanvas, shadersrelpath, antialias);
         this.meshesrelpath = meshesrelpath;
         this.scene = null;
-        this.specialMeshes = {};
+        this.meshesCache = {};
         // Initialize the icosahedron for the camera beacons
-        this.specialMeshes.beacon = getIcosahedronMesh();
-        this.specialMeshes.beacon.Scale(SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE);
+        this.meshesCache.beacon = getIcosahedronMesh();
+        this.meshesCache.beacon.Scale(SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE);
         // Setup drawer object for debugging
-        this.drawer = new SimpleDrawer(this.gl, this.shaders);
+        if (!('shaderReady' in this.shaders.pointColorShader)) {
+            this.shaders.pointColorShader.then(function() {
+                canvas.drawer = new SimpleDrawer(canvas.gl, canvas.shaders.pointColorShader);
+            })
+        }
+        else {
+            this.drawer = new SimpleDrawer(this.gl, this.shaders.pointColorShader);
+        }
+        
         // Initialize menus
         this.setupMenus();
     }
@@ -42,10 +65,28 @@ class SceneCanvas extends BaseCanvas {
         ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
             function(s) {
                 let evt = meshOpts.add(canvas, s);
-                evt.onChange(function() {
-                    canvas.updateMeshDrawings();
-                    requestAnimFrame(canvas.repaint.bind(canvas));
-                });
+                function resolveCheckboxes() {
+                    // Make sure canvas normalShader and pointShader have been compiled
+                    // before drawing edges/normals/points
+                    let ready = true;
+                    if (!('shaderReady' in canvas.shaders.normalShader)) {
+                        ready = false;
+                        canvas.shaders.normalShader.then(function() {
+                            resolveCheckboxes();
+                        });
+                    }
+                    if (!('shaderReady' in canvas.shaders.pointShader)) {
+                        ready = false;
+                        canvas.shaders.pointShader.then(function() {
+                            resolveCheckboxes();
+                        });
+                    }
+                    if (ready) {
+                        canvas.updateMeshDrawings();
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    }
+                }
+                evt.onChange(resolveCheckboxes);
             }
         );
 
@@ -71,11 +112,25 @@ class SceneCanvas extends BaseCanvas {
         this.materialMenus = []; // Individual menus for each material
 
         // Shaders menu
-        this.shaderToUse = this.shaders.blinnPhong;
         this.shader = "blinnPhong";
-        gui.add(canvas, "shader", ["blinnPhong", "gouraud", "depth", "depth16", "normal", "normalLocal", "flat"]).onChange(function() {
+        this.shaderToUse = this.shaders[this.shader];
+        function finalizeShaderChange() {
             canvas.shaderToUse = canvas.shaders[canvas.shader];
             requestAnimFrame(canvas.repaint.bind(canvas));
+        }
+        if (!('shaderReady' in this.shaders.blinnPhong)) {
+            this.shaders.blinnPhong.then(finalizeShaderChange);
+        }
+        else {
+            finalizeShaderChange();
+        }
+        gui.add(canvas, "shader", ["blinnPhong", "gouraud", "depth", "depth16", "normal", "normalLocal", "flat"]).onChange(function() {
+            if (!('shaderReady' in canvas.shaders[canvas.shader])) {
+                canvas.shaders[canvas.shader].then(finalizeShaderChange);
+            }
+            else {
+                finalizeShaderChange();
+            }
         });
 
         // Other options
@@ -114,7 +169,7 @@ class SceneCanvas extends BaseCanvas {
         if (!('shapes' in node)) {
             node.shapes = [];
         }
-        for (var i = 0; i < node.shapes.length; i++) {
+        for (let i = 0; i < node.shapes.length; i++) {
             let shape = node.shapes[i];
             if (!('type' in shape)) {
                 console.log("ERROR: Shape not specified in node " + node);
@@ -124,20 +179,30 @@ class SceneCanvas extends BaseCanvas {
             // shape properties such as length/width/height/center/radius
             shape.ms = glMatrix.mat4.create();
             shape.mesh = null;
+            let canvas = this;
             if (shape.type == "mesh") {
                 if (!('filename' in shape) && !('src' in shape)) {
                     console.log("ERROR: Neither filename nor src specified for mesh: " + shape);
                     continue;
                 }
-                shape.mesh = new BasicMesh();
-                let src = "";
                 if ('src' in shape) {
-                    src = shape.src;
+                    shape.mesh.loadFileFromLines(shape.src.split("\n"));
                 }
                 else {
-                    src = BlockLoader.loadTxt(shape.filename);
+                    if (shape.filename in this.meshesCache) {
+                        shape.mesh = this.meshesCache[filename];
+                    }
+                    else {
+                        shape.mesh = new BasicMesh();
+                        $.get(shape.filename, function(src) {
+                            shape.mesh.loadFileFromLines(src.split("\n"));
+                            if (canvas.cacheRegMeshes) {
+                                canvas.meshesCache[shape.filename] = shape.mesh;
+                            }
+                            requestAnimationFrame(canvas.repaint.bind(canvas));
+                        });
+                    }
                 }
-                shape.mesh.loadFileFromLines(src.split("\n"));
             }
             else if (shape.type == "polygon") {
                 shape.mesh = new BasicMesh();
@@ -150,13 +215,16 @@ class SceneCanvas extends BaseCanvas {
                 shape.mesh.addFace(face);
             }
             else if (shape.type == "sphere") {
-                if (!('sphere' in this.specialMeshes)) {
+                if (!('sphere' in this.meshesCache)) {
                     let sphereMesh = new BasicMesh();
-                    let lines = BlockLoader.loadTxt(this.meshesrelpath + "sphere1026.off")
-                    sphereMesh.loadFileFromLines(lines.split("\n"));
-                    this.specialMeshes.sphere = sphereMesh;
+                    let meshFilename = this.meshesrelpath + "sphere1026.off";
+                    $.get(meshFilename, function(lines) {
+                        sphereMesh.loadFileFromLines(lines.split("\n"));
+                        requestAnimationFrame(canvas.repaint.bind(canvas));
+                    });
+                    this.meshesCache.sphere = sphereMesh;
                 }
-                shape.mesh = this.specialMeshes.sphere;
+                shape.mesh = this.meshesCache.sphere;
                 // Apply a transform that realizes the proper center and radius
                 // before the transform at this node
                 let ms = glMatrix.mat4.create();
@@ -181,13 +249,16 @@ class SceneCanvas extends BaseCanvas {
                 shape.ms = ms;
             }
             else if (shape.type == "box") {
-                if (!('box' in this.specialMeshes)) {
+                if (!('box' in this.meshesCache)) {
                     let boxMesh = new BasicMesh();
-                    let lines = BlockLoader.loadTxt(this.meshesrelpath + "box2402.off");
-                    boxMesh.loadFileFromLines(lines.split("\n"));
-                    this.specialMeshes.box = boxMesh;
+                    let meshFilename = this.meshesrelpath + "box2402.off";
+                    $.get(meshFilename, function(lines) {
+                        boxMesh.loadFileFromLines(lines.split("\n"));
+                        requestAnimationFrame(canvas.repaint.bind(canvas));
+                    });
+                    this.meshesCache.box = boxMesh;
                 }
-                shape.mesh = this.specialMeshes.box;
+                shape.mesh = this.meshesCache.box;
                 let ms = glMatrix.mat4.create();
                 if ('width' in shape) {
                     ms[0] = shape.width;
@@ -219,12 +290,12 @@ class SceneCanvas extends BaseCanvas {
                 shape.ms = ms;
             }
             else if (shape.type == "cylinder") {
-                if (!('cylinder' in this.specialMeshes)) {
+                if (!('cylinder' in this.meshesCache)) {
                     let center = glMatrix.vec3.fromValues(0, 0, 0);
                     let cylinderMesh = getCylinderMesh(center, 1.0, 1.0, 100);
-                    this.specialMeshes.cylinder = cylinderMesh;
+                    this.meshesCache.cylinder = cylinderMesh;
                 }
-                shape.mesh = this.specialMeshes.cylinder;
+                shape.mesh = this.meshesCache.cylinder;
                 let ms = glMatrix.mat4.create();
                 if ('radius' in shape) {
                     ms[0] = shape.radius;
@@ -251,12 +322,12 @@ class SceneCanvas extends BaseCanvas {
                 shape.ms = ms;
             }
             else if (shape.type == "cone") {
-                if (!('cone' in this.specialMeshes)) {
+                if (!('cone' in this.meshesCache)) {
                     let center = glMatrix.vec3.fromValues(0, 0, 0);
                     let conemesh = getConeMesh(center, 1.0, 1.0, 100);
-                    this.specialMeshes.cone = conemesh;
+                    this.meshesCache.cone = conemesh;
                 }
-                shape.mesh = this.specialMeshes.cone;
+                shape.mesh = this.meshesCache.cone;
                 let ms = glMatrix.mat4.create();
                 if ('radius' in shape) {
                     ms[0] = shape.radius;
@@ -287,17 +358,22 @@ class SceneCanvas extends BaseCanvas {
                     console.log("ERROR: filename not specified for scene: " + node);
                     continue;
                 }
-                let subscene = BlockLoader.loadJSON(shape.filename);
-                // Ignore the cameras, but copy over the materials
-                if ('materials' in subscene) {
-                    this.scene.materials = {...this.scene.materials, ...subscene.materials };
-                }
-                if ('children' in subscene) {
-                    if (!('children' in node)) {
-                        node.children = [];
+                let canvas = this;
+                $.get(shape.filename, function(subscene) {
+                    // Asynchronously load the child scene as a subtree
+                    // Ignore the cameras, but copy over the materials
+                    if ('materials' in subscene) {
+                        canvas.scene.materials = {...canvas.scene.materials, ...subscene.materials };
                     }
-                    node.children = node.children.concat(subscene.children);
-                }
+                    if ('children' in subscene) {
+                        if (!('children' in node)) {
+                            node.children = [];
+                        }
+                        node.children = node.children.concat(subscene.children);
+                    }
+                    requestAnimFrame(canvas.repaint.bind(canvas));
+                });
+
             }            
             else {
                 console.log("Warning: Unknown shape type " + shape.type);
@@ -762,11 +838,14 @@ class SceneCanvas extends BaseCanvas {
                     else if ('material' in canvas) {
                         delete canvas.material;
                     }
-                    // There may be an additional transform to apply based
-                    // on shape properties of special shapes (e.g. box width)
-                    let tMatrix = glMatrix.mat4.create();
-                    glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
-                    shape.mesh.render(canvas, tMatrix);
+                    if ('shaderReady' in canvas.shaderToUse) {
+                        // There may be an additional transform to apply based
+                        // on shape properties of special shapes (e.g. box width)
+                        let tMatrix = glMatrix.mat4.create();
+                        glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
+                        shape.mesh.render(canvas, tMatrix);
+                    }
+
                 }
             }
         });
@@ -784,6 +863,9 @@ class SceneCanvas extends BaseCanvas {
      * @param {string} color Hex color of the beacon
      */
     drawCameraBeacon(camera, color) {
+        if (this.drawer === undefined) {
+            return;
+        }
         // Switch over to a flat shader with no edges
         let sProg = this.shaderToUse;
         let drawEdges = this.drawEdges;
@@ -805,7 +887,9 @@ class SceneCanvas extends BaseCanvas {
         this.material = {ka:colorFloatFromHex(color)};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
-        this.specialMeshes.beacon.render(this, tMatrix);
+        if ('shaderReady' in this.shaderToUse) {
+            this.meshesCache.beacon.render(this, tMatrix);
+        }
         
         // Set properties back to what they were
         this.material = material;
@@ -820,6 +904,9 @@ class SceneCanvas extends BaseCanvas {
      * @param {object} light Light object
      */
     drawLightBeacon(light) {
+        if (this.drawer === undefined) {
+            return null;
+        }
         // Switch over to a flat shader with no edges
         let sProg = this.shaderToUse;
         let drawEdges = this.drawEdges;
@@ -831,7 +918,9 @@ class SceneCanvas extends BaseCanvas {
         this.material = {ka:light.color};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
-        this.specialMeshes.beacon.render(this, tMatrix);
+        if ('shaderReady' in this.shaderToUse) {
+            this.meshesCache.beacon.render(this, tMatrix);
+        }
         
         // Set properties back to what they were
         this.shaderToUse = sProg;
@@ -861,8 +950,11 @@ class SceneCanvas extends BaseCanvas {
         }
 
         //Draw lines and points for debugging
-        this.drawer.reset(); //Clear lines and points drawn last time
-        //TODO: Paint debugging stuff here if desired
+        if (!(this.drawer === undefined)) {
+            this.drawer.reset(); //Clear lines and points drawn last time
+            //TODO: Paint debugging stuff here if desired
+        }
+
 
         // Now draw the beacons for the cameras and lights (assuming FPSCamera objects)
         if (this.showCameras) {

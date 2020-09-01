@@ -1,9 +1,3 @@
-/* 
-Files that have been assumed to have been also loaded
-../utils/blockloader.js
-
-*/
-
 const MAX_LIGHTS = 10;
 
 /**

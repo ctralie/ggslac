@@ -2,7 +2,6 @@
 Files that have been assumed to have been also loaded
 primitives3d.js
 cameras3d.js
-../utils/blockloader.js
 ../shaders/shaders.js
 ../utils/simpledraw.js
 
