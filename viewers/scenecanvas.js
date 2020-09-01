@@ -33,6 +33,7 @@ class SceneCanvas extends BaseCanvas {
      */
     constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes, verbose) {
         super(glcanvas, shadersrelpath, antialias);
+        let canvas = this;
         this.meshesrelpath = meshesrelpath;
         this.scene = null;
         if (cacheRegMeshes === undefined) {
@@ -190,6 +191,7 @@ class SceneCanvas extends BaseCanvas {
             if (shape.type == "mesh") {
                 if ('filename' in shape || 'src' in shape) {
                     if ('src' in shape) {
+                        shape.mesh = new BasicMesh();
                         shape.mesh.loadFileFromLines(shape.src.split("\n"), canvas.verbose);
                     }
                     else {
