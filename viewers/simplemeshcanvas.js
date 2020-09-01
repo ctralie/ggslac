@@ -34,15 +34,11 @@ class SimpleMeshCanvas extends BaseCanvas {
                     let ready = true;
                     if (!('shaderReady' in canvas.shaders.normalShader)) {
                         ready = false;
-                        canvas.shaders.normalShader.then(function() {
-                            resolveCheckboxes();
-                        });
+                        canvas.shaders.normalShader.then(resolveCheckboxes);
                     }
                     if (!('shaderReady' in canvas.shaders.pointShader)) {
                         ready = false;
-                        canvas.shaders.pointShader.then(function() {
-                            resolveCheckboxes();
-                        });
+                        canvas.shaders.pointShader.then(resolveCheckboxes);
                     }
                     if (ready) {
                         requestAnimFrame(canvas.repaint.bind(canvas));
@@ -75,19 +71,13 @@ class SimpleMeshCanvas extends BaseCanvas {
         //for "shaderToUse"
         let canvas = this;
         if (!('shaderReady' in this.shaders.blinnPhong)) {
-            // Wait until the promise has resolved
-            this.shaders.blinnPhong.then(function(arg) {
-                canvas.shaderToUse = canvas.shaders.blinnPhong;
-                canvas.mesh.render(canvas);
-            });
+            // Wait until the promise has resolved, then draw again
+            this.shaders.blinnPhong.then(canvas.repaint.bind(canvas));
         }
         else {
             this.shaderToUse = this.shaders.blinnPhong;
             this.mesh.render(this);
         }
-        
-
-        
     }
 
     /**

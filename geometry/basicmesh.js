@@ -66,7 +66,7 @@ class MeshVertex {
      * @returns {glMatrix.vec3} The normal
      */
     getNormal() {
-        faces = this.getAttachedFaces();
+        let faces = this.getAttachedFaces();
         let normal = glMatrix.vec3.fromValues(0, 0, 0);
         let w;
         let N;
