@@ -29,12 +29,22 @@ class SceneCanvas extends BaseCanvas {
      *                              filename, and reuse them if they've already
      *                              been loaded to save computation and memory.
      *                              NOTE: Special meshes are cached by default
+     * @param {boolean} verbose Whether to print debugging information
      */
-    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes) {
+    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes, verbose) {
         super(glcanvas, shadersrelpath, antialias);
         this.meshesrelpath = meshesrelpath;
         this.scene = null;
+        if (cacheRegMeshes === undefined) {
+            cacheRegMeshes = true;
+        }
+        this.cacheRegMeshes = cacheRegMeshes;
         this.meshesCache = {};
+        if (verbose === undefined) {
+            verbose = false;
+        }
+        this.meshPromises = {}
+        this.verbose = verbose;
         // Initialize the icosahedron for the camera beacons
         this.meshesCache.beacon = getIcosahedronMesh();
         this.meshesCache.beacon.Scale(SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE);
@@ -178,45 +188,73 @@ class SceneCanvas extends BaseCanvas {
             shape.mesh = null;
             let canvas = this;
             if (shape.type == "mesh") {
-                if (!('filename' in shape) && !('src' in shape)) {
-                    console.log("ERROR: Neither filename nor src specified for mesh: " + shape);
-                    continue;
-                }
-                if ('src' in shape) {
-                    shape.mesh.loadFileFromLines(shape.src.split("\n"));
-                }
-                else {
-                    if (shape.filename in this.meshesCache) {
-                        shape.mesh = this.meshesCache[filename];
+                if ('filename' in shape || 'src' in shape) {
+                    if ('src' in shape) {
+                        shape.mesh.loadFileFromLines(shape.src.split("\n"), canvas.verbose);
                     }
                     else {
-                        shape.mesh = new BasicMesh();
-                        $.get(shape.filename, function(src) {
-                            shape.mesh.loadFileFromLines(src.split("\n"));
-                            if (canvas.cacheRegMeshes) {
-                                canvas.meshesCache[shape.filename] = shape.mesh;
+                        shape.filename = shape.filename.trim();
+                        if (shape.filename in this.meshesCache || shape.filename in this.meshPromises) {
+                            if (this.verbose) {
+                                console.log("Cache hit for " + shape.filename);
                             }
-                            requestAnimationFrame(canvas.repaint.bind(canvas));
-                        });
+                            if (shape.filename in this.meshPromises) {
+                                shape.mesh = SceneCanvas.EMPTY_MESH;
+                                this.meshPromises[shape.filename].then(function(mesh) {
+                                    if (canvas.verbose) {
+                                        console.log("Resolving " + shape.filename);
+                                    }
+                                    shape.mesh = mesh;
+                                    requestAnimationFrame(canvas.repaint.bind(canvas));
+                                });
+                            }
+                            else {
+                                shape.mesh = this.meshesCache[shape.filename];
+                            }
+                        }
+                        else {
+                            canvas.meshPromises[shape.filename] = new Promise((resolve, reject) => {
+                                shape.mesh = new BasicMesh();
+                                $.get(shape.filename, function(src) {
+                                    shape.mesh.loadFileFromLines(src.split("\n"), canvas.verbose);
+                                    if (canvas.cacheRegMeshes) {
+                                        canvas.meshesCache[shape.filename] = shape.mesh;
+                                    }
+                                    requestAnimationFrame(canvas.repaint.bind(canvas));
+                                    resolve(shape.mesh);
+                                }).fail(function() {
+                                    console.log("Error: Could not load mesh " + shape.filename);
+                                });
+                            })
+                        }
                     }
+                }
+                else {
+                    console.log("ERROR: Neither filename nor src specified for mesh: " + shape);
                 }
             }
             else if (shape.type == "polygon") {
-                shape.mesh = new BasicMesh();
-                shape.type = "mesh";
-                let face = [];
-                for (i = 0; i < shape.vertices.length; i++) {
-                    let p = glMatrix.vec3.fromValues.apply(null, shape.vertices[i]);
-                    face.push(shape.mesh.addVertex(p));
+                if ('vertices' in shape) {
+                    shape.mesh = new BasicMesh();
+                    shape.type = "mesh";
+                    let face = [];
+                    for (i = 0; i < shape.vertices.length; i++) {
+                        let p = glMatrix.vec3.fromValues.apply(null, shape.vertices[i]);
+                        face.push(shape.mesh.addVertex(p));
+                    }
+                    shape.mesh.addFace(face);
                 }
-                shape.mesh.addFace(face);
+                else {
+                    console.log("Error: Polygon specified without 'vertices' field");
+                    console.log(shape);
+                }
             }
             else if (shape.type == "sphere") {
                 if (!('sphere' in this.meshesCache)) {
                     let sphereMesh = new BasicMesh();
                     let meshFilename = this.meshesrelpath + "sphere1026.off";
                     $.get(meshFilename, function(lines) {
-                        sphereMesh.loadFileFromLines(lines.split("\n"));
+                        sphereMesh.loadFileFromLines(lines.split("\n"), canvas.verbose);
                         requestAnimationFrame(canvas.repaint.bind(canvas));
                     });
                     this.meshesCache.sphere = sphereMesh;
@@ -250,7 +288,7 @@ class SceneCanvas extends BaseCanvas {
                     let boxMesh = new BasicMesh();
                     let meshFilename = this.meshesrelpath + "box2402.off";
                     $.get(meshFilename, function(lines) {
-                        boxMesh.loadFileFromLines(lines.split("\n"));
+                        boxMesh.loadFileFromLines(lines.split("\n"), canvas.verbose);
                         requestAnimationFrame(canvas.repaint.bind(canvas));
                     });
                     this.meshesCache.box = boxMesh;
@@ -351,25 +389,26 @@ class SceneCanvas extends BaseCanvas {
                 shape.ms = ms;
             }
             else if (shape.type == "scene") {
-                if (!('filename' in shape)) {
-                    console.log("ERROR: filename not specified for scene: " + node);
-                    continue;
-                }
-                let canvas = this;
-                $.get(shape.filename, function(subscene) {
-                    // Asynchronously load the child scene as a subtree
-                    // Ignore the cameras, but copy over the materials
-                    if ('materials' in subscene) {
-                        canvas.scene.materials = {...canvas.scene.materials, ...subscene.materials };
-                    }
-                    if ('children' in subscene) {
-                        if (!('children' in node)) {
-                            node.children = [];
+                if ('filename' in shape) {
+                    let canvas = this;
+                    $.get(shape.filename, function(subscene) {
+                        // Asynchronously load the child scene as a subtree
+                        // Ignore the cameras, but copy over the materials
+                        if ('materials' in subscene) {
+                            canvas.scene.materials = {...canvas.scene.materials, ...subscene.materials };
                         }
-                        node.children = node.children.concat(subscene.children);
-                    }
-                    requestAnimFrame(canvas.repaint.bind(canvas));
-                });
+                        if ('children' in subscene) {
+                            if (!('children' in node)) {
+                                node.children = [];
+                            }
+                            node.children = node.children.concat(subscene.children);
+                        }
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    });
+                }
+                else {
+                    console.log("ERROR: filename not specified for scene: " + node);
+                }
 
             }            
             else {
@@ -552,7 +591,7 @@ class SceneCanvas extends BaseCanvas {
             );
             menu.add(light, 'angle', 0, Math.PI).step(0.01).onChange(
                 function() {
-                    requestAnimationFrame(canvas.repaint);
+                    requestAnimationFrame(canvas.repaint.bind(canvas));
                 }
             );
             // Setup mechanism to move light around with camera
@@ -801,9 +840,11 @@ class SceneCanvas extends BaseCanvas {
             canvas.parseNode(child);
         });
         //Output information about the scene tree
-        this.scene.children.forEach(function(child) {
-            console.log(canvas.getSceneString(child, " "));
-        });
+        if (this.verbose) {
+            this.scene.children.forEach(function(child) {
+                console.log(canvas.getSceneString(child, " "));
+            });
+        }
 
         // Step 3: Setup menus
         // Setup lights and light menus
@@ -1036,3 +1077,4 @@ class SceneCanvas extends BaseCanvas {
 SceneCanvas.BEACON_SIZE = 0.1;
 SceneCanvas.BEACON_COLOR_1 = "A7383E";
 SceneCanvas.BEACON_COLOR_2 = "378B2E";
+SceneCanvas.EMPTY_MESH = new BasicMesh();
