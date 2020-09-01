@@ -38,7 +38,8 @@ class SceneCanvas extends BaseCanvas {
         // Initialize the icosahedron for the camera beacons
         this.meshesCache.beacon = getIcosahedronMesh();
         this.meshesCache.beacon.Scale(SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE);
-        // Setup drawer object for debugging
+        // Setup drawer object for debugging.  It is undefined until
+        // the pointColorShader is ready
         if (!('shaderReady' in this.shaders.pointColorShader)) {
             this.shaders.pointColorShader.then(function() {
                 canvas.drawer = new SimpleDrawer(canvas.gl, canvas.shaders.pointColorShader);
@@ -863,7 +864,14 @@ class SceneCanvas extends BaseCanvas {
      * @param {string} color Hex color of the beacon
      */
     drawCameraBeacon(camera, color) {
+        let canvas = this;
         if (this.drawer === undefined) {
+            return;
+        }
+        if (!('shaderReady' in this.shaders.flat)) {
+            this.shaders.flat.then(function() {
+                requestAnimationFrame(canvas.repaint.bind(canvas));
+            })
             return;
         }
         // Switch over to a flat shader with no edges
@@ -887,9 +895,7 @@ class SceneCanvas extends BaseCanvas {
         this.material = {ka:colorFloatFromHex(color)};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
-        if ('shaderReady' in this.shaderToUse) {
-            this.meshesCache.beacon.render(this, tMatrix);
-        }
+        this.meshesCache.beacon.render(this, tMatrix);
         
         // Set properties back to what they were
         this.material = material;
@@ -904,8 +910,15 @@ class SceneCanvas extends BaseCanvas {
      * @param {object} light Light object
      */
     drawLightBeacon(light) {
+        let canvas = this;
         if (this.drawer === undefined) {
-            return null;
+            return;
+        }
+        if (!('shaderReady' in this.shaders.flat)) {
+            this.shaders.flat.then(function() {
+                requestAnimationFrame(canvas.repaint.bind(canvas));
+            })
+            return;
         }
         // Switch over to a flat shader with no edges
         let sProg = this.shaderToUse;
@@ -918,9 +931,7 @@ class SceneCanvas extends BaseCanvas {
         this.material = {ka:light.color};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
-        if ('shaderReady' in this.shaderToUse) {
-            this.meshesCache.beacon.render(this, tMatrix);
-        }
+        this.meshesCache.beacon.render(this, tMatrix);
         
         // Set properties back to what they were
         this.shaderToUse = sProg;
