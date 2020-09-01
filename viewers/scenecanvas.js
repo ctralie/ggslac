@@ -72,15 +72,11 @@ class SceneCanvas extends BaseCanvas {
                     let ready = true;
                     if (!('shaderReady' in canvas.shaders.normalShader)) {
                         ready = false;
-                        canvas.shaders.normalShader.then(function() {
-                            resolveCheckboxes();
-                        });
+                        canvas.shaders.normalShader.then(resolveCheckboxes);
                     }
                     if (!('shaderReady' in canvas.shaders.pointShader)) {
                         ready = false;
-                        canvas.shaders.pointShader.then(function() {
-                            resolveCheckboxes();
-                        });
+                        canvas.shaders.pointShader.then(resolveCheckboxes);
                     }
                     if (ready) {
                         canvas.updateMeshDrawings();
@@ -869,9 +865,7 @@ class SceneCanvas extends BaseCanvas {
             return;
         }
         if (!('shaderReady' in this.shaders.flat)) {
-            this.shaders.flat.then(function() {
-                requestAnimationFrame(canvas.repaint.bind(canvas));
-            })
+            this.shaders.flat.then(requestAnimationFrame(canvas.repaint.bind(canvas)));
             return;
         }
         // Switch over to a flat shader with no edges
@@ -915,9 +909,7 @@ class SceneCanvas extends BaseCanvas {
             return;
         }
         if (!('shaderReady' in this.shaders.flat)) {
-            this.shaders.flat.then(function() {
-                requestAnimationFrame(canvas.repaint.bind(canvas));
-            })
+            this.shaders.flat.then(requestAnimationFrame(canvas.repaint.bind(canvas)));
             return;
         }
         // Switch over to a flat shader with no edges
