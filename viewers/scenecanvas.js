@@ -70,7 +70,9 @@ class SceneCanvas extends BaseCanvas {
     setupMenus() {
         this.gui = new dat.GUI();
         const gui = this.gui;
-
+        // Title
+        this.name = "Untitled Scene";
+        gui.add(this, "name").listen();
         // Mesh display options menu
         this.drawEdges = false;
         let meshOpts = gui.addFolder('Mesh Display Options');
@@ -98,6 +100,32 @@ class SceneCanvas extends BaseCanvas {
                 evt.onChange(resolveCheckboxes);
             }
         );
+
+        // Animation menu
+        this.animationMenu = gui.addFolder("Animation");
+        this.animation = {framesPerStep:50, interpolation:'slerp', cameraSequence:''};
+        this.animationMenu.add(this.animation, "cameraSequence").listen();
+        this.animationMenu.add(this.animation, 'framesPerStep');
+        this.animationMenu.add(this.animation, 'interpolation', ['slerp', 'euler']);
+        this.animating = false;
+        this.MakeGIF = function() {
+            canvas.animating = true;
+            let a = canvas.animation;
+            a.frame = 0;
+            let c = this.camera;
+            a.animCamera = new FPSCamera(c.pixWidth, c.pixHeight, c.fovx, c.fovy, c.near, c.far);
+            a.sequence = a.cameraSequence.split(",");
+            for (let i = 0; i < a.sequence.length; i++) {
+                a.sequence[i] = Integer.parseInt(a.sequence[i]);
+            }
+            this.camera = a.animCamera;
+            a.gif = new GIF({workers: 2,quality: 10});
+            a.gif.on('finished', function(blob) {
+                window.open(URL.createObjectURL(blob));
+            });
+            requestAnimationFrame(canvas.repaint.bind(canvas));
+        }
+        this.animationMenu.add(canvas, 'MakeGIF');
 
         // Lighting menu
         this.lightMenu = gui.addFolder('Lights');
@@ -198,10 +226,13 @@ class SceneCanvas extends BaseCanvas {
                     else {
                         shape.filename = shape.filename.trim();
                         if (shape.filename in this.meshesCache || shape.filename in this.meshPromises) {
-                            if (this.verbose) {
-                                console.log("Cache hit for " + shape.filename);
+                            if (shape.filename in this.meshesCache) {
+                                if (this.verbose) {
+                                    console.log("Cache hit for " + shape.filename);
+                                }
+                                shape.mesh = this.meshesCache[shape.filename];
                             }
-                            if (shape.filename in this.meshPromises) {
+                            else {
                                 shape.mesh = SceneCanvas.EMPTY_MESH;
                                 this.meshPromises[shape.filename].then(function(mesh) {
                                     if (canvas.verbose) {
@@ -211,13 +242,10 @@ class SceneCanvas extends BaseCanvas {
                                     requestAnimationFrame(canvas.repaint.bind(canvas));
                                 });
                             }
-                            else {
-                                shape.mesh = this.meshesCache[shape.filename];
-                            }
                         }
                         else {
+                            shape.mesh = new BasicMesh();
                             canvas.meshPromises[shape.filename] = new Promise((resolve, reject) => {
-                                shape.mesh = new BasicMesh();
                                 $.get(shape.filename, function(src) {
                                     shape.mesh.loadFileFromLines(src.split("\n"), canvas.verbose);
                                     if (canvas.cacheRegMeshes) {
@@ -228,7 +256,7 @@ class SceneCanvas extends BaseCanvas {
                                 }).fail(function() {
                                     console.log("Error: Could not load mesh " + shape.filename);
                                 });
-                            })
+                            });
                         }
                     }
                 }
@@ -639,6 +667,40 @@ class SceneCanvas extends BaseCanvas {
             // Also add each camera to a GUI control
             let menu = canvas.cameraMenu.addFolder("camera " + i);
             canvas.cameraMenus.push(menu);
+
+            // Setup mechanism to move camera around with keyboard/mouse
+            if (i == 0) {
+                c.viewFrom = true;
+            }
+            else {
+                c.viewFrom = false;
+            }
+            menu.add(c, 'viewFrom').listen().onChange(
+                function(v) {
+                    if (v) {
+                        // Toggle other cameras viewFrom
+                        scene.cameras.forEach(function(other) {
+                            if (!(other === c)) {
+                                other.viewFrom = false;
+                            }
+                        });
+                        // Turn off all viewFrom in lights
+                        scene.lights.forEach(function(light) {
+                            light.viewFrom = false;
+                        });
+                        canvas.camera = c.camera;
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    }
+                }
+            );
+            c.addToAnimation = function() {
+                if (canvas.animation.cameraSequence.length > 0) {
+                    canvas.animation.cameraSequence += ", ";
+                }
+                canvas.animation.cameraSequence += "" + i;
+            }
+            menu.add(c, 'addToAnimation');
+
             c.camera.position = vecToStr(c.camera.pos);
             menu.add(c.camera, 'position').listen().onChange(
                 function(value) {
@@ -678,31 +740,6 @@ class SceneCanvas extends BaseCanvas {
                     requestAnimFrame(canvas.repaint.bind(canvas));
                 }
             );
-            // Setup mechanism to move camera around with keyboard/mouse
-            if (i == 0) {
-                c.viewFrom = true;
-            }
-            else {
-                c.viewFrom = false;
-            }
-            menu.add(c, 'viewFrom').listen().onChange(
-                function(v) {
-                    if (v) {
-                        // Toggle other cameras viewFrom
-                        scene.cameras.forEach(function(other) {
-                            if (!(other === c)) {
-                                other.viewFrom = false;
-                            }
-                        });
-                        // Turn off all viewFrom in lights
-                        scene.lights.forEach(function(light) {
-                            light.viewFrom = false;
-                        });
-                        canvas.camera = c.camera;
-                        requestAnimFrame(canvas.repaint.bind(canvas));
-                    }
-                }
-            )
         });
         if (scene.cameras.length > 0) {
             // Add the first camera to the drawing parameters
@@ -811,12 +848,11 @@ class SceneCanvas extends BaseCanvas {
         this.height = pixHeight;
 
         // Step 0: Put the title in the DOM
-        let title = document.getElementById('scenetitle');
         if ('name' in scene) {
-            title.innerHTML = "<h3>" + scene.name + "</h3>";
+            this.name = scene.name;
         }
         else {
-            title.innerHTML = "<h3>Scene</h3>";
+            this.name = "Untitled Scene";
         }
 
         // Step 1: Setup defaults
@@ -997,6 +1033,31 @@ class SceneCanvas extends BaseCanvas {
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
+        // Move the camera to the appropriate position/orientation if animating
+        if (this.animating) {
+            let a = this.animation;
+            // Frame in this leg of the animation
+            let frame = a.frame % a.framesPerStep; 
+            // Leg of the animation
+            let idx = (a.frame - a.framesPerStep)/a.framesPerStep;
+            if (idx > a.sequence.length - 1) {
+                // Reached end of animation; save gif
+                this.animating = false;
+                a.gif.render();
+            }
+            else {
+                let t = frame/a.framesPerStep;
+                let camera1 = this.cameras[a.sequence[idx]];
+                let camera2 = this.cameras[a.sequence[idx+1]];
+                let pos = glMatrix.vec3.create();
+                glMatrix.vec3.lerp(pos, camera1.pos, camera2.pos, t);
+                let rot = glMatrix.quat.create();
+                glmatrix.quat.slerp(rot, camera1.rot, camera2.rot, t);
+                a.animCamera.pos = pos;
+                a.animCamera.rot = rot;
+            }
+        }
+
         //Then draw the scene
         let scene = this.scene;
         if ('children' in scene) {
@@ -1031,6 +1092,12 @@ class SceneCanvas extends BaseCanvas {
                     }
                 }
             );
+        }
+
+        if (this.animating) {
+            let a = this.animation;
+            a.frame += 1;
+            a.gif.addFrame(canvas.glcanvas, {copy:true, delay:100});
         }
         
         // Redraw if walking
