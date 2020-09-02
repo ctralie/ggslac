@@ -110,29 +110,43 @@ class SceneCanvas extends BaseCanvas {
         this.animationMenu.add(this.animation, 'interpolation', ['slerp', 'euler']);
         this.animating = false;
         this.MakeGIF = function() {
-            canvas.animating = true;
+            
             let a = canvas.animation;
             a.frame = 0;
             let c = this.camera;
-            a.animCamera = new FPSCamera(c.pixWidth, c.pixHeight, c.fovx, c.fovy, c.near, c.far);
             a.sequence = a.cameraSequence.split(",");
-            for (let i = 0; i < a.sequence.length; i++) {
-                a.sequence[i] = parseInt(a.sequence[i]);
+
+            if (a.sequence.length < 2) {
+                alert("Animation Error: Must have at least two cameras in the camera sequence!");
             }
-            // Remember which camera was used before so it can be restored
-            a.cameraBefore = this.camera;
-            this.camera = a.animCamera;
-            a.gif = new GIF({workers: 2, quality: 10, 
-                            workerScript:"../jslibs/gif.worker.js",
-                            width:c.pixWidth, height:c.pixHeight});
-            a.gif.on('finished', function(blob) {
-                window.open(URL.createObjectURL(blob));
-            });
-            // Remember the show camera settings, but turn off
-            // the camera displays for the animation
-            a.showCameras = canvas.showCameras;
-            canvas.showCameras = false;
-            requestAnimationFrame(canvas.repaint.bind(canvas));
+            else {
+                let valid = true;
+                for (let i = 0; i < a.sequence.length; i++) {
+                    a.sequence[i] = parseInt(a.sequence[i]);
+                    if (a.sequence[i] >= this.scene.cameras.length) {
+                        alert("Animation Error: Camera " + a.sequence[i] + " does not exist!");
+                        valid = false;
+                    }
+                }
+                if (valid) {
+                    canvas.animating = true;
+                    a.animCamera = new FPSCamera(c.pixWidth, c.pixHeight, c.fovx, c.fovy, c.near, c.far);
+                    // Remember which camera was used before so it can be restored
+                    a.cameraBefore = this.camera;
+                    this.camera = a.animCamera;
+                    a.gif = new GIF({workers: 2, quality: 10, 
+                                    workerScript:"../jslibs/gif.worker.js",
+                                    width:c.pixWidth, height:c.pixHeight});
+                    a.gif.on('finished', function(blob) {
+                        window.open(URL.createObjectURL(blob));
+                    });
+                    // Remember the show camera settings, but turn off
+                    // the camera displays for the animation
+                    a.showCameras = canvas.showCameras;
+                    canvas.showCameras = false;
+                    requestAnimationFrame(canvas.repaint.bind(canvas));
+                }
+            }
         }
         this.animationMenu.add(canvas, 'MakeGIF');
 
