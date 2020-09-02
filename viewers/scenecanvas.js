@@ -65,43 +65,11 @@ class SceneCanvas extends BaseCanvas {
     }
 
     /**
-     * Setup the dat.GUI menus
+     * Setup the animation menu in dat.gui
      */
-    setupMenus() {
-        this.gui = new dat.GUI();
-        const gui = this.gui;
-        // Title
-        this.name = "Untitled Scene";
-        gui.add(this, "name").listen();
-        // Mesh display options menu
-        this.drawEdges = false;
-        let meshOpts = gui.addFolder('Mesh Display Options');
+    setupAnimationMenu() {
+        let gui = this.gui;
         let canvas = this;
-        ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
-            function(s) {
-                let evt = meshOpts.add(canvas, s);
-                function resolveCheckboxes() {
-                    // Make sure canvas normalShader and pointShader have been compiled
-                    // before drawing edges/normals/points
-                    let ready = true;
-                    if (!('shaderReady' in canvas.shaders.normalShader)) {
-                        ready = false;
-                        canvas.shaders.normalShader.then(resolveCheckboxes);
-                    }
-                    if (!('shaderReady' in canvas.shaders.pointShader)) {
-                        ready = false;
-                        canvas.shaders.pointShader.then(resolveCheckboxes);
-                    }
-                    if (ready) {
-                        canvas.updateMeshDrawings();
-                        requestAnimFrame(canvas.repaint.bind(canvas));
-                    }
-                }
-                evt.onChange(resolveCheckboxes);
-            }
-        );
-
-        // Animation menu
         this.animationMenu = gui.addFolder("Animation");
         this.animation = {framesPerStep:50, framesPerSec: 30, interpolation:'slerp', cameraSequence:''};
         this.animationMenu.add(this.animation, "cameraSequence").listen();
@@ -110,7 +78,6 @@ class SceneCanvas extends BaseCanvas {
         this.animationMenu.add(this.animation, 'interpolation', ['slerp', 'euler']);
         this.animating = false;
         this.MakeGIF = function() {
-            
             let a = canvas.animation;
             a.frame = 0;
             let c = this.camera;
@@ -149,6 +116,46 @@ class SceneCanvas extends BaseCanvas {
             }
         }
         this.animationMenu.add(canvas, 'MakeGIF');
+    }
+
+    /**
+     * Setup the dat.GUI menus
+     */
+    setupMenus() {
+        this.gui = new dat.GUI();
+        const gui = this.gui;
+        // Title
+        this.name = "Untitled Scene";
+        gui.add(this, "name").listen();
+        // Mesh display options menu
+        this.drawEdges = false;
+        let meshOpts = gui.addFolder('Mesh Display Options');
+        let canvas = this;
+        ['drawEdges', 'drawNormals', 'drawPoints'].forEach(
+            function(s) {
+                let evt = meshOpts.add(canvas, s);
+                function resolveCheckboxes() {
+                    // Make sure canvas normalShader and pointShader have been compiled
+                    // before drawing edges/normals/points
+                    let ready = true;
+                    if (!('shaderReady' in canvas.shaders.normalShader)) {
+                        ready = false;
+                        canvas.shaders.normalShader.then(resolveCheckboxes);
+                    }
+                    if (!('shaderReady' in canvas.shaders.pointShader)) {
+                        ready = false;
+                        canvas.shaders.pointShader.then(resolveCheckboxes);
+                    }
+                    if (ready) {
+                        canvas.updateMeshDrawings();
+                        requestAnimFrame(canvas.repaint.bind(canvas));
+                    }
+                }
+                evt.onChange(resolveCheckboxes);
+            }
+        );
+        
+        this.setupAnimationMenu();
 
         // Lighting menu
         this.lightMenu = gui.addFolder('Lights');
@@ -1074,12 +1081,22 @@ class SceneCanvas extends BaseCanvas {
                 let idx2 = a.sequence[idx+1];
                 let camera1 = this.scene.cameras[idx1].camera;
                 let camera2 = this.scene.cameras[idx2].camera;
+                // Linearly interpolate between two cameras to get position
                 let pos = glMatrix.vec3.create();
                 glMatrix.vec3.lerp(pos, camera1.pos, camera2.pos, t);
-                let rot = glMatrix.quat.create();
-                glMatrix.quat.slerp(rot, camera1.getQuatFromRot(), camera2.getQuatFromRot(), t);
                 this.camera.pos = pos;
-                this.camera.setRotFromQuat(rot);
+                if (a.interpolation === "slerp") {
+                    let rot = glMatrix.quat.create();
+                    glMatrix.quat.slerp(rot, camera1.getQuatFromRot(), camera2.getQuatFromRot(), t);
+                    this.camera.setRotFromQuat(rot);
+                }
+                else if(a.interpolation === "euler") {
+                    let euler1 = GeomUtils.getEulerYZXFromQuat(camera1.getQuatFromRot());
+                    let euler2 = GeomUtils.getEulerYZXFromQuat(camera2.getQuatFromRot());
+                    let euler = GeomUtils.angle3LERP(euler1, euler2, t);
+                    let rot = GeomUtils.getQuatFromEulerYZX(euler);
+                    this.camera.setRotFromQuat(rot);
+                }
             }
         }
 

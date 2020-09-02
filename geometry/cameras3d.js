@@ -107,12 +107,13 @@ class Camera3D {
         this.up = glMatrix.vec3.fromValues(m[1], m[4], m[7]);
     }
 
-    /** 
-     * Compute the quaternion from the given right/up vectors
+    /**
+     * Use the right/up vectors to construct a corresponding
+     * 3x3 rotation matrix
      * 
-     * @returns {glMatrix.quat} The quaternion
+     * @returns {glMatrix.mat3} The rotation matrix
      */
-    getQuatFromRot() {
+    getRotMat3() {
         let T = glMatrix.vec3.create();
         glMatrix.vec3.cross(T, this.right, this.up);
         let rotMat = glMatrix.mat3.create();
@@ -121,6 +122,15 @@ class Camera3D {
             rotMat[i*3+1] = this.up[i];
             rotMat[i*3+2] = T[i];
         }
+        return rotMat;
+    }
+    /** 
+     * Compute the quaternion from the given right/up vectors
+     * 
+     * @returns {glMatrix.quat} The quaternion
+     */
+    getQuatFromRot() {
+        let rotMat = this.getRotMat3();
         let q = glMatrix.quat.create();
         glMatrix.quat.fromMat3(q, rotMat);
         return q;
