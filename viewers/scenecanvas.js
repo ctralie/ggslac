@@ -116,13 +116,17 @@ class SceneCanvas extends BaseCanvas {
             a.animCamera = new FPSCamera(c.pixWidth, c.pixHeight, c.fovx, c.fovy, c.near, c.far);
             a.sequence = a.cameraSequence.split(",");
             for (let i = 0; i < a.sequence.length; i++) {
-                a.sequence[i] = Integer.parseInt(a.sequence[i]);
+                a.sequence[i] = parseInt(a.sequence[i]);
             }
             this.camera = a.animCamera;
             a.gif = new GIF({workers: 2,quality: 10});
             a.gif.on('finished', function(blob) {
                 window.open(URL.createObjectURL(blob));
             });
+            // Remember the show camera settings, but turn off
+            // the camera displays for the animation
+            a.showCameras = canvas.showCameras;
+            canvas.showCameras = false;
             requestAnimationFrame(canvas.repaint.bind(canvas));
         }
         this.animationMenu.add(canvas, 'MakeGIF');
@@ -140,7 +144,7 @@ class SceneCanvas extends BaseCanvas {
         this.cameraMenus = []; // Individual menus for each camera
         let cameraMenu = this.cameraMenu;
         this.showCameras = true;
-        cameraMenu.add(canvas, 'showCameras').onChange(function() {
+        cameraMenu.add(canvas, 'showCameras').listen().onChange(function() {
             requestAnimFrame(canvas.repaint.bind(canvas));
         });
 
@@ -236,7 +240,7 @@ class SceneCanvas extends BaseCanvas {
                                 shape.mesh = SceneCanvas.EMPTY_MESH;
                                 this.meshPromises[shape.filename].then(function(mesh) {
                                     if (canvas.verbose) {
-                                        console.log("Resolving " + shape.filename);
+                                        console.log("Resolving cached version of " + shape.filename);
                                     }
                                     shape.mesh = mesh;
                                     requestAnimationFrame(canvas.repaint.bind(canvas));
@@ -924,14 +928,11 @@ class SceneCanvas extends BaseCanvas {
                     else if ('material' in canvas) {
                         delete canvas.material;
                     }
-                    if ('shaderReady' in canvas.shaderToUse) {
-                        // There may be an additional transform to apply based
-                        // on shape properties of special shapes (e.g. box width)
-                        let tMatrix = glMatrix.mat4.create();
-                        glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
-                        shape.mesh.render(canvas, tMatrix);
-                    }
-
+                    // There may be an additional transform to apply based
+                    // on shape properties of special shapes (e.g. box width)
+                    let tMatrix = glMatrix.mat4.create();
+                    glMatrix.mat4.mul(tMatrix, nextTransform, shape.ms);
+                    shape.mesh.render(canvas, tMatrix);
                 }
             }
         });
@@ -1039,20 +1040,24 @@ class SceneCanvas extends BaseCanvas {
             // Frame in this leg of the animation
             let frame = a.frame % a.framesPerStep; 
             // Leg of the animation
-            let idx = (a.frame - a.framesPerStep)/a.framesPerStep;
+            let idx = (a.frame - frame)/a.framesPerStep;
             if (idx > a.sequence.length - 1) {
                 // Reached end of animation; save gif
                 this.animating = false;
                 a.gif.render();
+                // Restore show camera setting
+                this.showCameras = a.showCameras;
             }
             else {
                 let t = frame/a.framesPerStep;
-                let camera1 = this.cameras[a.sequence[idx]];
-                let camera2 = this.cameras[a.sequence[idx+1]];
+                let idx1 = a.sequence[idx];
+                let idx2 = a.sequence[idx+1];
+                let camera1 = this.scene.cameras[idx1];
+                let camera2 = this.scene.cameras[idx2];
                 let pos = glMatrix.vec3.create();
                 glMatrix.vec3.lerp(pos, camera1.pos, camera2.pos, t);
                 let rot = glMatrix.quat.create();
-                glmatrix.quat.slerp(rot, camera1.rot, camera2.rot, t);
+                glMatrix.quat.slerp(rot, camera1.rot, camera2.rot, t);
                 a.animCamera.pos = pos;
                 a.animCamera.rot = rot;
             }
@@ -1060,7 +1065,7 @@ class SceneCanvas extends BaseCanvas {
 
         //Then draw the scene
         let scene = this.scene;
-        if ('children' in scene) {
+        if ('children' in scene && 'shaderReady' in canvas.shaderToUse) {
             scene.children.forEach(function(child) {
                 canvas.repaintRecurse(child, glMatrix.mat4.create());
             });
@@ -1098,19 +1103,22 @@ class SceneCanvas extends BaseCanvas {
             let a = this.animation;
             a.frame += 1;
             a.gif.addFrame(canvas.glcanvas, {copy:true, delay:100});
+            requestAnimationFrame(canvas.repaint.bind(canvas));
         }
         
         // Redraw if walking
         let thisTime = (new Date()).getTime();
         let dt = (thisTime - this.lastTime)/1000.0;
         this.lastTime = thisTime;
-        if (this.movelr != 0 || this.moveud != 0 || this.movefb != 0) {
-            this.camera.translate(0, 0, this.movefb, this.walkspeed*dt);
-            this.camera.translate(0, this.moveud, 0, this.walkspeed*dt);
-            this.camera.translate(this.movelr, 0, 0, this.walkspeed*dt);
-            this.camera.position = vecToStr(this.camera.pos);
-            if (this.repaintOnInteract) {
-                requestAnimFrame(canvas.repaint.bind(canvas));
+        if (!this.animating) {
+            if (this.movelr != 0 || this.moveud != 0 || this.movefb != 0) {
+                this.camera.translate(0, 0, this.movefb, this.walkspeed*dt);
+                this.camera.translate(0, this.moveud, 0, this.walkspeed*dt);
+                this.camera.translate(this.movelr, 0, 0, this.walkspeed*dt);
+                this.camera.position = vecToStr(this.camera.pos);
+                if (this.repaintOnInteract) {
+                    requestAnimFrame(canvas.repaint.bind(canvas));
+                }
             }
         }
     }
