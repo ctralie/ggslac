@@ -181,6 +181,135 @@ function getPolygonArea(verts) {
 GeomUtils.getPolygonArea = getPolygonArea;
 
 
+/**
+ * Convert Euler angles from a M = R(y)R(z)R(x) rotation order
+ * into a quaternion
+ * @param {glMatrix.vec3} r The euler angles, in y, z, x order
+ * @returns {glMatrix.quat} The corresponding quaternion
+ */
+function getQuatFromEulerYZX(r) {
+    let ry = r[0];
+    let rz = r[1];
+    let rx = r[2];
+    let c1 = Math.cos(ry/2);
+    let s1 = Math.sin(ry/2);
+    let c2 = Math.cos(rz/2);
+    let s2 = Math.sin(rz/2);
+    let c3 = Math.cos(rx/2);
+    let s3 = Math.sin(rx/2);
+    let c1c2 = c1*c2;
+    let s1s2 = s1*s2;
+    w =c1c2*c3 - s1s2*s3;
+    x =c1c2*s3 + s1s2*c3;
+    y =s1*c2*c3 + c1*s2*s3;
+    z =c1*s2*c3 - s1*c2*s3;
+    return glMatrix.quat.fromValues(x, y, z, w);
+}
+GeomUtils.getQuatFromEulerYZX = getQuatFromEulerYZX;
+
+/**
+ * Convert a quaternion to an Euler angles representation, taking
+ * care at the singularities
+ * With help from 
+ * http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+ * 
+ * @param {glMatrix.quat} q The quaternion to convert
+ * @returns {glMatrix.vec3} The euler angles, in y, z, x order
+ */
+function getEulerYZXFromQuat(q) {
+    let x = q[0];
+    let y = q[1];
+    let z = q[2];
+    let w = q[3];
+    let sqw = w*w;
+    let sqx = x*x;
+    let sqy = y*y;
+    let sqz = z*z;
+    // Normalization / correction factor
+    let unit = sqx + sqy + sqz + sqw; 
+    console.log("unit = " + unit);
+    let test = x*y + z*w;
+    let ry = 0; // Heading / Yaw
+    let rz = 0; // Attitude / Pitch
+    let rx = 0; // Bank / Roll
+    if (test > 0.499*unit) { 
+        console.log("North pole singularity");
+        // singularity at north pole
+        ry = 2 * Math.atan2(x,w);
+        rz = Math.PI/2;
+        rx = 0;
+    }
+    else if (test < -0.499*unit) { 
+        console.log("South pole singularity");
+        // singularity at south pole
+        ry = -2*Math.atan2(x,w);
+        rz = -Math.PI/2;
+        rx = 0;
+    }
+    else {
+        ry = Math.atan2(2*y*w-2*x*z, sqx-sqy-sqz+sqw);
+        rz = Math.asin(2*test/unit);
+        rx = Math.atan2(2*x*w-2*y*z, -sqx+sqy-sqz+sqw);
+    }
+    return glMatrix.vec3.fromValues(ry, rz, rx);
+}
+GeomUtils.getEulerYZXFromQuat = getEulerYZXFromQuat;
+
+/**
+ * Return an angle which is linearly interpolated between
+ * two angles, which is along the shortest path between them
+ * @param {float} a First angle, in radians
+ * @param {float} b Second angle, in radians
+ * @param {float} t LERP parameter, in [0, 1]
+ * @return {float} The interpolated angle along the shortest path from a to b
+ */
+function angleLERP(a, b, t) {
+    function angleIn2PI(x) {
+        let fac = Math.floor(x/(2*Math.PI));
+        let ret = x - 2*Math.PI*fac;
+        if (ret < 0) {
+            ret = 2*Math.PI - ret;
+        }
+        return ret;
+    }
+    let x = angleIn2PI(a);
+    let y = angleIn2PI(b);
+    let res = 0;
+    if (y < x) {
+        t = 1-t;
+        let temp = x;
+        x = y;
+        y = temp;
+    }
+    console.log("y = " + y);
+    console.log("x = " + x);
+    if (y - x > Math.PI) {
+        res = x - t*(2*Math.PI-(y-x));
+    }
+    else {
+        res = x + t*(y-x);
+    }
+    return angleIn2PI(res);
+}
+GeomUtils.angleLERP = angleLERP;
+
+/**
+ * Return a vector angle which is linearly interpolated between
+ * two vector angles, where each component is along the shortest 
+ * path between the two corresponding angles
+ * @param {glMatrix.vec3} a First vector of angles, each in radians
+ * @param {glMatrix.vec3} b Second vector of angles, each in radians
+ * @param {float} t LERP parameter, in [0, 1]
+ * @return {glMatrix.vec3} The interpolated angle along the shortest path from a to b
+ */
+function angle3LERP(a, b, t) {
+    let x = GeomUtils.angleLERP(a[0], b[0], t);
+    let y = GeomUtils.angleLERP(a[1], b[1], t);
+    let z = GeomUtils.angleLERP(a[2], b[2], t);
+    return glMatrix.vec3.fromValues(x, y, z);
+}
+GeomUtils.angle3LERP = angle3LERP;
+
 /////////////////////////////////////////////
 ///////////   PRIMITIVE OBJECTS   ///////////
 /////////////////////////////////////////////
