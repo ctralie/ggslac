@@ -40,13 +40,9 @@ void main(void) {
     gl_Position = uPMatrix*uMVMatrix*tpos; // Viewing window position
 
     // Diffuse color
-    // The default value of the uniform diffuse color is (2, 2, 2)
-    // So ignore and use the vColor from the buffer in this case.
-    // Otherwise, override the buffer with the specified uniform color
-    vec3 vKd = uKd;
-    if (uKd[0] == 2.0 && uKd[1] == 2.0 && uKd[2] == 2.0) {
-        vKd = vColor; 
-    }
+    // Diffuse color should be the product of 
+    // the diffuse material and the per-vertex color
+    vec3 vKd = uKd*vColor;
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         if (i < numLights) {

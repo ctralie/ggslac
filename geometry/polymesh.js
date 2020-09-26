@@ -338,9 +338,9 @@ class PolyMesh {
             }
             else {
                 //Default color is greenish gray
-                C[i*3] = 0.5;
-                C[i*3+1] = 0.55;
-                C[i*3+2] = 0.5;
+                C[i*3] = PolyMesh.DEFAULT_DIFFUSE[0];
+                C[i*3+1] = PolyMesh.DEFAULT_DIFFUSE[1];
+                C[i*3+2] = PolyMesh.DEFAULT_DIFFUSE[2];
             }    
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
@@ -401,11 +401,7 @@ class PolyMesh {
             gl.uniform3fv(sProg.uKaUniform, ka);
         }
         if ('uKdUniform' in sProg) {
-            // The default value of the constant diffuse color is (2, 2, 2).
-            // The shader knows to ignore it if it receives 2, 2, 2 and to 
-            // instead rely on the per-vertex color buffer
-            // But if the mesh material specifies a diffuse color, then use that instead
-            let kd = glMatrix.vec3.fromValues(2.0, 2.0, 2.0);
+            let kd = glMatrix.vec3.fromValues(1.0, 1.0, 1.0);
             if ('kd' in canvas.material) {
                 kd = canvas.material.kd;
             }
@@ -482,7 +478,7 @@ class PolyMesh {
             tMatrix = glMatrix.mat4.create();
         }
         if (color === undefined) {
-            color = glMatrix.vec3.fromValues(1.0, 1.0, 1.0);
+            color = glMatrix.vec3.fromValues(0.136, 0.846, 0.136);
         }
         let gl = canvas.gl;
         let sProg = canvas.shaders.pointShader;
@@ -510,7 +506,7 @@ class PolyMesh {
             return;
         }
         if (color === undefined) {
-            color = [1.0, 0.0, 0.0];
+            color = [1.0, 0.498, 0.055];
         }
         let gl = canvas.gl;
         let sProg = canvas.shaders.pointShader;
@@ -538,7 +534,7 @@ class PolyMesh {
             tMatrix = glMatrix.mat4.create();
         }
         if (color === undefined) {
-            color = glMatrix.vec3.fromValues(0.0, 1.0, 1.0);
+            color = glMatrix.vec3.fromValues(0.58, 0.404, 0.741);
         }
         if (scale === undefined) {
             scale = 0.05*this.bbox.getDiagLength();

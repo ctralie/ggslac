@@ -50,14 +50,9 @@ void main(void) {
             if (kdCoeff < 0.0) {
                 kdCoeff = 0.0;
             }
-            // Diffuse color
-            // The default value of the uniform diffuse color is (2, 2, 2)
-            // So ignore and use the interpolated per fragment color C in this case.
-            // Otherwise, override the buffer with the specified uniform color
-            vec3 cKd = uKd;
-            if (uKd[0] == 2.0 && uKd[1] == 2.0 && uKd[2] == 2.0) {
-                cKd = C;
-            }
+            // Diffuse color should be the product of 
+            // the diffuse material and the per-vertex color
+            vec3 cKd = uKd*C;
 
             // Specular Term
             // Find a vector from the uEye to tpos.  Then take its 
