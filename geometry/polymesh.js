@@ -337,10 +337,9 @@ class PolyMesh {
                 C[i*3+2] = this.vertices[i].color[2];
             }
             else {
-                //Default color is greenish gray
-                C[i*3] = PolyMesh.DEFAULT_DIFFUSE[0];
-                C[i*3+1] = PolyMesh.DEFAULT_DIFFUSE[1];
-                C[i*3+2] = PolyMesh.DEFAULT_DIFFUSE[2];
+                C[i*3] = 1;
+                C[i*3+1] = 1;
+                C[i*3+2] = 1;
             }    
         }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
@@ -617,32 +616,31 @@ class PolyMesh {
         let pMatrix = canvas.camera.getPMatrix();
         
         //Step 1: Figure out which shader to use
-        let sProg = canvas.shaders.blinnPhong;
         if ('shaderToUse' in canvas) {
-            sProg = canvas.shaderToUse;
-        }
-        gl.useProgram(sProg);
+            let sProg = canvas.shaderToUse;
+            gl.useProgram(sProg);
         
-        // Step 2: Bind all buffers
-        this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
-        
-        // Step 3: Render the mesh
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-        
-        //Step 4: Draw lines and points for vertices, edges, and normals if requested
-        if (canvas.drawNormals) {
-            this.drawNormals(canvas, tMatrix);
+            // Step 2: Bind all buffers
+            this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
+            
+            // Step 3: Render the mesh
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+            
+            //Step 4: Draw lines and points for vertices, edges, and normals if requested
+            if (canvas.drawNormals) {
+                this.drawNormals(canvas, tMatrix);
+            }
+            if (canvas.drawEdges) {
+                this.drawEdges(canvas, tMatrix);
+            }
+            if (canvas.drawPoints) {
+                this.drawPoints(canvas, tMatrix);
+            }
+            //By the time rendering is done, there should not be a need to update
+            //the display unless this flag is changed again externally
+            this.needsDisplayUpdate = false;
         }
-        if (canvas.drawEdges) {
-            this.drawEdges(canvas, tMatrix);
-        }
-        if (canvas.drawPoints) {
-            this.drawPoints(canvas, tMatrix);
-        }
-        //By the time rendering is done, there should not be a need to update
-        //the display unless this flag is changed again externally
-        this.needsDisplayUpdate = false;
     }
 
     /**

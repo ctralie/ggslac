@@ -95,6 +95,25 @@ function getShaderProgramAsync(gl, prefix) {
  */
 function initStandardShaders(gl, relpath) {
     let shaders = {};
+    /** flat: A shader that draws a constant color for all faces*/
+    shaders.flat = new Promise((resolve, reject) => {
+        getShaderProgramAsync(gl, relpath + "flat").then((shader) => {
+            shader.description = 'A shader that draws a constant color for all faces';
+            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
+            gl.enableVertexAttribArray(shader.vPosAttrib);
+            shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
+            gl.enableVertexAttribArray(shader.vColorAttrib);
+            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
+            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
+            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
+            shader.uKdUniform = gl.getUniformLocation(shader, "uKd"); // Flat diffuse color
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.flat = shader;
+    });
+
     /** gouraud: Per-vertex lambertian shader  */
     shaders.gouraud = new Promise((resolve, reject) => {
         getShaderProgramAsync(gl, relpath + "gouraud").then((shader) => {
@@ -243,23 +262,6 @@ function initStandardShaders(gl, relpath) {
     }).then(shader => {
         shader.shaderReady = true;
         shaders.normalLocal = shader;
-    });
-
-    /** flat: A shader that draws a constant color for all faces*/
-    shaders.flat = new Promise((resolve, reject) => {
-        getShaderProgramAsync(gl, relpath + "flat").then((shader) => {
-            shader.description = 'A shader that draws a constant color for all faces';
-            shader.vPosAttrib = gl.getAttribLocation(shader, "vPos");
-            gl.enableVertexAttribArray(shader.vPosAttrib);
-            shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
-            shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
-            shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
-            shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Flat ambient color
-            resolve(shader);
-        });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.flat = shader;
     });
     
     /** Point shader: Simple shader for drawing points with flat colors */

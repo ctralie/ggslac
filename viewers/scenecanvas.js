@@ -30,8 +30,9 @@ class SceneCanvas extends BaseCanvas {
      *                              been loaded to save computation and memory.
      *                              NOTE: Special meshes are cached by default
      * @param {boolean} verbose Whether to print debugging information
+     * @param {string} defaultShader Default shader to use
      */
-    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes, verbose) {
+    constructor(glcanvas, shadersrelpath, meshesrelpath, antialias, cacheRegMeshes, verbose, defaultShader) {
         super(glcanvas, shadersrelpath, antialias);
         let canvas = this;
         this.meshesrelpath = meshesrelpath;
@@ -46,6 +47,12 @@ class SceneCanvas extends BaseCanvas {
         }
         this.meshPromises = {}
         this.verbose = verbose;
+        if (defaultShader === undefined) {
+            this.shader = "blinnPhong";
+        }
+        else {
+            this.shader = defaultShader;
+        }
         // Initialize the icosahedron for the camera beacons
         this.meshesCache.beacon = getIcosahedronMesh();
         this.meshesCache.beacon.Scale(SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE, SceneCanvas.BEACON_SIZE);
@@ -179,14 +186,13 @@ class SceneCanvas extends BaseCanvas {
         this.materialMenus = []; // Individual menus for each material
 
         // Shaders menu
-        this.shader = "blinnPhong";
         this.shaderToUse = this.shaders[this.shader];
         function finalizeShaderChange() {
             canvas.shaderToUse = canvas.shaders[canvas.shader];
             requestAnimFrame(canvas.repaint.bind(canvas));
         }
-        if (!('shaderReady' in this.shaders.blinnPhong)) {
-            this.shaders.blinnPhong.then(finalizeShaderChange);
+        if (!('shaderReady' in this.shaders[this.shader])) {
+            this.shaders[this.shader].then(finalizeShaderChange);
         }
         else {
             finalizeShaderChange();
@@ -1002,7 +1008,7 @@ class SceneCanvas extends BaseCanvas {
         this.drawer.drawLine(pos, postw, [1, 0, 0]);
         this.drawer.drawLine(pos, posrt, [0, 1, 0]);
         this.drawer.drawLine(pos, posup, [0, 0, 1]);
-        this.material = {ka:colorFloatFromHex(color)};
+        this.material = {kd:colorFloatFromHex(color)};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
         this.meshesCache.beacon.render(this, tMatrix);
@@ -1036,7 +1042,7 @@ class SceneCanvas extends BaseCanvas {
         this.drawEdges = false;
 
         let pos = light.pos;
-        this.material = {ka:light.color};
+        this.material = {kd:light.color};
         let tMatrix = glMatrix.mat4.create();
         glMatrix.mat4.fromTranslation(tMatrix, pos);
         this.meshesCache.beacon.render(this, tMatrix);
