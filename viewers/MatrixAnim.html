@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Examples using matrix transforms in SVG</title>
+    <script src="../jslibs/d3.v3.min.js" charset="utf-8"></script>
+    <script src="../jslibs/gl-matrix-min.js" charset="utf-8"></script>
+    <script src="matrixanim.js"></script>
+    <style>
+        .square {
+            stroke: black;
+            stroke-width: 1;
+        }
+
+        text {
+            font-family: monospace;
+            font-size: 9pt;
+        }
+        line {
+            stroke-width: 1;
+            stroke: blue;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Matrix Multiplication And Composition Demo</h1>
+<h2>Chris Tralie</h2>
+
+<table>
+    <tr>
+        <td>
+            <h3>Homogenous Coordinates</h3>
+        </td>
+        <td>
+            <input type = "checkbox" id = "homogenous"></input>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <h3>Number of Matrices</h3>
+        </td>
+        <td>
+            <input type="number" min=1 step=1 max=10 value=2 id="N">
+        </td>
+    </tr>
+</table>
+<div id = "matrixdisplay"></div>
+
+
+<script>
+    let homogenous = document.getElementById("homogenous");
+    let NInput = document.getElementById("N");
+    let matrixDisplay = document.getElementById("matrixdisplay");
+    let width = 300;
+    let height = 300;
+    let sideLength = 40;
+    let N = parseInt(NInput.value);
+    let res = addNCompositionMatrixWidgets(matrixDisplay, N, homogenous.checked, width, height, sideLength);
+    let table = res.table;
+
+    homogenous.onclick = function() {
+        matrixDisplay.removeChild(table);
+        res = addNCompositionMatrixWidgets(matrixDisplay, N, homogenous.checked, width, height, sideLength);
+        table = res.table;
+    };
+
+    NInput.onclick = function() {
+        N = parseInt(NInput.value);
+        matrixDisplay.removeChild(table);
+        res = addNCompositionMatrixWidgets(matrixDisplay, N, homogenous.checked, width, height, sideLength);
+        table = res.table;
+    }
+
+</script>
+
+</body>
+</html>
