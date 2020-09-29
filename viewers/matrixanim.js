@@ -657,7 +657,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
  * @param {string} shaderPath Relative path to shader files for 3D
  * @param {string} meshesPath Relative path to mesh files for 3D
  */
-function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideLen, AInit, BInit) {
+function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideLen, AInit, BInit, shadersPath, meshesPath) {
     let matx = glMatrix.mat3;
     if (is3D) {
         matx = glMatrix.mat4;
