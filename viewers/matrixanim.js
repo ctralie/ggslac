@@ -129,6 +129,7 @@ function add3DInputRow(labels, width, height) {
                     "pos": [0.00, 1.0, 6.00],
                     "rot": [0.00, 0.00, 0.00, 1.00],
                     "fovy": 1.0,
+                    "fovx": 1.0
                 }
             ],
             "materials":{
