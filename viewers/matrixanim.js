@@ -111,8 +111,16 @@ function addSquaresRow(labels, width, height, shapeSide) {
  * @param {list of string} labels The label for each plot
  * @param {float} width Width of each plot in pixels
  * @param {float} height Height of each plot in pixels
+ * @param {string} shaderPath Relative path to shader files
+ * @param {string} meshesPath Relative path to mesh files
  */
-function add3DInputRow(labels, width, height) {
+function add3DInputRow(labels, width, height, shadersPath, meshesPath) {
+    if (shadersPath === undefined) {
+        shadersPath = "../shaders/";
+    }
+    if (meshesPath === undefined) {
+        meshesPath = "../meshes/";
+    }
     let row = document.createElement("tr");
     let scenes = [];
     for (let i = 0; i < labels.length; i++) {
@@ -250,7 +258,7 @@ function add3DInputRow(labels, width, height) {
                 
             }
         }
-        let scene = new SceneCanvas(glcanvas, "../shaders/", "../meshes/", true, true, false, "gouraud");
+        let scene = new SceneCanvas(glcanvas, shadersPath, meshesPath, true, true, false, "gouraud");
         scene.showLights = false;
         scene.showCameras = false;
         scene.setupScene(scenespec, width, height);
@@ -512,10 +520,18 @@ function transform3DScene(scene, As, delay, fps) {
  * @param {float} height Height of each transformation plot in pixels
  * @param {float} shapeSide Dimension of each square in pixels in the transformation plots
  * @param {array of glMatrix.mat3 or glMatrix.mat4} initStates Initial conditions for the matrices
+ * @param {string} shaderPath Relative path to shader files for 3D
+ * @param {string} meshesPath Relative path to mesh files for 3D
  */
-function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, height, sideLen, initStates) {
+function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, height, sideLen, initStates, shadersPath, meshesPath) {
     if (is3D === undefined) {
         is3D = false;
+    }
+    if (is3D && shadersPath === undefined) {
+        shadersPath = "../shaders/";
+    }
+    if (is3D && meshesPath === undefined) {
+        meshesPath = "../meshes/";
     }
     if (initStates === undefined) {
         initStates = [];
@@ -557,12 +573,12 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
     let buttons = row.buttons;
     // Third row with the object that will be transformed
     if (is3D) {
-        let res = add3DInputRow(labels, width, height);
+        let res = add3DInputRow(labels, width, height, shadersPath, meshesPath);
         row = res.row;
         scenes = res.scenes;
     }
     else {
-        row = addSquaresRow(labels, width, height, sideLen);
+        row = addSquaresRow(labels, width, height, sideLen, shadersPath, meshesPath);
     }
     table.appendChild(row);
     // Add matrix inputs
@@ -638,6 +654,8 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
  * @param {float} shapeSide Dimension of each square in pixels in the transformation plots
  * @param {glMatrix.mat3 or glMatrix.mat4} AInit Initial A matrix
  * @param {glMatrix.mat3 or glMatrix.mat4} BInit Initial B matrix
+ * @param {string} shaderPath Relative path to shader files for 3D
+ * @param {string} meshesPath Relative path to mesh files for 3D
  */
 function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideLen, AInit, BInit) {
     let matx = glMatrix.mat3;
@@ -653,6 +671,12 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
     if (BInit === undefined) {
         BInit = matx.create();
     }
+    if (is3D && shadersPath === undefined) {
+        shadersPath = "../shaders/";
+    }
+    if (is3D && meshesPath === undefined) {
+        meshesPath = "../meshes/";
+    }
     let labels = ["Ax", "Bx", "B(Ax)", "A(Bx)"];
     let table = document.createElement("table");
     parent.appendChild(table);
@@ -665,7 +689,7 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
     let buttons = row.buttons;
     // Third row with the object that will be transformed
     if (is3D) {
-        let res = add3DInputRow(labels, width, height);
+        let res = add3DInputRow(labels, width, height, shadersPath, meshesPath);
         row = res.row;
         scenes = res.scenes;
     }
