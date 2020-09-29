@@ -120,6 +120,49 @@ function loadFileFromLines(lines) {
     }
 }
 
+/**
+ * Parse an X3D file, assuming exactly one mesh 
+ * TODO: This is currently broken
+ * @param {xml} xml The xml code for the 3D specification
+ */
+function parseX3DMesh(doc) {
+    let points = doc.children[0].children[1].children[0].children[0].children[0]
+    .getAttribute("point").match(/\S+/g);
+    let textures = doc.children[0].children[1].children[0].children[0].children[1]
+        .getAttribute("point").match(/\S+/g);
+    let faceidx = doc.children[0].children[1].children[0].children[0]
+    .getAttribute("coordIndex").match(/\S+/g);
+
+    // Setup vertices
+    let vertices = [];
+    let colors = [];
+    for (let i = 0; i < points.length; i += 3) {
+        let x = parseFloat(points[i]);
+        let y = parseFloat(points[i+1]);
+        let z = parseFloat(points[i+2]);
+        vertices.push(glMatrix.vec3.fromValues(x, y, z));
+        colors.push(glMatrix.vec3.fromValues([1, 1, 1]));
+    }
+
+    // Setup faces
+    let faces = [];
+    let i = 0;
+    while (i < faceidx.length) {
+        let k = i;
+        let face = [];
+        while(k < faceidx.length && faceidx[k] != -1) {
+            let idx = parseInt(faceidx[k]);
+            face.push(idx);
+            k++;
+        }
+        if (face.length > 0) {
+            faces.push(face);
+        }
+        i = k+1;
+    }
+    return {'vertices':vertices, 'colors':colors, 'faces':faces};
+}
+
 
 /**
  * A prototype class for mesh manipulation, which includes some important

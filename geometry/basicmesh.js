@@ -692,14 +692,18 @@ class BasicMesh extends PolyMesh {
     /**
      * Initialize a mesh from a set of formatted lines
      * 
-     * @param {array of string} lines The lines in the file
+     * @param {object} lines The lines in the file
      * @param {boolean} verbose Whether to print information on the loaded mesh
+     * @param {function} fn Function to use 
      */
-    loadFileFromLines(lines, verbose) {
+    loadFileFromLines(lines, verbose, fn) {
         if (verbose === undefined) {
             verbose = false;
         }
-        let res = loadFileFromLines(lines);
+        if (fn === undefined) {
+            fn = loadFileFromLines;
+        }
+        let res = fn(lines);
         this.vertices.length = 0;
         this.edges.length = 0;
         this.faces.length = 0;

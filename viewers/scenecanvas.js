@@ -283,7 +283,14 @@ class SceneCanvas extends BaseCanvas {
                             shape.mesh = new BasicMesh();
                             canvas.meshPromises[shape.filename] = new Promise((resolve, reject) => {
                                 $.get(shape.filename, function(src) {
-                                    shape.mesh.loadFileFromLines(src.split("\n"), canvas.verbose);
+                                    let ext = shape.filename.substring(shape.filename.length-3);
+                                    ext = ext.toLocaleLowerCase();
+                                    if (ext == "x3d") {
+                                        shape.mesh.loadFileFromLines(src, canvas.verbose, parseX3DMesh);
+                                    }
+                                    else {
+                                        shape.mesh.loadFileFromLines(src.split("\n"), canvas.verbose);
+                                    }
                                     if (canvas.cacheRegMeshes) {
                                         canvas.meshesCache[shape.filename] = shape.mesh;
                                     }
