@@ -1,0 +1,180 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../jslibs/dat.gui.min.js"></script>
+<script type="text/javascript" src = "../jslibs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-utils.js"></script>
+<script type="text/javascript" src="../jslibs/webgl-debug.js"></script>
+<script type="text/javascript" src="../jslibs/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="../jslibs/ace.js"></script>
+
+<!--Our Scripts!-->
+<script src="../geometry/polymesh.js"></script>
+<script src="../geometry/basicmesh.js"></script>
+<script src="../geometry/primitives3d.js"></script>
+<script src="../geometry/cameras3d.js"></script>
+<script src="../shaders/shaders.js"></script>
+<script src="../utils/simpledraw.js"></script>
+<script src="./basecanvas.js"></script>
+<script src="./scenecanvas.js"></script>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+<style>
+#mainEditor {
+    position: relative;
+    width: 800px;
+    height: 400px;
+}
+</style>
+</head>
+
+<body>
+<h1>Scene Editor</h1>
+<table>
+    <tr>
+        <td>
+            <div id="mainEditor">{
+    "name":"testscene",
+    "materials":{
+        "green":{
+            "ka":[0.05, 0.05, 0.05],
+            "kd":[0.0, 1.0, 0.0],
+            "ks":[0.8, 0.0, 0.0]
+        },
+        "red":{
+            "kd":[1.0, 0.0, 0.0]
+        }
+    },
+
+    "lights":[
+        {
+            "pos":[0, 2, 0],
+            "color":[1, 1, 1]
+        },
+        {
+            "pos":[0, 2, -3],
+            "color":[1, 1, 1]
+        }
+    ],
+    
+    "cameras":[
+        {
+            "pos": [0.00, 1.50, 5.00],
+            "rot": [0.00, 0.00, 0.00, 1.00],
+            "fovy": 1.0
+        }
+    ],
+    
+    "children":[
+        {
+            "transform":[1, 0, 0, 0,
+                            0, 1, 0, 0.5,
+                            0, 0, 1, 0,
+                            0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"box",
+                "length":1,
+                "width":1,
+                "height":1,
+                "center":[0, 0, 0],
+                "material":"red"
+                }
+            ]
+        },
+
+        {
+            "transform":[20, 0, 0, 0,
+                        0, 20, 0, 0,
+                        0, 0, 20, 0,
+                        0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"mesh",
+                "filename":"../meshes/square.off",
+                "material":"green"
+                }
+            ]
+        },
+
+        {
+            "transform":[2, 0, 0, 0,
+                            0, 1, 0, 0,
+                            0, 0, 1, 0,
+                            0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"sphere",
+                    "radius":0.5,
+                    "center":[0, 0, -10],
+                    "material":"green"
+                }
+            ]
+        }
+    ]
+}
+
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <button onclick="updateScene()">Update Scene</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <canvas id="GLCanvas1" style="border: none;" width="800" height="600"></canvas>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <table cellpadding>
+                <tr>
+                    <td>
+                        <h3>Controls</h3>
+                        <ul>
+                            <li><b>Mouse</b>: Click and drag to look around</li>
+                            <li><b>W:</b> Forward</li>
+                            <li><b>S:</b> Backwards</li>
+                            <li><b>A:</b> Left</li>
+                            <li><b>D:</b> Right</li>
+                            <li><b>E:</b> Up</li>
+                            <li><b>C:</b> Down</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+
+
+<script>
+    let mainEditor = ace.edit("mainEditor");
+    mainEditor.setFontSize(16);
+    mainEditor.session.setMode("ace/mode/javascript");
+
+    let glcanvas = document.getElementById("GLCanvas1");
+    glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    let canvas = new SceneCanvas(glcanvas, "../shaders/", "../meshes/", true, true, true);
+
+    function updateScene() {
+        let scene = JSON.parse(mainEditor.getValue());
+        canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+        canvas.updateMeshDrawings();
+    }
+    updateScene();
+    
+
+
+</script>
+
+<script type="text/javascript" src="../jslibs/gif.js"></script>
+<script type="text/javascript" src="../jslibs/gif.worker.js"></script>
+
+</body>
+</html>
