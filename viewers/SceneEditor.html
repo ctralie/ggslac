@@ -71,9 +71,9 @@
     "children":[
         {
             "transform":[1, 0, 0, 0,
-                            0, 1, 0, 0.5,
-                            0, 0, 1, 0,
-                            0, 0, 0, 1],
+                        0, 1, 0, 0.5,
+                        0, 0, 1, 0,
+                        0, 0, 0, 1],
             "shapes":[
                 {
                 "type":"box",
@@ -102,9 +102,9 @@
 
         {
             "transform":[2, 0, 0, 0,
-                            0, 1, 0, 0,
-                            0, 0, 1, 0,
-                            0, 0, 0, 1],
+                        0, 1, 0, 0,
+                        0, 0, 1, 0,
+                        0, 0, 0, 1],
             "shapes":[
                 {
                     "type":"sphere",
@@ -166,6 +166,7 @@
         let scene = JSON.parse(mainEditor.getValue());
         canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
         canvas.updateMeshDrawings();
+        requestAnimationFrame(canvas.repaint.bind(canvas));
     }
     updateScene();
     
