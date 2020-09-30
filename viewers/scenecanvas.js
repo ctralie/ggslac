@@ -911,7 +911,7 @@ class SceneCanvas extends BaseCanvas {
             scene.cameras = [];
         }
         if (scene.cameras.length == 0) {
-            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovx:1.9, fovy:1.9});
+            scene.cameras.push({pos:[0.00, 1.50, 5.00], rot:[0.00, 0.00, 0.00, 1.00], fovx:1.3, fovy:1.3});
         }
         // Setup default material
         if (!('materials' in scene)) {
