@@ -163,10 +163,17 @@
     let canvas = new SceneCanvas(glcanvas, "../shaders/", "../meshes/", true, true, true);
 
     function updateScene() {
-        let scene = JSON.parse(mainEditor.getValue());
-        canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
-        canvas.updateMeshDrawings();
-        requestAnimationFrame(canvas.repaint.bind(canvas));
+        try {
+            let scene = JSON.parse(mainEditor.getValue());
+            canvas.setupScene(scene, glcanvas.clientWidth, glcanvas.clientHeight);
+            canvas.updateMeshDrawings();
+            requestAnimationFrame(canvas.repaint.bind(canvas));
+        }
+        catch (err) {
+            alert("Javascript syntax error! Check console");
+            throw err;
+        }
+
     }
     updateScene();
     
