@@ -470,12 +470,18 @@ class SceneCanvas extends BaseCanvas {
                         // Ignore the cameras, but copy over the materials
                         if ('materials' in subscene) {
                             canvas.scene.materials = {...canvas.scene.materials, ...subscene.materials };
+                            // Setup the materials menu again
+                            // TODO: Fix this to deal with naming collisions
+                            //canvas.setupMaterialsMenu.bind(canvas)(canvas.scene);
                         }
                         if ('children' in subscene) {
                             if (!('children' in node)) {
                                 node.children = [];
                             }
                             node.children = node.children.concat(subscene.children);
+                            subscene.children.forEach(function(child) {
+                                canvas.parseNode(child);
+                            });
                         }
                         requestAnimFrame(canvas.repaint.bind(canvas));
                     });
