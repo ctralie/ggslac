@@ -180,6 +180,9 @@ class SceneCanvas extends BaseCanvas {
         cameraMenu.add(canvas, 'showCameras').listen().onChange(function() {
             requestAnimFrame(canvas.repaint.bind(canvas));
         });
+        cameraMenu.add(canvas, 'invertYAxis').listen().onChange(function() {
+            requestAnimFrame(canvas.repaint.bind(canvas));
+        });
 
         // Materials menu
         this.materialsMenu = gui.addFolder('Materials');

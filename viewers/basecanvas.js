@@ -40,6 +40,7 @@ class BaseCanvas {
         this.lastY = 0;
         this.dragging = false;
         this.justClicked = false;
+        this.invertYAxis = false;
         this.clickType = "LEFT";
     
         // Keyboard variables
@@ -237,7 +238,12 @@ class BaseCanvas {
         else if (this.dragging && this.camera.type == "fps") {
             //Rotate camera by mouse dragging
             this.camera.rotateLeftRight(-dX);
-            this.camera.rotateUpDown(-dY);
+            if (this.invertYAxis) {
+                this.camera.rotateUpDown(dY);
+            }
+            else {
+                this.camera.rotateUpDown(-dY);
+            }
             let noKeysPressing = true;
             for (let name in this.keysDown) {
                 if (Object.prototype.hasOwnProperty.call(this.keysDown, name)) {
