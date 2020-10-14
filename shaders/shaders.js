@@ -50,7 +50,7 @@ function getShaderProgram(gl, prefix, vertexSrc, fragmentSrc) {
     gl.attachShader(shader, fragmentShader);
     gl.linkProgram(shader);
     if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
-        reject(Error("Could not initialize shader" + prefix));
+        throw new Error("Could not initialize shader" + prefix);
     }
     shader.name = prefix;
     return shader;
