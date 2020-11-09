@@ -25,23 +25,28 @@
 
 <table>
 <tr><td><h3>Mesh File</h3></td><td><input type = "file" id = "meshInput"></td></tr>
+<tr><td colspan=2><div id="meshInfo"></div></td></tr>
 </table>
 <canvas id="MainGLCanvas" style="border: none;" width="800" height="600"></canvas>
 
 
 <script>
-    var glcanvas = document.getElementById("MainGLCanvas");
+    let glcanvas = document.getElementById("MainGLCanvas");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
     let canvas = new SimpleMeshCanvas(glcanvas, "../shaders/");
 
-    var meshInput = document.getElementById('meshInput');
-    var result = document.getElementById('text');
+    let meshInput = document.getElementById('meshInput');
+    let meshInfo = document.getElementById('meshInfo');
     
     meshInput.addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
             let lines = e.target.result.split("\n");
             canvas.mesh.loadFileFromLines(lines);
+            let NV = canvas.mesh.vertices.length;
+            let NE = canvas.mesh.edges.length;
+            let NF = canvas.mesh.faces.length;
+            meshInfo.innerHTML = "<h3>" + NV + " vertices, " + NE + " edges, " + NF + " faces";
             canvas.centerCamera();
             requestAnimationFrame(canvas.repaint.bind(canvas));
         }
