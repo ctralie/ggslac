@@ -507,14 +507,14 @@ class BasicMesh extends PolyMesh {
     }
     
     /**
-     * @returns {I} A NumTrisx3 Uint16Array of indices into the vertex array
+     * @returns {I} A NumTrisx3 Uint32Array of indices into the vertex array
      */
     getTriangleIndices() {
         let NumTris = 0;
         for (let i = 0; i < this.faces.length; i++) {
             NumTris += this.faces[i].edges.length - 2;
         }
-        let I = new Uint16Array(NumTris*3);
+        let I = new Uint32Array(NumTris*3);
         let i = 0;
         let faceIdx = 0;
         //Now copy over the triangle indices
@@ -547,11 +547,11 @@ class BasicMesh extends PolyMesh {
     }
 
     /**
-     * @returns {I} A NEdgesx2 Uint16Array of indices into the vertex array
+     * @returns {I} A NEdgesx2 Uint32Array of indices into the vertex array
      */
     getEdgeIndices() {
         let NumEdges = this.edges.length;
-        let I = new Uint16Array(NumEdges*2);
+        let I = new Uint32Array(NumEdges*2);
         for (let i = 0; i < NumEdges; i++) {
             I[i*2] = this.edges[i].v1.ID;
             I[i*2+1] = this.edges[i].v2.ID;

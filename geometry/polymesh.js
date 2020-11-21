@@ -530,8 +530,9 @@ class PolyMesh {
         gl.useProgram(sProg);
         this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
         gl.uniform3fv(sProg.uKaUniform, color);
+        gl.getExtension('OES_element_index_uint');
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.edgeIndexBuffer);
-        gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.LINES, this.edgeIndexBuffer.numItems, gl.UNSIGNED_INT, 0);
     }
 
     /**
@@ -667,8 +668,9 @@ class PolyMesh {
             this.sendBuffersToGPU(canvas, sProg, pMatrix, mvMatrix, tMatrix);
             
             // Step 3: Render the mesh
+            gl.getExtension('OES_element_index_uint');
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-            gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+            gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_INT, 0);
             
             //Step 4: Draw lines and points for vertices, edges, and normals if requested
             if (canvas.drawNormals) {
