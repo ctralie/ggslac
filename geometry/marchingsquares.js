@@ -222,7 +222,7 @@ class MarchingSquaresCanvas {
         let i = 0;
         for (let y = 0; y < H; y++) {
             for (let x = 0; x < W; x++) {
-                const g = Math.round(255*(I[y][x]-this.min)/scale);
+                const g = Math.round(255*(I[H-1-y][x]-this.min)/scale);
                 for (let k = 0; k < 3; k++) {
                     imgData.data[i] = g;
                     i++;
@@ -249,10 +249,10 @@ class MarchingSquaresCanvas {
     computeFunction(fn, res) {
         let I = [];
         for (let i = 0; i < res; i++) {
-            let y = (i-res/2)/res;
+            let y = 2*(i-res/2)/res;
             I[i] = new Float32Array(res);
             for (let j = 0; j < res; j++) {
-                let x = (j-res/2)/res;
+                let x = 2*(j-res/2)/res;
                 I[i][j] = fn(x, y);
             }
         }
@@ -289,9 +289,9 @@ class MarchingSquaresCanvas {
         let IDs = ret.IDs;
         this.contour.edges.forEach(function(idxs) {
             let x1 = that.contour.vertices[2*idxs[0]];
-            let y1 = that.contour.vertices[2*idxs[0]+1];
+            let y1 = H-that.contour.vertices[2*idxs[0]+1];
             let x2 = that.contour.vertices[2*idxs[1]];
-            let y2 = that.contour.vertices[2*idxs[1]+1];
+            let y2 = H-that.contour.vertices[2*idxs[1]+1];
             ctx.beginPath();
 			ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
