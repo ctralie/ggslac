@@ -49,9 +49,14 @@ MS_COLORCYCLE = ["#ff7f0e", "#2ca02c", "#d62728", "#1f77b4", "#9467bd", "#8c564b
  * @param {2d array} I Rasterized 2D function
  * @param {pixWidth} float Width of each pixel
  * @param {float} isolevel Isocontour cutoff level
+ * @param {boolean} interpolation If true, do linear interpolation to
+ *                                update positions of contours
  */
 // TODO: Deal with saddle
-function marchingSquares(I, pixWidth, isolevel) {
+function marchingSquares(I, pixWidth, isolevel, interpolation) {
+    if (interpolation === undefined) {
+        interpolation = true;
+    }
     let NV = 0; // Number of vertices
     let varr =  []; // Sparse array for storing vertices actually used
     let edges = []; // Edges connecting vertices
@@ -98,8 +103,11 @@ function marchingSquares(I, pixWidth, isolevel) {
     vertices = new Float32Array(NV*2);
     varr.forEach(function(arr, y) {
         arr.forEach(function(idx, x) {
-            vertices[idx*2] = x*pixWidth/2 + pixWidth/2;
-            vertices[idx*2+1] = y*pixWidth/2 + pixWidth/2;
+            let x1 = x*pixWidth/2 + pixWidth/2;
+            let y1 = y*pixWidth/2 + pixWidth/2;
+            // TODO: Add interpolation
+            vertices[idx*2] = x1;
+            vertices[idx*2+1] = y1;
         });
     });
     return {'vertices':vertices, 'edges':edges};
