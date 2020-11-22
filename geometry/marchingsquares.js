@@ -83,8 +83,8 @@ function marchingSquares(I, pixWidth, isolevel, interpolation) {
             for (let k = 0; k < indices.length; k += 2) {
                 let edge = [];
                 for (let a = 0; a < 2; a++) {
-                    let xa = 2*x + MSQUARES_OFFSET[indices[2*k+a]][0];
-                    let ya = 2*y + MSQUARES_OFFSET[indices[2*k+a]][1];
+                    let xa = 2*x + MSQUARES_OFFSET[indices[k+a]][0];
+                    let ya = 2*y + MSQUARES_OFFSET[indices[k+a]][1];
                     if (varr[ya] === undefined) {
                         varr[ya] = [];
                     }
@@ -204,6 +204,7 @@ class MarchingSquaresCanvas {
      * Update the scalar function associated to this canvas
      * and render to an image offscreen
      * @param {2d array} I A floating point scalar function
+     * @return A promise that resolves when the new image is drawn
      */
     updateImage(I) {
         this.I = I;
@@ -242,17 +243,21 @@ class MarchingSquaresCanvas {
         this.oscCtx.putImageData(imgData, 0, 0);
         this.image = new Image();
         this.image.src = this.osc.toDataURL();
-        let that = this;
-        this.image.onload = function() {
-            that.drawMatrix();
-        };
         this.contour = {'vertices':[], 'edges':[]};
+        let that = this;
+        return new Promise(resolve => {
+            this.image.onload = function() {
+                that.drawMatrix();
+                resolve();
+            };
+        });
     }
 
     /**
      * Create image based on a function
      * @param {function handle (x, y) => float} fn 2D scalar function
      * @param {res} Resolution of function
+     * @return A promise that resolves when the new image is drawn
      */
     computeFunction(fn, res) {
         let I = [];
@@ -264,7 +269,7 @@ class MarchingSquaresCanvas {
                 I[i][j] = fn(x, y);
             }
         }
-        this.updateImage(I);
+        return this.updateImage(I);
     }
 
     /**
