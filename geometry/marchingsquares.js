@@ -62,6 +62,18 @@ function marchingSquares(I, pixWidth, isolevel) {
             idx = idx | (I[y][x+1] > isolevel) << 2;
             idx = idx | (I[y+1][x+1] > isolevel) << 1;
             idx = idx | (I[y+1][x] > isolevel);
+            if (idx == 5 || idx == 10) {
+                // Check saddles
+                let central = 0.25*(I[y][x]+I[y][x+1]+I[y+1][x+1]+I[y+1][x]);
+                if (central < isolevel) {
+                    if (idx == 5) {
+                        idx = 10;
+                    }
+                    else {
+                        idx = 5;
+                    }
+                }
+            }
             let indices = MSQUARES_LOOKUP[idx];
             for (let k = 0; k < indices.length; k += 2) {
                 let edge = [];
@@ -275,7 +287,6 @@ class MarchingSquaresCanvas {
         ctx.fillStyle = "red";
         let ret = getConnectedComponents(this.contour.edges, this.contour.vertices.length/2);
         let IDs = ret.IDs;
-        console.log(ret.components.length);
         this.contour.edges.forEach(function(idxs) {
             let x1 = that.contour.vertices[2*idxs[0]];
             let y1 = that.contour.vertices[2*idxs[0]+1];
@@ -285,6 +296,7 @@ class MarchingSquaresCanvas {
 			ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
             let id = IDs[idxs[0]];
+            // Color by membership to a connected component
             ctx.strokeStyle = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
 			ctx.stroke();   
         });

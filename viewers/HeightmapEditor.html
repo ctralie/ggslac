@@ -56,23 +56,10 @@ function fn(x, y) {
 
     let canvas = document.getElementById("heightmapCanvas");
     let ms = new MarchingSquaresCanvas(canvas);
-
-    // Setup menu
-    let gui = new dat.GUI();
-    ms.isocolor = [128, 128, 128];
-    ms.isolevel = 0;
-    gui.addColor(ms, "isocolor").listen();
-    let isochooser = gui.add(ms, "isolevel", 0, 1).listen().onChange(function(val) {
-        let c = 255*(val-ms.min)/(ms.max-ms.min);
-        ms.isoclor = [c, c, c];
-        ms.updateIsocontour(ms.isolevel);
-    });
-
-    function updateHeightmap() {
+    ms.updateHeightmap = function() {
         try {
             eval(mainEditor.getValue());
-            let res = Math.min(canvas.clientWidth, canvas.clientHeight);
-            ms.computeFunction(fn, res);
+            ms.computeFunction(fn, ms.res);
             gui.remove(isochooser);
             let dx = (ms.max-ms.min)/100;
             isochooser = gui.add(ms, "isolevel", ms.min, ms.max, dx).onChange(function(val) {
@@ -86,6 +73,23 @@ function fn(x, y) {
             alert("Javascript syntax error! Check console");
             throw err;
         }
+    }
+
+    // Setup menu
+    let gui = new dat.GUI();
+    ms.res = Math.min(canvas.clientWidth, canvas.clientHeight);
+    gui.add(ms, "res", 5, ms.res);
+    gui.add(ms, "updateHeightmap");
+    ms.isocolor = [128, 128, 128];
+    ms.isolevel = 0;
+    gui.addColor(ms, "isocolor").listen();
+    let isochooser = gui.add(ms, "isolevel", 0, 1).listen().onChange(function(val) {
+        let c = 255*(val-ms.min)/(ms.max-ms.min);
+        ms.isoclor = [c, c, c];
+        ms.updateIsocontour(ms.isolevel);
+    });
+    function updateHeightmap() {
+        ms.updateHeightmap();
     }
     updateHeightmap();
     ms.isolevel = 0.5*(ms.max+ms.min);
