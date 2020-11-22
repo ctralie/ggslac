@@ -284,7 +284,7 @@ class MarchingSquaresCanvas {
             ctx.beginPath();
 			ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
-            let id = IDs[2*idxs[0]];
+            let id = IDs[idxs[0]];
             ctx.strokeStyle = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
 			ctx.stroke();   
         });
