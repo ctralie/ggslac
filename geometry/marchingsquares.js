@@ -184,7 +184,6 @@ function getConnectedComponents(edges, N) {
     return {"components":components, "IDs":IDs};
 }
 
-
 class MarchingSquaresCanvas {
     constructor(canvas) {
         this.canvas = canvas;
@@ -256,7 +255,7 @@ class MarchingSquaresCanvas {
     /**
      * Create image based on a function
      * @param {function handle (x, y) => float} fn 2D scalar function
-     * @param {res} Resolution of function
+     * @param {int} res of function
      * @return A promise that resolves when the new image is drawn
      */
     computeFunction(fn, res) {
@@ -270,6 +269,35 @@ class MarchingSquaresCanvas {
             }
         }
         return this.updateImage(I);
+    }
+
+    /**
+     * Compute an indexed mesh representation treating the image as a heightmap
+     * putting X, Y on the mesh [-1, 1] x [-1, 1]
+     * @param {int} res of function
+     * @return A basicmesh object for this heightmap
+     */
+    getHeightmapMesh(res) {
+        let mesh = new BasicMesh();
+        for (let i = 0; i < res; i++) {
+            let y = 2*(i-res/2)/res;
+            for (let j = 0; j < res; j++) {
+                let x = 2*(j-res/2)/res;
+                let z = this.I[i][j];
+                mesh.addVertex(glMatrix.vec3.fromValues(x, y, z));
+            }
+        }
+        for (let i = 0; i < res-1; i++) {
+            for (let j = 0; j < res-1; j++) {
+                let d = mesh.vertices[i*res+j];
+                let c = mesh.vertices[(i+1)*res+j];
+                let b = mesh.vertices[(i+1)*res+j+1];
+                let a = mesh.vertices[i*res+j+1];
+                mesh.addFace([a, b, c, d]);
+            }
+        }
+        mesh.needsDisplayUpdate = true;
+        return mesh;
     }
 
     /**
@@ -288,6 +316,7 @@ class MarchingSquaresCanvas {
      * isocontour if it is defined
      */
     drawMatrix() {
+        const that = this;
         const ctx = this.ctx;
 		const W = this.canvas.width;
 		const H = this.canvas.height;
@@ -296,7 +325,6 @@ class MarchingSquaresCanvas {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(this.image, 0, 0, W, H);
         // Now draw the warping path
-        const that = this;
         ctx.fillStyle = "red";
         let ret = getConnectedComponents(this.contour.edges, this.contour.vertices.length/2);
         let IDs = ret.IDs;
@@ -312,6 +340,39 @@ class MarchingSquaresCanvas {
             // Color by membership to a connected component
             ctx.strokeStyle = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
 			ctx.stroke();   
+        });
+    }
+
+    /**
+     * Draw 3D contour using a SimpleDrawer object
+     * @param {int} res Resolution of drawing
+     * @param {SimpleDrawer} drawer Handle to simpler drawer to which to draw these contours
+     * @param {float} s The amount by which to offset the isocontour for z-fighting
+     */ 
+    draw3DContour(res, drawer, s) {
+        if (s === undefined) {
+            s = 0.02;
+        }
+        const z = this.isolevel + s;
+        const that = this;
+        drawer.reset();
+        let ret = getConnectedComponents(this.contour.edges, this.contour.vertices.length/2);
+        let IDs = ret.IDs;
+        this.contour.edges.forEach(function(idxs) {
+            let x1 = 2.0*that.contour.vertices[2*idxs[0]]/res - 1;
+            let y1 = 2.0*that.contour.vertices[2*idxs[0]+1]/res - 1;
+            let x2 = 2.0*that.contour.vertices[2*idxs[1]]/res - 1;
+            let y2 = 2.0*that.contour.vertices[2*idxs[1]+1]/res - 1;
+            let v1 = glMatrix.vec3.fromValues(x1, y1, z);
+            let v2 = glMatrix.vec3.fromValues(x2, y2, z);
+            let id = IDs[idxs[0]];
+            // Color by membership to a connected component
+            let hexColor = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
+            let rgball = parseInt(hexColor.substring(1), 16);
+            let r = ((rgball >> 16) & 255)/255.0;
+            let g = ((rgball >> 8) & 255)/255.0;
+            let b = (rgball & 255)/255.0;
+            drawer.drawLine(v1, v2, [r, g, b]);
         });
     }
 }
