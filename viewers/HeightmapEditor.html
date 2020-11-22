@@ -1,0 +1,96 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "../jslibs/dat.gui.min.js"></script>
+<script type="text/javascript" src="../jslibs/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="../jslibs/ace.js"></script>
+
+<!--Our Scripts!-->
+<script src="../geometry/marchingsquares.js"></script>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+<style>
+#mainEditor {
+    position: relative;
+    width: 800px;
+    height: 200px;
+}
+</style>
+</head>
+
+<body>
+<h1>Heightmap Editor</h1>
+<table>
+    <tr>
+        <td>
+            <div id="mainEditor">function gauss(x, y, cx, cy, sigma) {
+    const dx = x - cx;
+    const dy = y - cy;
+    return Math.exp(-(dx*dx+dy*dy)/(sigma*sigma));
+}
+function fn(x, y) {
+    return gauss(x, y, 0, 0, 0.1);
+}</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <button onclick="updateHeightmap()">Update Heightmap</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <canvas id="heightmapCanvas" style="border: none;" width="400" height="400"></canvas>
+        </td>
+    </tr>
+</table>
+
+
+<script>
+    let mainEditor = ace.edit("mainEditor");
+    mainEditor.setFontSize(16);
+    mainEditor.session.setMode("ace/mode/javascript");
+
+    let canvas = document.getElementById("heightmapCanvas");
+    let ms = new MarchingSquaresCanvas(canvas);
+
+    // Setup menu
+    let gui = new dat.GUI();
+    ms.isocolor = [128, 128, 128];
+    ms.isolevel = 0;
+    gui.addColor(ms, "isocolor").listen();
+    let isochooser = gui.add(ms, "isolevel", 0, 1).listen().onChange(function(val) {
+        let c = 255*(val-ms.min)/(ms.max-ms.min);
+        ms.isoclor = [c, c, c];
+        ms.updateIsocontour(ms.isolevel);
+    });
+
+    function updateHeightmap() {
+        try {
+            eval(mainEditor.getValue());
+            let res = Math.min(canvas.clientWidth, canvas.clientHeight);
+            ms.computeFunction(fn, res);
+            gui.remove(isochooser);
+            let dx = (ms.max-ms.min)/100;
+            isochooser = gui.add(ms, "isolevel", ms.min, ms.max, dx).onChange(function(val) {
+                let c = 255*(val-ms.min)/(ms.max-ms.min);
+                ms.isocolor = [c, c, c];
+                ms.updateIsocontour(ms.isolevel);
+            });
+            ms.updateIsocontour(ms.isolevel);
+        }
+        catch (err) {
+            alert("Javascript syntax error! Check console");
+            throw err;
+        }
+    }
+    updateHeightmap();
+    ms.isolevel = 0.5*(ms.max+ms.min);
+
+</script>
+
+</body>
+</html>
