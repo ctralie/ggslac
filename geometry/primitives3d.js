@@ -399,7 +399,7 @@ class Line3D {
     
     /**
     * Solve for (s, t) in the equation P0 + t*V0 = P1+s*V1
-    * This is three equations (x, y, z components) in 2 letiables (s, t)
+    * This is three equations (x, y, z components) in 2 variables (s, t)
     * Use Cramer's rule and the fact that there is a linear
     * dependence that only leaves two independent equations
     * (add the last two equations together)
@@ -408,10 +408,10 @@ class Line3D {
     * 
     * @param{Line3D} other Other line
     * 
-    * @returns{"t", "P"} Time and point of intersection, or null
+    * @returns{"s", "t", "P"} Time and point of intersection, or null
     * if there isn't an intersection
     */
-    intersectOtherLineRet_t(other) {
+    intersectOtherLineRet_ts(other) {
         let P0 = this.P0;
         let V0 = this.V;
         let P1 = other.P0;
@@ -434,7 +434,7 @@ class Line3D {
         //return (t, P0 + t*V0)
         let PRet = glMatrix.vec3.create();
         glMatrix.vec3.scaleAndAdd(PRet, P0, V0, t);
-        return {"t":t, "P":PRet};
+        return {"t":t, "s":s, "P":PRet};
     }
     
     /**
@@ -445,13 +445,46 @@ class Line3D {
     * if they don't intersect
     */
     intersectOtherLine(other) {
-        let ret = this.intersectOtherLineRet_t(other);
+        let ret = this.intersectOtherLineRet_ts(other);
         if (!(ret === null)) {
             return ret.P;
         }
         return null;
     }
 }        
+
+/**
+ * Determine whether a point is inside a polygon by 
+ * casting a ray from the point and seeing how many 
+ * segments of the polygon it crosses
+ * @param {array} p Point to test
+ * @param {2d array} poly Points on polygon
+ */
+function pointInsidePolygon2D(p, poly) {
+    if (poly.length < 3) {
+        return false;
+    }
+    const p0 = glMatrix.vec3.fromValues(p[0], p[1], 0);
+    const line1 = new Line3D(p0, glMatrix.vec3.fromValues(1, 0, 0));
+    let crossings = 0;
+    let v1 = glMatrix.vec3.fromValues(poly[0][0], poly[0][1], 0);
+    const N = poly.length;
+    for (let i = 0; i < N; i++) {
+        let v2 = glMatrix.vec3.fromValues(poly[(i+1)%N][0], poly[(i+1)%N][1], 0);
+        let v = glMatrix.vec3.create();
+        glMatrix.vec3.subtract(v, v2, v1);
+        const line2 = new Line3D(v1, v);
+        let res = line1.intersectOtherLineRet_ts(line2);
+        
+        if (!(res === null)) {
+            if (res.t >= 0 && res.s >= 0 && res.s < 1) {
+                crossings++;
+            }
+        }
+        v1 = v2;
+    }
+    return crossings%2 == 1;
+}
 
 /**
  * An axis-aligned 3D box
