@@ -152,11 +152,10 @@ function UFUnion(UFP, ranks, u, v) {
 }
 
 /**
- * Count the number of connected components in
- * an undirected graph
+ * Extract the connected components in an undirected graph
  * @param {list of [i1, i2]} edges Edges in graph
  * @param {int} N Number of nodes in the graph
- * @return {list of list} list of vertices in each connected component
+ * @return {"components": list of list, "IDs":ID of each vertex} 
  */
 function getConnectedComponents(edges, N) {
     let UFP = new Float32Array(N);
@@ -311,6 +310,61 @@ class MarchingSquaresCanvas {
     }
 
     /**
+     * Compute the loops in the isocontour, and make sure they are
+     * specified in order of the polygon
+     */
+    getContourLoops() {
+        let edges = this.contour.edges;
+        if (edges.length == 0) {
+            return [];
+        }
+        let vertices = this.contour.vertices;
+        let N = vertices.length/2;
+        let IDs = getConnectedComponents(edges, N).IDs;
+        let v2edge = [];
+        for (let i = 0; i < edges.length; i++) {
+            for (let k = 0; k < 2; k++) {
+                let idx = edges[i][k];
+                if (v2edge[idx] === undefined) {
+                    v2edge[idx] = [];
+                }
+                v2edge[idx].push(i);
+            }
+        }
+        let vs = [];
+        let visited = [];
+        for (let i = 0; i < N; i++) {
+            visited[i] = false;
+        }
+        for (let vi = 0; vi < N; vi++) {
+            if (!visited[vi]) {
+                let stack = [vi];
+                while (stack.length > 0) {
+                    let i = stack.pop();
+                    if (!visited[i]) {
+                        visited[i] = true;
+                        if (vs[IDs[i]] === undefined) {
+                            vs[IDs[i]] = [];
+                        }
+                        vs[IDs[i]].push([vertices[i*2], vertices[i*2+1]]);
+                        let ei = v2edge[i];
+                        for (let k = 0; k < ei.length; k++) {
+                            let j = edges[ei[k]][0];
+                            if (i == j) {
+                                j = edges[ei[k]][1];
+                            }
+                            if (!visited[j]) {
+                                stack.push(j);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return vs;
+    }
+
+    /**
      * Draw the heightmap as a grayscale image
      * where brighter is higher cost.  Also superimpose an
      * isocontour if it is defined
@@ -324,23 +378,24 @@ class MarchingSquaresCanvas {
         // First draw the image
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(this.image, 0, 0, W, H);
-        // Now draw the warping path
-        ctx.fillStyle = "red";
-        let ret = getConnectedComponents(this.contour.edges, this.contour.vertices.length/2);
-        let IDs = ret.IDs;
-        this.contour.edges.forEach(function(idxs) {
-            let x1 = that.contour.vertices[2*idxs[0]];
-            let y1 = H-that.contour.vertices[2*idxs[0]+1];
-            let x2 = that.contour.vertices[2*idxs[1]];
-            let y2 = H-that.contour.vertices[2*idxs[1]+1];
-            ctx.beginPath();
-			ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            let id = IDs[idxs[0]];
+        // Now draw the connected components
+        let vs = this.getContourLoops();
+        for (let i = 0; i < vs.length; i++) {
             // Color by membership to a connected component
-            ctx.strokeStyle = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
-			ctx.stroke();   
-        });
+            let hexColor = MS_COLORCYCLE[i%MS_COLORCYCLE.length];
+            let N = vs[i].length;
+            for (let j = 0; j < N; j++) {
+                let x1 = vs[i][j][0];
+                let y1 = H - vs[i][j][1];
+                let x2 = vs[i][(j+1)%N][0];
+                let y2 = H - vs[i][(j+1)%N][1];
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = hexColor;
+                ctx.stroke();   
+            }
+        }
     }
 
     /**
@@ -356,23 +411,25 @@ class MarchingSquaresCanvas {
         const z = this.isolevel + s;
         const that = this;
         drawer.reset();
-        let ret = getConnectedComponents(this.contour.edges, this.contour.vertices.length/2);
-        let IDs = ret.IDs;
-        this.contour.edges.forEach(function(idxs) {
-            let x1 = 2.0*that.contour.vertices[2*idxs[0]]/res - 1;
-            let y1 = 2.0*that.contour.vertices[2*idxs[0]+1]/res - 1;
-            let x2 = 2.0*that.contour.vertices[2*idxs[1]]/res - 1;
-            let y2 = 2.0*that.contour.vertices[2*idxs[1]+1]/res - 1;
-            let v1 = glMatrix.vec3.fromValues(x1, y1, z);
-            let v2 = glMatrix.vec3.fromValues(x2, y2, z);
-            let id = IDs[idxs[0]];
-            // Color by membership to a connected component
-            let hexColor = MS_COLORCYCLE[id%MS_COLORCYCLE.length];
+        let vs = this.getContourLoops();
+        for (let i = 0; i < vs.length; i++) {
+            let hexColor = MS_COLORCYCLE[i%MS_COLORCYCLE.length];
             let rgball = parseInt(hexColor.substring(1), 16);
             let r = ((rgball >> 16) & 255)/255.0;
             let g = ((rgball >> 8) & 255)/255.0;
             let b = (rgball & 255)/255.0;
-            drawer.drawLine(v1, v2, [r, g, b]);
-        });
+            const rgb = [r, g, b];
+            const N = vs[i].length;
+            for (let j = 0; j < N; j++) {
+                let x1 = 2.0*vs[i][j][0]/res - 1;
+                let y1 = 2.0*vs[i][j][1]/res - 1;
+                let x2 = 2.0*vs[i][(j+1)%N][0]/res - 1;
+                let y2 = 2.0*vs[i][(j+1)%N][1]/res - 1;
+                let v1 = glMatrix.vec3.fromValues(x1, y1, z);
+                let v2 = glMatrix.vec3.fromValues(x2, y2, z);
+                // Color by membership to a connected component
+                drawer.drawLine(v1, v2, rgb);
+            }
+        }
     }
 }
