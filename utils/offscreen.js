@@ -20,12 +20,32 @@ class OffscreenRender {
             console.log(e);
         }
 
-        // Initialize shaders for this offscreen drawer
-        if (!(shadersrelpath === undefined)) {
-            this.shaders = Shaders.initStandardShaders(glcanvas.gl, shadersrelpath);
-        }
         // Initialize gl texture object
         this.texture = glcanvas.gl.createTexture();
+        this.setupShaders(shadersrelpath);
+    }
+
+    setupShaders(relpath) {
+        let shaders = {};
+        this.shaders = shaders;
+        let gl = this.glcanvas.gl;
+        shaders.texEcho = new Promise((resolve, reject) =>  {
+            getShaderProgramAsync(gl, relpath + "texecho").then((shader) => {
+                shader.description = 'A simple shader to draw a texture as-is';
+                // Extract the position buffer and store it in the shader object
+                shader.positionLocation = gl.getAttribLocation(shader, "a_position");
+                gl.enableVertexAttribArray(shader.positionLocation);
+                // Extract texture coordinate buffer and store it in the shader object
+                shader.textureLocation = gl.getAttribLocation(shader, "a_texture");
+                gl.enableVertexAttribArray(shader.textureLocation);
+                // Extract uniforms and store them in the shader object
+                shader.uSampler = gl.getUniformLocation(shader, 'uSampler');
+                resolve(shader);
+            });
+        }).then(shader => {
+            shader.shaderReady = true;
+            shaders.texEcho = shader;
+        });
     }
 
     /**
@@ -110,7 +130,6 @@ class OffscreenRender {
         }
         else {
             let gl = this.glcanvas.gl;
-            console.log(shader);
             gl.useProgram(shader);
     
             gl.activeTexture(gl.TEXTURE0);
