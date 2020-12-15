@@ -320,6 +320,23 @@ function initStandardShaders(gl, relpath) {
         shaders.normalShader = shader;
     });
 
+    shaders.texEcho = new Promise((resolve, reject) =>  {
+        getShaderProgramAsync(gl, relpath + "texecho").then((shader) => {
+            // Extract uniforms and store them in the shader object
+            shader.uSampler = gl.getUniformLocation(shader, 'uSampler');
+            // Extract the position buffer and store it in the shader object
+            shader.positionLocation = gl.getAttribLocation(shader, "a_position");
+            gl.enableVertexAttribArray(shader.positionLocation);
+            // Extract texture coordinate buffer and store it in the shader object
+            shader.textureLocation = gl.getAttribLocation(shader, "a_texture");
+            gl.enableVertexAttribArray(shader.textureLocation);
+            resolve(shader);
+        });
+    }).then(shader => {
+        shader.shaderReady = true;
+        shaders.texEcho = shader;
+    });
+
     return shaders;
 }
 
