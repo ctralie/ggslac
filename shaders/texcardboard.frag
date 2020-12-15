@@ -20,5 +20,10 @@ void main() {
     float fac = 1.0+k1*rSqr + k2*rSqr*rSqr;
     float x = (xu*fac + 1.0)/2.0;
     float y = 1.0-(yu*fac + 1.0)/2.0;
-    gl_FragColor = texture2D(uSampler, vec2(x, y));
+    if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0) {
+        gl_FragColor = texture2D(uSampler, vec2(x, y));
+    }
+    else {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
 }
