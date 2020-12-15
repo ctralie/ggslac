@@ -319,7 +319,6 @@ function initStandardShaders(gl, relpath) {
         shader.shaderReady = true;
         shaders.normalShader = shader;
     });
-
     return shaders;
 }
 
