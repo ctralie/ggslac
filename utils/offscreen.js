@@ -46,6 +46,23 @@ class OffscreenRender {
             shader.shaderReady = true;
             shaders.texEcho = shader;
         });
+        shaders.texCardboard = new Promise((resolve, reject) =>  {
+            getShaderProgramAsync(gl, relpath + "texcardboard").then((shader) => {
+                shader.description = 'A simple shader to draw a texture as-is';
+                // Extract the position buffer and store it in the shader object
+                shader.positionLocation = gl.getAttribLocation(shader, "a_position");
+                gl.enableVertexAttribArray(shader.positionLocation);
+                // Extract texture coordinate buffer and store it in the shader object
+                shader.textureLocation = gl.getAttribLocation(shader, "a_texture");
+                gl.enableVertexAttribArray(shader.textureLocation);
+                // Extract uniforms and store them in the shader object
+                shader.uSampler = gl.getUniformLocation(shader, 'uSampler');
+                resolve(shader);
+            });
+        }).then(shader => {
+            shader.shaderReady = true;
+            shaders.texCardboard = shader;
+        });
     }
 
     /**
