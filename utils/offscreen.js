@@ -42,26 +42,25 @@ class OffscreenRender {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.generateMipmap(gl.TEXTURE_2D);		
-        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);	
+        this.render();
     }
 
     /**
      * Setup the buffers for a particular shader
-     * @param {object} shader Handle to a shader/promise. Assumed shader has been loaded
-     * as part of this gl context
+     * @param {string} shaderStr Name of a shader to load.  Assumed that the 
+     *                           shader has position and texture coordinate attributes
      */
-    setupShader(shader) {
+    setupShader(shaderStr) {
         let that = this;
-        if (!('ready' in shader)) {
+        let shader = this.shaders[shaderStr];
+        if (!('shaderReady' in shader)) {
             shader.then(function() {
-                that.setupShader(shader);
+                that.setupShader(shaderStr);
             })
         }
         else {
             this.shader = shader;
-            let buffers = {};
             // Setup position buffers to hold a square
             const positions = new Float32Array([-1.0,  1.0,
                                                 1.0,  1.0,
@@ -92,30 +91,43 @@ class OffscreenRender {
 
             this.indexBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, buffers.indices, gl.STATIC_DRAW);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
             this.indexBuffer.itemSize = 1;
-            this.indexBuffer.numItems = buffers.indices.length;
+            this.indexBuffer.numItems = indices.length;
         }
     }
 
     render() {
-        let gl = this.glcanvas.gl;
         let shader = this.shader;
         if (shader === undefined) {
             return;
         }
-        gl.useProgram(shader);
+        let that = this;
+        if (!('shaderReady' in shader)) {
+            shader.then(function() {
+                that.render();
+            })
+        }
+        else {
+            let gl = this.glcanvas.gl;
+            console.log(shader);
+            gl.useProgram(shader);
+    
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.uniform1i(shader.uSampler, 0);
 
-        // Step 2: Bind vertex and index buffers to draw two triangles
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.vertexAttribPointer(shader.positionLocation, 2, gl.FLOAT, false, 0, 0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+            // Step 2: Bind vertex and index buffers to draw two triangles
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+            gl.vertexAttribPointer(shader.positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // Step 3: Set active texture
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.uniform1i(shader.uSampler, 0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.textureCoordBuffer);
+            gl.vertexAttribPointer(shader.textureLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            gl.drawElements(gl.TRIANGLES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+
+        }
     }
     
 }
