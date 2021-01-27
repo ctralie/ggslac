@@ -57,6 +57,8 @@ class OffscreenRender {
                 gl.enableVertexAttribArray(shader.textureLocation);
                 // Extract uniforms and store them in the shader object
                 shader.uSampler = gl.getUniformLocation(shader, 'uSampler');
+                shader.uk1 = gl.getUniformLocation(shader, "uk1");
+                shader.uk2 = gl.getUniformLocation(shader, "uk2");
                 resolve(shader);
             });
         }).then(shader => {
@@ -134,7 +136,12 @@ class OffscreenRender {
         }
     }
 
-    render() {
+    /**
+     * 
+     * @param {float} k1 Distortion parameter (optional)
+     * @param {float} k2 Distortion parameter (optional)
+     */
+    render(k1, k2) {
         let shader = this.shader;
         if (shader === undefined) {
             return;
@@ -152,6 +159,10 @@ class OffscreenRender {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             gl.uniform1i(shader.uSampler, 0);
+            if (!(k1 === undefined) && !(k2 === undefined)) {
+                gl.uniform1f(shader.uk1, k1);
+                gl.uniform1f(shader.uk2, k2);
+            }
 
             // Step 2: Bind vertex and index buffers to draw two triangles
             gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);

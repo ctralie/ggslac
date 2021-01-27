@@ -55,12 +55,22 @@
         ctx.stroke();
     }
     
+    let params = {"k1":0.33582564, "k2":0.55348791};
+    let elem = document.getElementById("osCanvas");
+    let ctx2 = elem.getContext("2d");
+
+    function repaint() {
+        offscreen.render(params.k1, params.k2);
+        ctx2.drawImage(offscreen.glcanvas, 0, 0);
+    }
+
+    this.gui = new dat.GUI();
+    const gui = this.gui;
+    gui.add(params, 'k1').listen().onChange(repaint);
+    gui.add(params, 'k2').listen().onChange(repaint);
     setTimeout(function() {
         offscreen.updateTexture();
-        offscreen.render();
-        let elem = document.getElementById("osCanvas");
-        let ctx2 = elem.getContext("2d");
-        ctx2.drawImage(offscreen.glcanvas, 0, 0);
+        repaint();
     }, 1000);
 
 </script>

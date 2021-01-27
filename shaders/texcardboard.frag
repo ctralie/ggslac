@@ -11,13 +11,15 @@ varying vec2 v_position;
 varying highp vec2 v_texture;
 
 uniform sampler2D uSampler;
+uniform float uk1;
+uniform float uk2;
 
 
 void main() {
     float xu = v_position.x;
     float yu = v_position.y;
     float rSqr = xu*xu + yu*yu;
-    float fac = 1.0+k1*rSqr + k2*rSqr*rSqr;
+    float fac = 1.0+uk1*rSqr + uk2*rSqr*rSqr;
     float x = (xu*fac + 1.0)/2.0;
     float y = 1.0-(yu*fac + 1.0)/2.0;
     if (x >= 0.0 && x <= 1.0 && y >= 0.0 && y <= 1.0) {
