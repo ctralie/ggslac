@@ -142,6 +142,12 @@ class OffscreenRender {
      * @param {float} k2 Distortion parameter (optional)
      */
     render(k1, k2) {
+        if (k1 === undefined) {
+            k1 = 0.33582564;
+        }
+        if (k2 === undefined) {
+            k2 = 0.55348791;
+        }
         let shader = this.shader;
         if (shader === undefined) {
             return;
@@ -153,17 +159,18 @@ class OffscreenRender {
             })
         }
         else {
-            let gl = this.glcanvas.gl;
+            let gl = this.glcanvas.gl;z
             gl.useProgram(shader);
     
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             gl.uniform1i(shader.uSampler, 0);
-            if (!(k1 === undefined) && !(k2 === undefined)) {
-                gl.uniform1f(shader.uk1, k1);
+            if ("uk1" in shader) {
                 gl.uniform1f(shader.uk2, k2);
             }
-
+            if ("uk2" in shader) {
+                gl.uniform1f(shader.uk1, k1);
+            }
             // Step 2: Bind vertex and index buffers to draw two triangles
             gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
             gl.vertexAttribPointer(shader.positionLocation, 2, gl.FLOAT, false, 0, 0);
