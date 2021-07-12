@@ -13,13 +13,14 @@
 <!--Our Scripts!-->
 <script src="../geometry/polymesh.js"></script>
 <script src="../geometry/basicmesh.js"></script>
+<script src="../geometry/directmesh.js"></script>
 <script src="../geometry/primitives3d.js"></script>
 <script src="../geometry/cameras3d.js"></script>
 <script src="../shaders/shaders.js"></script>
 <script src="../utils/simpledraw.js"></script>
 <script src="./basecanvas.js"></script>
 <script src="./scenecanvas.js"></script>
-<script src="./fakescannercanvas.js"></script>
+<script src="./meshvideocanvas.js"></script>
 
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -27,11 +28,11 @@
 <body>
 
     <table>
-        <tr><td><h3>Mesh File</h3></td><td><input type = "file" id = "meshInput"></td></tr>
+        <tr><td><h3>Mesh Video File</h3></td><td><input type = "file" id = "meshVideoInput"></td></tr>
     </table>
 
 <table><tr><td>
-<canvas id="GLCanvas" style="border: none;" width="300" height="300"></canvas>
+<canvas id="GLCanvas" style="border: none;" width="512" height="512"></canvas>
 
 </td>
 <td>
@@ -43,17 +44,18 @@
 <script>
     let glcanvas = document.getElementById("GLCanvas");
     glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
-    let scanner = new FakeScannerCanvas(glcanvas, "../shaders/", "../meshes/");
+    let videoCanvas = new MeshVideoCanvas(glcanvas, "../shaders/", "../meshes/");
 
-    let meshInput = document.getElementById('meshInput');
+    let meshVideoInput = document.getElementById('meshVideoInput');
     let result = document.getElementById('text');
     
-    meshInput.addEventListener('change', function(e) {
+    meshVideoInput.addEventListener('change', function(e) {
         let reader = new FileReader();
         reader.onload = function(e) {
-            scanner.loadMeshToScan(e.target.result);
+            const frames = JSON.parse(e.target.result);
+            videoCanvas.loadVideo(frames);
         }
-        reader.readAsText(meshInput.files[0]);
+        reader.readAsText(meshVideoInput.files[0]);
     });
 </script>
 
