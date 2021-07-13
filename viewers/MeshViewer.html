@@ -38,19 +38,16 @@
     let meshInput = document.getElementById('meshInput');
     let meshInfo = document.getElementById('meshInfo');
     
-    meshInput.addEventListener('change', function(e) {
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            let lines = e.target.result.split("\n");
-            canvas.mesh.loadFileFromLines(lines);
-            let NV = canvas.mesh.vertices.length;
-            let NE = canvas.mesh.edges.length;
-            let NF = canvas.mesh.faces.length;
-            meshInfo.innerHTML = "<h3>" + NV + " vertices, " + NE + " edges, " + NF + " faces";
-            canvas.centerCamera();
-            requestAnimationFrame(canvas.repaint.bind(canvas));
-        }
-        reader.readAsText(meshInput.files[0]);
+
+    $.get("../meshes/homer.off", function(src) {
+        let lines = src.split("\n");
+        canvas.mesh.loadFileFromLines(lines);
+        let NV = canvas.mesh.vertices.length;
+        let NE = canvas.mesh.edges.length;
+        let NF = canvas.mesh.faces.length;
+        meshInfo.innerHTML = "<h3>" + NV + " vertices, " + NE + " edges, " + NF + " faces";
+        canvas.centerCamera();
+        requestAnimationFrame(canvas.repaint.bind(canvas));
     });
 </script>
 

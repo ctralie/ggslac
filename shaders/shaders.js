@@ -289,6 +289,7 @@ function initStandardShaders(gl, relpath) {
             gl.enableVertexAttribArray(shader.vPosAttrib);
             shader.vColorAttrib = gl.getAttribLocation(shader, "vColor");
             gl.enableVertexAttribArray(shader.vColorAttrib);
+            shader.pSizeUniform = gl.getUniformLocation(shader, "pSize");
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
             shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
             shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");

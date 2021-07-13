@@ -39,6 +39,9 @@ class MeshVideoCanvas extends SceneCanvas {
         this.frame = 0; // Current frame of video
         this.fps = 30;
         this.meshFrames = [];
+        this.pointFramesReady = false;
+        this.pointSize = 1.0;
+        this.pointFrames = [];
         this.setupScanMenus();
     }
 
@@ -84,21 +87,76 @@ class MeshVideoCanvas extends SceneCanvas {
 
         let canvas = this;
         let gui = this.gui;
-        const videoMenu = gui.addFolder("Mesh Video / Fake Scanner");
-        videoMenu.add(this.camera, 'fovx').min(0).max(Math.PI).onChange(function() {
+        gui.add(this.camera, 'fovx').min(0).max(Math.PI).onChange(function() {
             requestAnimFrame(canvas.repaint.bind(canvas));
         });
-        videoMenu.add(this.camera, 'fovy').min(0).max(Math.PI).onChange(function() {
+        gui.add(this.camera, 'fovy').min(0).max(Math.PI).onChange(function() {
             requestAnimFrame(canvas.repaint.bind(canvas));
         });
+
+        const videoMenu = gui.addFolder("Mesh Video");
         videoMenu.add(this, 'fps').min(1).step(1);
         this.frameElem = videoMenu.add(this, 'frame');
+        this.showPoints = false;
+        videoMenu.add(this, 'showPoints').onChange(function() {
+            requestAnimFrame(canvas.repaint.bind(canvas));
+        });
+        videoMenu.add(this, 'pointSize').min(0).max(5).onChange(function() {
+            requestAnimFrame(canvas.repaint.bind(canvas));
+        });
         videoMenu.add(this, 'playVideo');
-        videoMenu.add(this, 'thetaStart');
-        videoMenu.add(this, 'thetaEnd');
-        videoMenu.add(this, 'nscans').min(1).step(1).listen();
-        videoMenu.add(this, 'saveNormals');
-        videoMenu.add(this, 'makeScan');
+
+        const scannerMenu = gui.addFolder("Fake Scanner");
+        scannerMenu.add(this, 'thetaStart');
+        scannerMenu.add(this, 'thetaEnd');
+        scannerMenu.add(this, 'nscans').min(1).step(1).listen();
+        scannerMenu.add(this, 'saveNormals');
+        scannerMenu.add(this, 'makeScan');
+    }
+
+    /**
+     * Setup point color plots for each mesh frame.
+     */
+    setupPointPlots() {
+        // Compute bounding box over all frames for consistent colors
+        const frames = this.frames;
+        const that = this;
+        if (!('shaderReady' in this.shaders.pointColorShader)) {
+            this.shaders.pointColorShader.then(function() {
+                that.setupPointPlots();
+            })
+        }
+        else {
+            // Step 1: Figure out bounding box over all frames for consistent colors
+            this.pointFrames = [];
+            let bbox = [0, 0, 0, 0, 0, 0];
+            for (let k = 0; k < 3; k++) {
+                bbox[2*k] = frames[0].VPos[0][k];
+                bbox[2*k+1] = frames[0].VPos[0][k];
+            }
+            for (let i = 0; i < frames.length; i++) {
+                for (let row = 0; row < frames[i].VPos.length; row++) {
+                    for (let k = 0; k < 3; k++) {
+                        bbox[2*k] = Math.min(bbox[2*k], frames[i].VPos[row][k]);
+                        bbox[2*k+1] = Math.max(bbox[2*k+1], frames[i].VPos[row][k]);
+                    }
+                }
+            }
+            // Step 2: Setup each colored point cloud as a simple drawer
+            for (let i = 0; i < frames.length; i++) {
+                const drawer = new SimpleDrawer(this.gl, this.shaders.pointColorShader);
+                for (let row = 0; row < frames[i].VPos.length; row++) {
+                    let color = [0, 0, 0];
+                    for (let k = 0; k < 3; k++) {
+                        let c = frames[i].VPos[row][k];
+                        color[k] = (c-bbox[2*k])/(bbox[2*k+1]-bbox[2*k]);
+                    }
+                    drawer.drawPoint(frames[i].VPos[row], color);
+                }
+                this.pointFrames.push(drawer);
+            }
+            this.pointFramesReady = true;
+        }
     }
 
     /**
@@ -106,8 +164,12 @@ class MeshVideoCanvas extends SceneCanvas {
      * @param {list} frames A list of objects, each with VPos and ITris
      */
     loadVideo(frames) {
+        this.frames = frames;
         this.meshFrames = [];
+        this.pointFrames = [];
+        this.pointFramesReady = false;
         this.nscans = frames.length;
+        // Step 1: Setup all mesh objects
         for (let i = 0; i < frames.length; i++) {
             this.meshFrames.push(new DirectMesh(frames[i].VPos, frames[i].ITris));
             if (i == 0) {
@@ -119,6 +181,7 @@ class MeshVideoCanvas extends SceneCanvas {
                 requestAnimFrame(this.repaint.bind(this));
             }
         }
+        // Step 2: Setup slider for frames
         const that = this;
         this.frameElem.min(0).max(frames.length-1).step(1).listen().onChange(function() {
             if (!that.videoPlaying) {
@@ -126,6 +189,23 @@ class MeshVideoCanvas extends SceneCanvas {
                 that.repaint();
             }
         });
+    }
+
+    /**
+     * Mostly repeat what super's repaint does, except allow for the possibility
+     * of drawing colored point clouds for the vertices
+     */
+    repaint() {
+        super.repaint();
+        if (this.showPoints) {
+            if (!this.pointFramesReady) {
+                this.setupPointPlots();
+            }
+            else {
+                this.pointFrames[this.frame].setPointSize(this.pointSize);
+                this.pointFrames[this.frame].repaint(this.camera);
+            }
+        }
     }
 
     playVideo() {
@@ -146,6 +226,7 @@ class MeshVideoCanvas extends SceneCanvas {
             }
             else {
                 that.videoPlaying = false;
+                that.frame = that.meshFrames.length-1;
             }
         }, 1000/this.fps);
     }
@@ -162,6 +243,8 @@ class MeshVideoCanvas extends SceneCanvas {
         let step = (this.thetaEnd-this.thetaStart)/this.nscans;
         this.theta = this.thetaStart;
         this.frame = 0;
+        let showPoints = this.showPoints;
+        this.showPoints = false; // Be careful not to draw any points
         while (this.frame < this.nscans && this.frame < this.meshFrames.length) {
             this.scene.children[0].shapes[0].mesh = this.meshFrames[this.frame];
             this.mesh = this.meshFrames[this.frame];
@@ -189,6 +272,8 @@ class MeshVideoCanvas extends SceneCanvas {
             cameras.push({"pos":pos, "up":up, "right":right});
             this.frame += 1;
         }
+        this.frame = 0;
+        this.showPoints = showPoints;
         let c = this.camera;
         download(JSON.stringify({'width':this.width, 'height':this.height, 'allNormals':allNormals, 'allDepth':allDepth, 'cameras':cameras, 'fovx':c.fovx, 'fovy':c.fovy, 'far':c.far}), 'scan.json', 'text/plain');
     }

@@ -182,7 +182,7 @@ class SimpleDrawer {
             gl.uniformMatrix4fv(this.shader.pMatrixUniform, false, pMatrix);
             gl.uniformMatrix4fv(this.shader.mvMatrixUniform, false, mvMatrix);
             gl.uniformMatrix4fv(this.shader.tMatrixUniform, false, tMatrix);
-            gl.uniform1f(this.shader.pSizeUniform, false, this.pSize);
+            gl.uniform1f(this.shader.pSizeUniform, this.pSize);
             gl.drawArrays(gl.POINTS, 0, this.pointsVBO.numItems);
         }
     }
