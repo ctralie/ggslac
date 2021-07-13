@@ -30,6 +30,8 @@ class MeshVideoCanvas extends SceneCanvas {
         offscreenCanvas.height = glcanvas.height;
         offscreenCanvas.ctx = offscreenCanvas.getContext("2d");
         this.offscreenCanvas = offscreenCanvas;
+        this.thetaStart = 0.0;
+        this.thetaEnd = 2*Math.PI;
         this.theta = 0.0;
         this.nscans = 20;
         this.saveNormals = false;
@@ -92,6 +94,8 @@ class MeshVideoCanvas extends SceneCanvas {
         videoMenu.add(this, 'fps').min(1).step(1);
         this.frameElem = videoMenu.add(this, 'frame');
         videoMenu.add(this, 'playVideo');
+        videoMenu.add(this, 'thetaStart');
+        videoMenu.add(this, 'thetaEnd');
         videoMenu.add(this, 'nscans').min(1).step(1).listen();
         videoMenu.add(this, 'saveNormals');
         videoMenu.add(this, 'makeScan');
@@ -155,10 +159,10 @@ class MeshVideoCanvas extends SceneCanvas {
         let allNormals = [];
         let allDepth = [];
         let cameras = [];
-        let step = 2*Math.PI/this.nscans;
-        this.theta = 0.0;
+        let step = (this.thetaEnd-this.thetaStart)/this.nscans;
+        this.theta = this.thetaStart;
         this.frame = 0;
-        while (this.theta < 2*Math.PI && this.frame < this.meshFrames.length) {
+        while (this.frame < this.nscans && this.frame < this.meshFrames.length) {
             this.scene.children[0].shapes[0].mesh = this.meshFrames[this.frame];
             this.mesh = this.meshFrames[this.frame];
             this.camera.orbitLeftRightTheta(step);
