@@ -61,7 +61,7 @@ class SceneCanvas extends BaseCanvas {
         if (!('shaderReady' in this.shaders.pointColorShader)) {
             this.shaders.pointColorShader.then(function() {
                 canvas.drawer = new SimpleDrawer(canvas.gl, canvas.shaders.pointColorShader);
-            })
+            });
         }
         else {
             this.drawer = new SimpleDrawer(this.gl, this.shaders.pointColorShader);

@@ -107,11 +107,10 @@ function initStandardShaders(gl, relpath) {
             shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
             shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
             shader.uKdUniform = gl.getUniformLocation(shader, "uKd"); // Flat diffuse color
+            shader.shaderReady = true;
+            shaders.flat = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.flat = shader;
     });
 
     /** gouraud: Per-vertex lambertian shader  */
@@ -144,11 +143,10 @@ function initStandardShaders(gl, relpath) {
                 };
                 shader.u_lights.push(light);
             }
+            shader.shaderReady = true;
+            shaders.gouraud = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.gouraud = shader;
     });
 
     /** blinnPhong: Blinn Phong shader  */
@@ -181,11 +179,10 @@ function initStandardShaders(gl, relpath) {
                 };
                 shader.u_lights.push(light);
             }
+            shader.shaderReady = true;
+            shaders.blinnPhong = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.blinnPhong = shader;
     });
 
     /** depth: A shader that shades by depth */
@@ -199,11 +196,10 @@ function initStandardShaders(gl, relpath) {
             shader.uNearUniform = gl.getUniformLocation(shader, "uNear");
             shader.uFarUniform = gl.getUniformLocation(shader, "uFar");
             shader.description = 'A shader that shades by depth';
+            shader.shaderReady = true;
+            shaders.depth = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.depth = shader;
     });
 
     /** depth16: A shader that packs a float depth into two bytes in the R/G channels */
@@ -217,11 +213,10 @@ function initStandardShaders(gl, relpath) {
             shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
             shader.uNearUniform = gl.getUniformLocation(shader, "uNear");
             shader.uFarUniform = gl.getUniformLocation(shader, "uFar");
+            shader.shaderReady = true;
+            shaders.depth16 = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.depth16 = shader;
     });
 
     /** normal: A shader to color points by their normals */
@@ -237,11 +232,10 @@ function initStandardShaders(gl, relpath) {
             shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
             shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
             shader.nMVMatrixUniform = gl.getUniformLocation(shader, "uNMVMatrix");
+            shader.shaderReady = true;
+            shaders.normal = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.normal = shader;
     });
 
     /** normal local: A shader to color points by their normals in local coordinates */
@@ -257,11 +251,10 @@ function initStandardShaders(gl, relpath) {
             shader.tMatrixUniform = gl.getUniformLocation(shader, "tMatrix");
             shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
             shader.nMVMatrixUniform = gl.getUniformLocation(shader, "uNMVMatrix");
+            shader.shaderReady = true;
+            shaders.normalLocal = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.normalLocal = shader;
     });
     
     /** Point shader: Simple shader for drawing points with flat colors */
@@ -274,11 +267,10 @@ function initStandardShaders(gl, relpath) {
             shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
             shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
             shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Ambient flat color
+            shader.shaderReady = true;
+            shaders.pointShader = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.pointShader = shader;
     });
 
     /** Point color shader: Simple shader for drawing points with flat, varying colors */
@@ -293,11 +285,10 @@ function initStandardShaders(gl, relpath) {
             shader.pMatrixUniform = gl.getUniformLocation(shader, "uPMatrix");
             shader.mvMatrixUniform = gl.getUniformLocation(shader, "uMVMatrix");
             shader.tMatrixUniform = gl.getUniformLocation(shader, "uTMatrix");
+            shader.shaderReady = true;
+            shaders.pointColorShader = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.pointColorShader = shader;
     });
 
     /** Normal shader: A shader used to draw normals as line segments */
@@ -314,11 +305,10 @@ function initStandardShaders(gl, relpath) {
             shader.nMatrixUniform = gl.getUniformLocation(shader, "uNMatrix");
             shader.uKaUniform = gl.getUniformLocation(shader, "uKa"); // Ambient flat color
             shader.uRUniform = gl.getUniformLocation(shader, "uR");
+            shader.shaderReady = true;
+            shaders.normalShader = shader;
             resolve(shader);
         });
-    }).then(shader => {
-        shader.shaderReady = true;
-        shaders.normalShader = shader;
     });
     return shaders;
 }
