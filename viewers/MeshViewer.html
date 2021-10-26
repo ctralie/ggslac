@@ -38,9 +38,7 @@
     let meshInput = document.getElementById('meshInput');
     let meshInfo = document.getElementById('meshInfo');
     
-
-    $.get("../meshes/homer.off", function(src) {
-        let lines = src.split("\n");
+    function finalizeMesh(lines) {
         canvas.mesh.loadFileFromLines(lines);
         let NV = canvas.mesh.vertices.length;
         let NE = canvas.mesh.edges.length;
@@ -48,7 +46,22 @@
         meshInfo.innerHTML = "<h3>" + NV + " vertices, " + NE + " edges, " + NF + " faces";
         canvas.centerCamera();
         requestAnimationFrame(canvas.repaint.bind(canvas));
+    }
+
+    $.get("../meshes/homer.off", function(src) {
+        let lines = src.split("\n");
+        finalizeMesh(lines);
     });
+    
+    meshInput.addEventListener('change', function(e) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let lines = e.target.result.split("\n");
+            finalizeMesh(lines);
+        }
+        reader.readAsText(meshInput.files[0]);
+    });
+
 </script>
 
 </body>

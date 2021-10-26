@@ -68,16 +68,23 @@ class MeshVertex {
     getNormal() {
         let faces = this.getAttachedFaces();
         let normal = glMatrix.vec3.fromValues(0, 0, 0);
-        let w;
-        let N;
-        for (let i = 0; i < faces.length; i++) {
-            w = faces[i].getArea();
-            N = faces[i].getNormal();
-            glMatrix.vec3.scale(N, N, w);
-            glMatrix.vec3.add(normal, normal, N);
+        try {
+            let w;
+            let N;
+            for (let i = 0; i < faces.length; i++) {
+                w = faces[i].getArea();
+                N = faces[i].getNormal();
+                glMatrix.vec3.scale(N, N, w);
+                glMatrix.vec3.add(normal, normal, N);
+            }
+            glMatrix.vec3.normalize(normal, normal);
         }
-        glMatrix.vec3.normalize(normal, normal);
-        return normal;
+        catch(err) {
+            console.log(err);
+        }
+        finally {
+            return normal;
+        }
     }
 }
 
