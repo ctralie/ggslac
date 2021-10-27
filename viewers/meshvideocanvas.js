@@ -147,9 +147,14 @@ class MeshVideoCanvas extends SceneCanvas {
                 const drawer = new SimpleDrawer(this.gl, this.shaders.pointColorShader);
                 for (let row = 0; row < frames[i].VPos.length; row++) {
                     let color = [0, 0, 0];
-                    for (let k = 0; k < 3; k++) {
-                        let c = frames[i].VPos[row][k];
-                        color[k] = (c-bbox[2*k])/(bbox[2*k+1]-bbox[2*k]);
+                    if ('VColors' in frames[i]) {
+                        color = frames[i].VColors[row];
+                    }
+                    else {
+                        for (let k = 0; k < 3; k++) {
+                            let c = frames[i].VPos[row][k];
+                            color[k] = (c-bbox[2*k])/(bbox[2*k+1]-bbox[2*k]);
+                        }
                     }
                     drawer.drawPoint(frames[i].VPos[row], color);
                 }
