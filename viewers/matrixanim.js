@@ -307,7 +307,9 @@ function createMatrixInput(domElem, homogenous, name, is3D) {
         for (let j = 0; j < ncols; j++) {
             let col = document.createElement("td");
             let input = document.createElement("input");
-            input.size = 1;
+            input.style.width="60px";
+            input.style.height="60px";
+            input.size = 2;
             input.type = "text";
             if (i == j) {
                 input.value = "1";
