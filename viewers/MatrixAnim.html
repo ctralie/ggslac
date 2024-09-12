@@ -44,10 +44,10 @@
 <table>
     <tr>
         <td>
-            <h3>Homogenous Coordinates</h3>
+            <h3>Homogeneous Coordinates</h3>
         </td>
         <td>
-            <input type = "checkbox" id = "homogenous"></input>
+            <input type = "checkbox" id = "homogeneous"></input>
         </td>
     </tr>
     <tr>
@@ -71,7 +71,7 @@
 
 
 <script>
-    let homogenous = document.getElementById("homogenous");
+    let homogeneous = document.getElementById("homogeneous");
     let is3D = document.getElementById("is3D");
     let NInput = document.getElementById("N");
     let matrixDisplay = document.getElementById("matrixdisplay");
@@ -79,17 +79,17 @@
     let height = 300;
     let sideLength = 40;
     let N = parseInt(NInput.value);
-    let res = addNCompositionMatrixWidgets(matrixDisplay, N, homogenous.checked, is3D.checked, width, height, sideLength);
+    let res = addNCompositionMatrixWidgets(matrixDisplay, N, homogeneous.checked, is3D.checked, width, height, sideLength);
     let table = res.table;
 
     let refresh = function() {
         N = parseInt(NInput.value);
         matrixDisplay.removeChild(table);
-        res = addNCompositionMatrixWidgets(matrixDisplay, N, homogenous.checked, is3D.checked, width, height, sideLength);
+        res = addNCompositionMatrixWidgets(matrixDisplay, N, homogeneous.checked, is3D.checked, width, height, sideLength);
         table = res.table;
     };
 
-    homogenous.onclick = refresh;
+    homogeneous.onclick = refresh;
     is3D.onclick = refresh;
     NInput.onclick = refresh;
 

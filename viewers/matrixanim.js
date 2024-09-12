@@ -279,11 +279,11 @@ function add3DInputRow(labels, width, height, shadersPath, meshesPath) {
  * Create a row-major unrolled array of text inputs in a table
  * to represent matrix elements
  * @param {dom element} domElem DOM element to which to add the table
- * @param {boolean} homogenous Whether to use homogenous coordinates
+ * @param {boolean} homogeneous Whether to use homogeneous coordinates
  * @param {string} name Display name for the matrix
  * @param {boolean} is3D Whether this is a 3D matrix input
  */
-function createMatrixInput(domElem, homogenous, name, is3D) {
+function createMatrixInput(domElem, homogeneous, name, is3D) {
     if (is3D === undefined) {
         is3D = false;
     }
@@ -291,7 +291,7 @@ function createMatrixInput(domElem, homogenous, name, is3D) {
     table.border = 1;
     let elems = [];
     let ncols = 2;
-    if (homogenous) {
+    if (homogeneous) {
         ncols = 3;
     }
     let nrows = ncols;
@@ -299,7 +299,7 @@ function createMatrixInput(domElem, homogenous, name, is3D) {
         nrows++;
         ncols++;
     }
-    if (homogenous) {
+    if (homogeneous) {
         nrows--;
     }
     for (let i = 0; i < nrows; i++) {
@@ -323,7 +323,7 @@ function createMatrixInput(domElem, homogenous, name, is3D) {
         }
         table.appendChild(row);
     }
-    if (homogenous) {
+    if (homogeneous) {
         let row = document.createElement("tr");
         let vals = ["&nbsp0", "&nbsp0"];
         if (is3D) {
@@ -354,10 +354,10 @@ function createMatrixInput(domElem, homogenous, name, is3D) {
 /**
  * Convert a grid of text inputs into a glMatrix.mat3 object
  * @param {list of dom elements} elems Text inputs
- * @param {boolean} homogenous Whether it's a homogenous matrix
+ * @param {boolean} homogeneous Whether it's a homogeneous matrix
  * @param {boolean} is3D Whether it's a 3D transformation
  */
-function textToMatrix(elems, homogenous, is3D) {
+function textToMatrix(elems, homogeneous, is3D) {
     let matx = glMatrix.mat3;
     if (is3D) {
         matx = glMatrix.mat4;
@@ -367,7 +367,7 @@ function textToMatrix(elems, homogenous, is3D) {
     for (let i = 0; i < elems.length; i++) {
         ms.push(parseFloat(elems[i].value));
     }
-    if (homogenous) {
+    if (homogeneous) {
         for (let i = 0; i < ms.length; i++) {
             m[i] = ms[i];
         }
@@ -402,10 +402,10 @@ function textToMatrix(elems, homogenous, is3D) {
  * Copy glMatrix.mat3 values over to text input elements
  * @param {glMatrix.mat3 or glMatrix.mat4} m matrix
  * @param {list of dom elements} elems Text inputs
- * @param {boolean} homogenous Whether it's a homogenous matrix
+ * @param {boolean} homogeneous Whether it's a homogeneous matrix
  * @param {boolean} is3D Whether it's a 3D transformation
  */
-function matrixToText(m, elems, homogenous, is3D) {
+function matrixToText(m, elems, homogeneous, is3D) {
     let mT = glMatrix.mat3.create();
     if (is3D) {
         mT = glMatrix.mat4.create();
@@ -415,7 +415,7 @@ function matrixToText(m, elems, homogenous, is3D) {
         mT = glMatrix.mat3.create();
         glMatrix.mat3.transpose(mT, m);
     }
-    if (homogenous) {
+    if (homogeneous) {
         for (let i = 0; i < elems.length; i++) {
             elems[i].value = "" + mT[i];
         }
@@ -440,7 +440,7 @@ function matrixToText(m, elems, homogenous, is3D) {
 }
 
 /**
- * Convert a 3x3 homogenous matrix into svg format, noting
+ * Convert a 3x3 homogeneous matrix into svg format, noting
  * that they are column major in both glMatrix.mat3 and svg
  * @param {glMatrix.mat3} m The matrix
  * @param {float} sideLen The length of a side of a square.
@@ -516,7 +516,7 @@ function transform3DScene(scene, As, delay, fps) {
  * for Ax, Bx, A(Bx), and (AB)x
  * @param {dom element} parent Parent element to which to add this widget
  * @param {int} NMats Number of compositions
- * @param {boolean} homogenous Whether to use homogenous coordinates
+ * @param {boolean} homogeneous Whether to use homogeneous coordinates
  * @param {boolean} is3D Whether this is a 3D system or a 2D system
  * @param {float} width Width of each transformation plot in pixels
  * @param {float} height Height of each transformation plot in pixels
@@ -525,7 +525,7 @@ function transform3DScene(scene, As, delay, fps) {
  * @param {string} shaderPath Relative path to shader files for 3D
  * @param {string} meshesPath Relative path to mesh files for 3D
  */
-function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, height, sideLen, initStates, shadersPath, meshesPath) {
+function addNCompositionMatrixWidgets(parent, NMats, homogeneous, is3D, width, height, sideLen, initStates, shadersPath, meshesPath) {
     if (is3D === undefined) {
         is3D = false;
     }
@@ -592,7 +592,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
     let MInputs = [];
     function callbackFactory(k) {
         return function() {
-            let M = textToMatrix(MInputs[k], homogenous, is3D);
+            let M = textToMatrix(MInputs[k], homogeneous, is3D);
             if (is3D) {
                 transform3DScene(scenes[k], [M], 1000);
             }
@@ -603,9 +603,9 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
     }
     for (let i = 0; i < NMats; i++) {
         let col = document.createElement("td");
-        let MiInputs = createMatrixInput(col, homogenous, labels[i], is3D);
+        let MiInputs = createMatrixInput(col, homogeneous, labels[i], is3D);
         MInputs.push(MiInputs);
-        matrixToText(initStates[i], MiInputs, homogenous, is3D);
+        matrixToText(initStates[i], MiInputs, homogeneous, is3D);
         matrixRow.appendChild(col);
         buttons[labels[i]].onclick = callbackFactory(i);
     }
@@ -614,7 +614,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
             let Ms = [];
             let MAll = matx.create();
             for (let i = 0; i < NMats; i++) {
-                let M = textToMatrix(MInputs[i], homogenous, is3D);
+                let M = textToMatrix(MInputs[i], homogeneous, is3D);
                 let MNext = matx.create();
                 matx.multiply(MNext, M, MAll);
                 Ms.push(MNext);
@@ -630,7 +630,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
         buttons[prestr].onclick = function() {
             let MAll = matx.create();
             for (let i = 0; i < NMats; i++) {
-                let M = textToMatrix(MInputs[i], homogenous, is3D);
+                let M = textToMatrix(MInputs[i], homogeneous, is3D);
                 matx.multiply(MAll, M, MAll);
             }
             if (is3D) {
@@ -649,7 +649,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
  * Add the matrix widgets to a particular div element
  * for Ax, Bx, B(Ax), A(Bx)
  * @param {dom element} parent Parent element to which to add this widget
- * @param {boolean} homogenous Whether to use homogenous coordinates
+ * @param {boolean} homogeneous Whether to use homogeneous coordinates
  * @param {boolean} is3D Whether this is a 3D system or a 2D system
  * @param {float} width Width of each transformation plot in pixels
  * @param {float} height Height of each transformation plot in pixels
@@ -659,7 +659,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogenous, is3D, width, he
  * @param {string} shaderPath Relative path to shader files for 3D
  * @param {string} meshesPath Relative path to mesh files for 3D
  */
-function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideLen, AInit, BInit, shadersPath, meshesPath) {
+function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, sideLen, AInit, BInit, shadersPath, meshesPath) {
     let matx = glMatrix.mat3;
     if (is3D) {
         matx = glMatrix.mat4;
@@ -702,16 +702,16 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
     // Add two matrix inputs
     let matrixRow = document.createElement("tr");
     let col = document.createElement("td");
-    let AInputs = createMatrixInput(col, homogenous, "A", is3D);
-    matrixToText(AInit, AInputs, homogenous, is3D);
+    let AInputs = createMatrixInput(col, homogeneous, "A", is3D);
+    matrixToText(AInit, AInputs, homogeneous, is3D);
     matrixRow.appendChild(col);
     col = document.createElement("td");
-    let BInputs = createMatrixInput(col, homogenous, "B", is3D);
-    matrixToText(BInit, BInputs, homogenous, is3D);
+    let BInputs = createMatrixInput(col, homogeneous, "B", is3D);
+    matrixToText(BInit, BInputs, homogeneous, is3D);
     matrixRow.appendChild(col);
     table.appendChild(matrixRow);
     buttons["Ax"].onclick = function() {
-        let A = textToMatrix(AInputs, homogenous, is3D);
+        let A = textToMatrix(AInputs, homogeneous, is3D);
         if (is3D) {
             transform3DScene(scenes[0], [A], 1000);
         }
@@ -720,7 +720,7 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
         }
     }
     buttons["Bx"].onclick = function() {
-        let B = textToMatrix(BInputs, homogenous, is3D);
+        let B = textToMatrix(BInputs, homogeneous, is3D);
         if (is3D) {
             transform3DScene(scenes[1], [B], 1000);
         }
@@ -729,8 +729,8 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
         }
     }
     buttons["B(Ax)"].onclick = function() {
-        let A = textToMatrix(AInputs, homogenous, is3D);
-        let B = textToMatrix(BInputs, homogenous, is3D);
+        let A = textToMatrix(AInputs, homogeneous, is3D);
+        let B = textToMatrix(BInputs, homogeneous, is3D);
         let BA = matx.create();
         matx.multiply(BA, B, A);
         if (is3D) {
@@ -741,8 +741,8 @@ function addCommutativeMatrixGrid(parent, homogenous, is3D, width, height, sideL
         }
     }
     buttons["A(Bx)"].onclick = function() {
-        let A = textToMatrix(AInputs, homogenous, is3D);
-        let B = textToMatrix(BInputs, homogenous, is3D);
+        let A = textToMatrix(AInputs, homogeneous, is3D);
+        let B = textToMatrix(BInputs, homogeneous, is3D);
         let AB = matx.create();
         matx.multiply(AB, A, B);
         
