@@ -513,7 +513,7 @@ function transform3DScene(scene, As, delay, fps) {
 
 /**
  * Add the matrix widgets to a particular div element
- * for Ax, Bx, A(Bx), and (AB)x
+ * for Av, Bv, A(Bv), and (AB)v
  * @param {dom element} parent Parent element to which to add this widget
  * @param {int} NMats Number of compositions
  * @param {boolean} homogeneous Whether to use homogeneous coordinates
@@ -547,11 +547,11 @@ function addNCompositionMatrixWidgets(parent, NMats, homogeneous, is3D, width, h
         }
     }
     let labels = [];
-    let prestr = ")x";
-    let allstr = "x";
+    let prestr = ")v";
+    let allstr = "v";
     for (let i = 0; i < NMats; i++) {
         let letter = (i+10).toString(36).toUpperCase();
-        labels.push(letter + "x");
+        labels.push(letter + "v");
         allstr = letter + allstr;
         if (i < NMats-1) {
             allstr = "(" + allstr + ")";
@@ -647,7 +647,7 @@ function addNCompositionMatrixWidgets(parent, NMats, homogeneous, is3D, width, h
 
 /**
  * Add the matrix widgets to a particular div element
- * for Ax, Bx, B(Ax), A(Bx)
+ * for Av, Bv, B(Av), A(Bv)
  * @param {dom element} parent Parent element to which to add this widget
  * @param {boolean} homogeneous Whether to use homogeneous coordinates
  * @param {boolean} is3D Whether this is a 3D system or a 2D system
@@ -679,7 +679,7 @@ function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, side
     if (is3D && meshesPath === undefined) {
         meshesPath = "../meshes/";
     }
-    let labels = ["Ax", "Bx", "B(Ax)", "A(Bx)"];
+    let labels = ["Av", "Bv", "B(Av)", "A(Bv)"];
     let table = document.createElement("table");
     parent.appendChild(table);
     // First row with labels
@@ -710,7 +710,7 @@ function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, side
     matrixToText(BInit, BInputs, homogeneous, is3D);
     matrixRow.appendChild(col);
     table.appendChild(matrixRow);
-    buttons["Ax"].onclick = function() {
+    buttons["Av"].onclick = function() {
         let A = textToMatrix(AInputs, homogeneous, is3D);
         if (is3D) {
             transform3DScene(scenes[0], [A], 1000);
@@ -719,7 +719,7 @@ function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, side
             transformSquareGrid(0, [A], 1000, sideLen);
         }
     }
-    buttons["Bx"].onclick = function() {
+    buttons["Bv"].onclick = function() {
         let B = textToMatrix(BInputs, homogeneous, is3D);
         if (is3D) {
             transform3DScene(scenes[1], [B], 1000);
@@ -728,7 +728,7 @@ function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, side
             transformSquareGrid(1, [B], 1000, sideLen);
         }
     }
-    buttons["B(Ax)"].onclick = function() {
+    buttons["B(Av)"].onclick = function() {
         let A = textToMatrix(AInputs, homogeneous, is3D);
         let B = textToMatrix(BInputs, homogeneous, is3D);
         let BA = matx.create();
@@ -740,7 +740,7 @@ function addCommutativeMatrixGrid(parent, homogeneous, is3D, width, height, side
             transformSquareGrid(2, [A, BA], 1000, sideLen);
         }
     }
-    buttons["A(Bx)"].onclick = function() {
+    buttons["A(Bv)"].onclick = function() {
         let A = textToMatrix(AInputs, homogeneous, is3D);
         let B = textToMatrix(BInputs, homogeneous, is3D);
         let AB = matx.create();
