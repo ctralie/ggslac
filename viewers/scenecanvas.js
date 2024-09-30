@@ -340,7 +340,7 @@ class SceneCanvas extends BaseCanvas {
                 // Apply a transform that realizes the proper center and radius
                 // before the transform at this node
                 let ms = glMatrix.mat4.create();
-                if ('r' in shape) {
+                if ('radius' in shape) {
                     let r = shape.radius;
                     ms[0] = r;
                     ms[5] = r;
